@@ -7,7 +7,7 @@ Easily collect and expose metrics in your akka-http server.
 
 The following implementations are supported:
 
-* [datadog](#datadog)
+* [datadog](#datadog) (via StatsD)
 * [dropwizard](#dropwizard)
 * [prometheus](#prometheus)
 
@@ -15,7 +15,7 @@ The following implementations are supported:
 
 | Version | Release date | Akka Http version | Scala versions      |
 | ------- | ------------ | ----------------- | ------------------- |
-| `0.2.0` |              | `10.1.0`          | `2.11.12`, `2.12.4` |
+| `0.2.0` |              | `10.1.6`          | `2.11.13`, `2.12.8` |
 
 The complete list can be found in the [CHANGELOG](CHANGELOG.md) file.
 
@@ -43,10 +43,10 @@ For more details, see the akka-http 10.1.x [release notes](https://doc.akka.io/d
 
 ### Server metrics
 
-`akka-http-metrics-core` enables you to easily record the following metrics from an akka-http server into a registry. The
+The library enables you to easily record the following metrics from an akka-http server into a registry. The
 metric names are chosen according to the backend naming guidelines.
 
-|Metrics                        |Type     |datadog                        |dropwizard                  |prometheus                         |
+|metric                         |type     |datadog                        |dropwizard                  |prometheus                         |
 |-------------------------------|---------|-------------------------------|----------------------------|-----------------------------------|
 | served requests (counter)     |counter  |akka.http.requests_count       |akka.http.requests          |akka_http_requests_total           |
 | errored request (counter)     |counter  |akka.http.requests_errors_count|akka.http.requests.errors   |akka_http_requests_errors_total    |
@@ -98,7 +98,7 @@ Of course, you will also need an implicit marshaller for your registry implement
 
 ## Implementations
 
-### [Datadog]( https://docs.datadoghq.com/developers/dogstatsd/) (via StatsD)
+### [Datadog]( https://docs.datadoghq.com/developers/dogstatsd/)
 
 The `DatadogRegistry` is just a facade to publish to your StatsD server. The registry is not stored in the JVM, for this reason, 
 it is not possible to expose the metrics in your API.
