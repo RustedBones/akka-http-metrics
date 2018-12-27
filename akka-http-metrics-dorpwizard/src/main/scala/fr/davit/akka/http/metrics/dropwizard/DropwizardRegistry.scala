@@ -47,9 +47,9 @@ class DropwizardRegistry(val underlying: MetricRegistry) extends HttpMetricsRegi
 
   override val active: Gauge[Long] = underlying.counter(name(AkkaPrefix,"requests", "active"))
 
-  override val duration: Timer = underlying.timer(name(AkkaPrefix, "requests", "durations"))
+  override val duration: Timer = underlying.timer(name(AkkaPrefix, "requests", "duration"))
 
-  override val receivedBytes: Histogram[Long] = underlying.histogram(name(AkkaPrefix, "requests", "sizes"))
+  override val receivedBytes: Histogram[Long] = underlying.histogram(name(AkkaPrefix, "requests", "bytes"))
 
-  override val sentBytes: Histogram[Long] = underlying.histogram(name(AkkaPrefix, "responses", "sizes"))
+  override val sentBytes: Histogram[Long] = underlying.histogram(name(AkkaPrefix, "responses", "bytes"))
 }

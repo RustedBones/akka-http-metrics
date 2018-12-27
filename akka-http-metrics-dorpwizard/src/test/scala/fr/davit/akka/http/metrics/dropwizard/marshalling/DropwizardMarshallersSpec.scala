@@ -31,9 +31,9 @@ class DropwizardMarshallersSpec extends FlatSpec with Matchers with ScalatestRou
         "akka.http.requests",
         "akka.http.requests.active",
         "akka.http.requests.errors",
-        "akka.http.requests.durations",
-        "akka.http.requests.sizes",
-        "akka.http.responses.sizes",
+        "akka.http.requests.duration",
+        "akka.http.requests.bytes",
+        "akka.http.responses.bytes",
         "other.metric"
       )
     }
