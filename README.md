@@ -46,14 +46,14 @@ For more details, see the akka-http 10.1.x [release notes](https://doc.akka.io/d
 The library enables you to easily record the following metrics from an akka-http server into a registry. The
 metric names are chosen according to the backend naming guidelines.
 
-|metric                         |type     |datadog                        |dropwizard                  |prometheus                         |
-|-------------------------------|---------|-------------------------------|----------------------------|-----------------------------------|
-| served requests (counter)     |counter  |akka.http.requests_count       |akka.http.requests          |akka_http_requests_total           |
-| errored request (counter)     |counter  |akka.http.requests_errors_count|akka.http.requests.errors   |akka_http_requests_errors_total    |
-| active requests (gauge)       |gauge    |akka.http.requests_active      |akka.http.requests.active   |akka_http_requests_active          |
-| requests durations (histogram)|histogram|akka.http.requests_time        |akka.http.requests.durations|akka_http_requests_duration_seconds|
-| request sizes (histogram)     |histogram|akka.http.requests_bytes       |akka.http.requests.sizes    |akka_http_requests_size_bytes      |
-| response sizes (histogram)    |histogram|akka.http.responses_bytes      |akka.http.responses.sizes   |akka_http_requests_size_bytes      |
+|metric                 |type     |datadog                        |dropwizard                  |prometheus                         |
+|-------------------|---------|-------------------------------|----------------------------|-----------------------------------|
+| served requests   |counter  |akka.http.requests_count       |akka.http.requests          |akka_http_requests_total           |
+| errored request   |counter  |akka.http.requests_errors_count|akka.http.requests.errors   |akka_http_requests_errors_total    |
+| active requests   |gauge    |akka.http.requests_active      |akka.http.requests.active   |akka_http_requests_active          |
+| requests durations|histogram|akka.http.requests_time        |akka.http.requests.durations|akka_http_requests_duration_seconds|
+| request sizes     |histogram|akka.http.requests_bytes       |akka.http.requests.sizes    |akka_http_requests_size_bytes      |
+| response sizes    |histogram|akka.http.responses_bytes      |akka.http.responses.sizes   |akka_http_requests_size_bytes      |
 
 
 ## Quick start

@@ -3,9 +3,9 @@ package fr.davit.akka.http.metrics.prometheus.marshalling
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives.metrics
 import fr.davit.akka.http.metrics.prometheus.PrometheusRegistry
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
-class PrometheusMarshallersSpec extends FlatSpec with Matchers with ScalatestRouteTest {
+class PrometheusMarshallersSpec extends FlatSpec with Matchers with ScalatestRouteTest with BeforeAndAfterAll {
 
   trait Fixture extends PrometheusMarshallers {
     val registry = PrometheusRegistry()
@@ -14,11 +14,16 @@ class PrometheusMarshallersSpec extends FlatSpec with Matchers with ScalatestRou
       .register(registry.underlying)
   }
 
+  override def afterAll(): Unit = {
+    cleanUp()
+    super.afterAll()
+  }
+
   "PrometheusMarshallers" should "expose metrics as prometheus format" in new Fixture {
     Get() ~> metrics(registry) ~> check {
       response.entity.contentType shouldBe PrometheusMarshallers.PrometheusContentType
       val text = responseAs[String]
-      println(text)
+      // println(text)
       val metrics = text
         .split('\n')
         .filterNot(_.startsWith("#"))
