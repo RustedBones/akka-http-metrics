@@ -43,14 +43,13 @@ class HttpMetricsRoute private (route: Route) extends HttpMetricsDirectives {
     registry.active.inc()
     registry.receivedBytes.update(request.entity.contentLengthOption.getOrElse(0L))
     val start = Deadline.now
-    handler(request).transform { r =>
+    val response = handler(request)
+    // no need to handle failures at this point. They will fail the stream hence the server
+    response.map { r =>
       registry.duration.observe(Deadline.now - start)
       registry.active.dec()
-      if (r.map(settings.definedError).getOrElse(true)) registry.errors.inc()
-      for {
-        r <- r.toOption
-        l <- r.entity.contentLengthOption
-      } yield registry.sentBytes.update(l)
+      if (settings.definedError(r)) registry.errors.inc()
+      r.entity.contentLengthOption.foreach(registry.sentBytes.update)
       r
     }
   }

@@ -6,17 +6,17 @@ import akka.http.scaladsl.server.{Directives, RequestContext, RouteResult}
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Keep
 import akka.stream.testkit.scaladsl.{TestSink, TestSource}
-import akka.testkit.{TestKit, _}
+import akka.testkit.TestKit
 import fr.davit.akka.http.metrics.core.TestRegistry
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsRoute._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.Eventually
-import org.scalatest.{FlatSpecLike, Matchers}
+import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Future, Promise}
 
-class HttpMetricsRouteSpec extends TestKit(ActorSystem("HttpMetricsRouteSpec")) with FlatSpecLike with Matchers with Eventually with MockFactory {
+class HttpMetricsRouteSpec extends TestKit(ActorSystem("HttpMetricsRouteSpec")) with FlatSpecLike with Matchers with Eventually with MockFactory with BeforeAndAfterAll {
 
   import Directives._
 
@@ -24,7 +24,6 @@ class HttpMetricsRouteSpec extends TestKit(ActorSystem("HttpMetricsRouteSpec")) 
   implicit val materializer = ActorMaterializer()
 
   abstract class Fixture[T](testField: TestRegistry => T) {
-    import TestRegistry._
     implicit val registry = new TestRegistry
 
     val server = mockFunction[RequestContext, Future[RouteResult]]
@@ -35,6 +34,11 @@ class HttpMetricsRouteSpec extends TestKit(ActorSystem("HttpMetricsRouteSpec")) 
       .run()
 
     def actual: T = testField(registry)
+  }
+
+  override def afterAll(): Unit = {
+    shutdown()
+    super.afterAll()
   }
 
   "HttpMetricsRoute" should "compute the number of requests" in new Fixture(_.requests) {

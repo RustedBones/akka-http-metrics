@@ -15,7 +15,7 @@ The following implementations are supported:
 
 | Version | Release date | Akka Http version | Scala versions      |
 | ------- | ------------ | ----------------- | ------------------- |
-| `0.2.0` |              | `10.1.6`          | `2.11.13`, `2.12.8` |
+| `0.2.0` |              | `10.1.6`          | `2.11.12`, `2.12.8` |
 
 The complete list can be found in the [CHANGELOG](CHANGELOG.md) file.
 
@@ -46,21 +46,22 @@ For more details, see the akka-http 10.1.x [release notes](https://doc.akka.io/d
 The library enables you to easily record the following metrics from an akka-http server into a registry. The
 metric names are chosen according to the backend naming guidelines.
 
-|metric                         |type     |datadog                        |dropwizard                  |prometheus                         |
-|-------------------------------|---------|-------------------------------|----------------------------|-----------------------------------|
-| served requests (counter)     |counter  |akka.http.requests_count       |akka.http.requests          |akka_http_requests_total           |
-| errored request (counter)     |counter  |akka.http.requests_errors_count|akka.http.requests.errors   |akka_http_requests_errors_total    |
-| active requests (gauge)       |gauge    |akka.http.requests_active      |akka.http.requests.active   |akka_http_requests_active          |
-| requests durations (histogram)|histogram|akka.http.requests_time        |akka.http.requests.durations|akka_http_requests_duration_seconds|
-| request sizes (histogram)     |histogram|akka.http.requests_bytes       |akka.http.requests.sizes    |akka_http_requests_size_bytes      |
-| response sizes (histogram)    |histogram|akka.http.responses_bytes      |akka.http.responses.sizes   |akka_http_requests_size_bytes      |
+|metric             |type     |datadog                        |dropwizard                 |prometheus                         |
+|-------------------|---------|-------------------------------|---------------------------|-----------------------------------|
+| served requests   |counter  |akka.http.requests_count       |akka.http.requests         |akka_http_requests_total           |
+| errored request   |counter  |akka.http.requests_errors_count|akka.http.requests.errors  |akka_http_requests_errors_total    |
+| active requests   |gauge    |akka.http.requests_active      |akka.http.requests.active  |akka_http_requests_active          |
+| requests durations|histogram|akka.http.requests_duration    |akka.http.requests.duration|akka_http_requests_duration_seconds|
+| request sizes     |histogram|akka.http.requests_bytes       |akka.http.requests.bytes   |akka_http_requests_size_bytes      |
+| response sizes    |histogram|akka.http.responses_bytes      |akka.http.responses.bytes  |akka_http_requests_size_bytes      |
 
 
 ## Quick start
 
 ### Record metrics
 
-To enable the feature, import the implicits from `HttpMetricsRoute` and start your server adding the `recordMetrics` to your route.
+Record metrics from your akka server by importing the implicits from `HttpMetricsRoute`. Convert your route to the
+flow that will handle requests with `recordMetrics` and bind your server to the desired port.
 
 ```scala
 import akka.actor.ActorSystem
@@ -83,7 +84,7 @@ Http().bindAndHandle(route.recordMetrics(registry), "localhost", 8080)
 
 ### Expose metrics
 
-If you want to expose the metrics from the registry on you endpoint, add the `metrics` directive to your route
+Expose the metrics from the registry on an http endpoint with the `metrics` directive.
 
 ```scala
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives._
@@ -93,15 +94,15 @@ val route = (get & path("metrics")) {
 }
 ```
 
-Of course, you will also need an implicit marshaller for your registry implementation.
+Of course, you will also need to have the implicit marshaller for your registry in scope.
 
 
 ## Implementations
 
 ### [Datadog]( https://docs.datadoghq.com/developers/dogstatsd/)
 
-The `DatadogRegistry` is just a facade to publish to your StatsD server. The registry is not stored in the JVM, for this reason, 
-it is not possible to expose the metrics in your API.
+The `DatadogRegistry` is just a facade to publish to your StatsD server. The registry itself not located in the JVM, 
+for this reason it is not possible to expose the metrics in your API.
 
 Add to your `build.sbt`:
 
@@ -119,6 +120,9 @@ val client: StatsDClient = ... // your statsd client
 
 val registry = DatadogRegistry(client)
 ```
+
+See datadog's [documentation](https://github.com/dataDog/java-dogstatsd-client) on how to create a StatsD client.
+
 
 ### [Dropwizard](https://metrics.dropwizard.io/)
 
