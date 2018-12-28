@@ -15,16 +15,12 @@ object PrometheusRegistry {
 
   private implicit def toLongCounter(counter: io.prometheus.client.Counter): Counter[Long] = new Counter[Long] {
     override def inc(): Unit = counter.inc()
-
-    override def value: Long = counter.get.toLong
   }
 
   private implicit def toLongGauge(gauge: io.prometheus.client.Gauge): Gauge[Long] = new Gauge[Long] {
     override def inc(): Unit = gauge.inc()
 
     override def dec(): Unit = gauge.dec()
-
-    override def value: Long = gauge.get.toLong
   }
 
   private implicit def toTimer(summary: io.prometheus.client.Summary): Timer = new Timer {

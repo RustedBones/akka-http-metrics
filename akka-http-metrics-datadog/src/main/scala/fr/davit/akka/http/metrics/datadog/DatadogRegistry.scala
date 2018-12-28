@@ -14,16 +14,12 @@ object DatadogRegistry {
   private class RichStatsDClient(client: StatsDClient) {
     def longCounter(name: String): Counter[Long] = new Counter[Long] {
       override def inc(): Unit = client.increment(name)
-
-      override def value: Long = ???
     }
 
     def longGauge(name: String): Gauge[Long] = new Gauge[Long] {
       override def inc(): Unit = client.increment(name)
 
       override def dec(): Unit = client.decrement(name)
-
-      override def value: Long = ???
     }
 
     def timer(name: String): Timer = new Timer {

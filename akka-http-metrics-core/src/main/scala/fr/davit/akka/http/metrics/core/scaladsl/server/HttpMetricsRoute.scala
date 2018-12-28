@@ -1,7 +1,7 @@
 package fr.davit.akka.http.metrics.core.scaladsl.server
 
 import akka.NotUsed
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, RoutingLog}
 import akka.http.scaladsl.settings.{ParserSettings, RoutingSettings}
 import akka.stream.Materializer
@@ -13,17 +13,6 @@ import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
 object HttpMetricsRoute {
 
-  trait Settings {
-    def definedError: HttpResponse => Boolean
-  }
-
-  object DefaultSettings extends Settings {
-    override val definedError: HttpResponse => Boolean = _.status match {
-      case _: StatusCodes.ServerError => true
-      case _                          => false
-    }
-  }
-
   implicit def apply(route: Route): HttpMetricsRoute = new HttpMetricsRoute(route)
 
 }
@@ -34,7 +23,7 @@ object HttpMetricsRoute {
   */
 class HttpMetricsRoute private (route: Route) extends HttpMetricsDirectives {
 
-  private def metricsHandler(registry: HttpMetricsRegistry, settings: HttpMetricsRoute.Settings, handler: HttpRequest => Future[HttpResponse])(
+  private def metricsHandler(registry: HttpMetricsRegistry, settings: HttpMetricsSettings, handler: HttpRequest => Future[HttpResponse])(
       request: HttpRequest)(
       implicit
       executionContext: ExecutionContext
@@ -48,7 +37,7 @@ class HttpMetricsRoute private (route: Route) extends HttpMetricsDirectives {
     response.map { r =>
       registry.duration.observe(Deadline.now - start)
       registry.active.dec()
-      if (settings.definedError(r)) registry.errors.inc()
+      if (settings.defineError(r)) registry.errors.inc()
       r.entity.contentLengthOption.foreach(registry.sentBytes.update)
       r
     }
@@ -56,7 +45,7 @@ class HttpMetricsRoute private (route: Route) extends HttpMetricsDirectives {
 
   def recordMetrics(
       registry: HttpMetricsRegistry,
-      settings: HttpMetricsRoute.Settings = HttpMetricsRoute.DefaultSettings)(
+      settings: HttpMetricsSettings = HttpMetricsSettings.default)(
       implicit
       routingSettings: RoutingSettings,
       parserSettings: ParserSettings,
