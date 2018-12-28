@@ -15,7 +15,7 @@ The following implementations are supported:
 
 | Version | Release date | Akka Http version | Scala versions      |
 | ------- | ------------ | ----------------- | ------------------- |
-| `0.2.0` |              | `10.1.6`          | `2.11.12`, `2.12.8` |
+| `0.2.0` | 2018-12-28   | `10.1.6`          | `2.11.12`, `2.12.8` |
 
 The complete list can be found in the [CHANGELOG](CHANGELOG.md) file.
 
