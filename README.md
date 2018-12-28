@@ -82,6 +82,17 @@ val route: Route = ... // your route
 Http().bindAndHandle(route.recordMetrics(registry), "localhost", 8080)
 ```
 
+By default, the errored request counter will be incremented when the served response is an `Server error (5xx)`.
+You can override this behaviour in the settings.
+
+```scala
+val settings = HttpMetricsSettings.default.withDefineError(_.status.isFailure)
+
+Http().bindAndHandle(route.recordMetrics(registry, settings), "localhost", 8080)
+```
+
+In this example, all responses with status >= 400 are considered as errors.
+
 ### Expose metrics
 
 Expose the metrics from the registry on an http endpoint with the `metrics` directive.

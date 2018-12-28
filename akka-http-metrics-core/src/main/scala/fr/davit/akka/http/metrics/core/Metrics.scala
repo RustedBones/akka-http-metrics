@@ -2,15 +2,11 @@ package fr.davit.akka.http.metrics.core
 
 import scala.concurrent.duration.FiniteDuration
 
-sealed trait ScalarMetric[T] {
-  def value: T
-}
-
-trait Counter[T] extends ScalarMetric[T] {
+trait Counter[T] {
   def inc(): Unit
 }
 
-trait Gauge[T] extends ScalarMetric[T] {
+trait Gauge[T] {
   def inc(): Unit
 
   def dec(): Unit

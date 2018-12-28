@@ -12,16 +12,12 @@ object DropwizardRegistry {
 
   private implicit def toLongCounter(counter: com.codahale.metrics.Counter): Counter[Long] = new Counter[Long] {
     override def inc(): Unit = counter.inc()
-
-    override def value: Long = counter.getCount
   }
 
   private implicit def toLongGauge(counter: com.codahale.metrics.Counter): Gauge[Long] = new Gauge[Long] {
     override def inc(): Unit = counter.inc()
 
     override def dec(): Unit = counter.dec()
-
-    override def value: Long = counter.getCount
   }
 
   private implicit def toTimer(timer: com.codahale.metrics.Timer): Timer = new Timer {

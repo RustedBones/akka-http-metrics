@@ -15,7 +15,7 @@ object TestRegistry {
 
     override def inc(): Unit = acc.increment()
 
-    override def value: Long = acc.longValue()
+    def value: Long = acc.longValue()
   }
 
   final class TestGauge extends Gauge[Long] {
@@ -25,7 +25,7 @@ object TestRegistry {
 
     override def dec(): Unit = acc.decrement()
 
-    override def value: Long = acc.longValue()
+    def value: Long = acc.longValue()
   }
 
   final class TestTimer extends Timer {
