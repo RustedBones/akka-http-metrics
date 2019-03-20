@@ -24,7 +24,7 @@ object PrometheusRegistry {
   }
 
   private implicit def toTimer(summary: io.prometheus.client.Summary): Timer = new Timer {
-    override def observe(duration: FiniteDuration): Unit = summary.observe(duration.toMillis / 100.0)
+    override def observe(duration: FiniteDuration): Unit = summary.observe(duration.toMillis / 1000.0)
   }
 
   private implicit def toLongHistogram(summary: io.prometheus.client.Summary): Histogram[Long] = new Histogram[Long] {
