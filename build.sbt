@@ -24,10 +24,12 @@ lazy val commonSettings = Seq(
   } yield Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", username, password)).toSeq
 )
 
-// akka-http-prometheus
-lazy val `akka-http-metrics` = (project in file("."))
+lazy val root = (project in file("."))
   .aggregate(`akka-http-metrics-core`, `akka-http-metrics-datadog`, `akka-http-metrics-dropwizard`, `akka-http-metrics-prometheus`)
   .settings(commonSettings: _*)
+  .settings(
+    publishArtifact := false
+  )
 
 lazy val `akka-http-metrics-core` = (project in file("akka-http-metrics-core"))
   .settings(commonSettings: _*)
