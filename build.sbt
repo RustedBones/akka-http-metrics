@@ -36,6 +36,7 @@ lazy val `akka-http-metrics-core` = (project in file("akka-http-metrics-core"))
   .settings(
     libraryDependencies ++= Seq(
       Dependencies.akkaHttp,
+      Dependencies.enumeratum,
       Dependencies.Provided.akkaStream,
       Dependencies.Test.akkaHttpTestkit,
       Dependencies.Test.akkaSlf4j,

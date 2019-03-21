@@ -7,6 +7,7 @@ import akka.http.scaladsl.settings.{ParserSettings, RoutingSettings}
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry
+import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.StatusGroupDimension
 
 import scala.concurrent.duration.Deadline
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
@@ -28,17 +29,19 @@ class HttpMetricsRoute private (route: Route) extends HttpMetricsDirectives {
       implicit
       executionContext: ExecutionContext
   ): Future[HttpResponse] = {
-    registry.requests.inc()
     registry.active.inc()
+    registry.requests.inc()
     registry.receivedBytes.update(request.entity.contentLengthOption.getOrElse(0L))
     val start = Deadline.now
     val response = handler(request)
     // no need to handle failures at this point. They will fail the stream hence the server
     response.map { r =>
-      registry.duration.observe(Deadline.now - start)
       registry.active.dec()
+      val dimensions = Seq(StatusGroupDimension(r.status))
+      registry.responses.inc(dimensions)
+      registry.duration.observe(Deadline.now - start, dimensions)
       if (settings.defineError(r)) registry.errors.inc()
-      r.entity.contentLengthOption.foreach(registry.sentBytes.update)
+      r.entity.contentLengthOption.foreach(registry.sentBytes.update(_))
       r
     }
   }

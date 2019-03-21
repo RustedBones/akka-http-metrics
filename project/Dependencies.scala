@@ -6,19 +6,21 @@ object Dependencies {
     val akka       = "2.5.21"
     val akkaHttp   = "10.1.8"
     val datadog    = "2.7"
-    val dropwizard = "4.0.5"
+    val dropwizard = "5.0.0"
+    val enumeratum = "1.5.13"
     val logback    = "1.2.3"
     val prometheus = "0.6.0"
     val scalaMock  = "4.1.0"
     val scalaTest  = "3.0.7"
   }
 
-  val akkaHttp             = "com.typesafe.akka"     %% "akka-http"              % Versions.akkaHttp
-  val datadog              = "com.datadoghq"         % "java-dogstatsd-client"   % Versions.datadog
-  val dropwizardCore       = "io.dropwizard.metrics" % "metrics-core"            % Versions.dropwizard
-  val dropwizardJson       = "io.dropwizard.metrics" % "metrics-json"            % Versions.dropwizard
-  val prometheusCommon     = "io.prometheus"         % "simpleclient_common"     % Versions.prometheus
-  val prometheusDropwizard = "io.prometheus"         % "simpleclient_dropwizard" % Versions.prometheus
+  val akkaHttp             = "com.typesafe.akka"      %% "akka-http"              % Versions.akkaHttp
+  val datadog              = "com.datadoghq"          % "java-dogstatsd-client"   % Versions.datadog
+  val dropwizardCore       = "io.dropwizard.metrics5" % "metrics-core"            % Versions.dropwizard
+  val dropwizardJson       = "io.dropwizard.metrics5" % "metrics-json"            % Versions.dropwizard
+  val enumeratum           = "com.beachape"           %% "enumeratum"             % Versions.enumeratum
+  val prometheusCommon     = "io.prometheus"          % "simpleclient_common"     % Versions.prometheus
+  val prometheusDropwizard = "io.prometheus"          % "simpleclient_dropwizard" % Versions.prometheus
 
   object Provided {
     val akkaStream = "com.typesafe.akka" %% "akka-stream" % Versions.akka % "provided"

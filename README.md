@@ -45,21 +45,17 @@ For more details, see the akka-http 10.1.x [release notes](https://doc.akka.io/d
 ### Server metrics
 
 The library enables you to easily record the following metrics from an akka-http server into a registry. The
-metric names are chosen according to the backend naming guidelines.
+following metrics are recorded:
 
-|metric             |type     |datadog                        |dropwizard                 |prometheus                         |
-|-------------------|---------|-------------------------------|---------------------------|-----------------------------------|
-| served requests   |counter  |akka.http.requests_count       |akka.http.requests         |akka_http_requests_total           |
-| errored request   |counter  |akka.http.requests_errors_count|akka.http.requests.errors  |akka_http_requests_errors_total    |
-| active requests   |gauge    |akka.http.requests_active      |akka.http.requests.active  |akka_http_requests_active          |
-| requests durations|histogram|akka.http.requests_duration    |akka.http.requests.duration|akka_http_requests_duration_seconds|
-| request sizes     |histogram|akka.http.requests_bytes       |akka.http.requests.bytes   |akka_http_requests_size_bytes      |
-| response sizes    |histogram|akka.http.responses_bytes      |akka.http.responses.bytes  |akka_http_requests_size_bytes      |
-
-
-## Quick start
-
-### Record metrics
+- requests (`counter`)
+- active requests (`gauge`)
+- request sizes (`histogram`)
+- responses (`counter`)
+    - status group [1xx/|2xx|3xx|4xx|5xx|other]
+- errors
+- durations (`histogram`)
+    - status group [1xx/|2xx|3xx|4xx|5xx|other]
+- response sizes (`histogram`)
 
 Record metrics from your akka server by importing the implicits from `HttpMetricsRoute`. Convert your route to the
 flow that will handle requests with `recordMetrics` and bind your server to the desired port.
@@ -113,6 +109,16 @@ Of course, you will also need to have the implicit marshaller for your registry 
 
 ### [Datadog]( https://docs.datadoghq.com/developers/dogstatsd/)
 
+| metric          | name                             |
+|-----------------|----------------------------------|
+| requests        | akka.http.requests_count         |
+| active requests | akka.http.requests_active        |
+| request sizes   | akka.http.requests_bytes         |
+| responses       | akka.http.responses_count        |
+| errors          | akka.http.responses_errors_count |
+| durations       | akka.http.responses_duration     |
+| response sizes  | akka.http.response_bytes         |
+
 The `DatadogRegistry` is just a facade to publish to your StatsD server. The registry itself not located in the JVM, 
 for this reason it is not possible to expose the metrics in your API.
 
@@ -138,6 +144,18 @@ See datadog's [documentation](https://github.com/dataDog/java-dogstatsd-client) 
 
 ### [Dropwizard](https://metrics.dropwizard.io/)
 
+| metric          | dropwizard                   |
+|-----------------|------------------------------|
+| requests        | akka.http.requests           |
+| active requests | akka.http.requests.active    |
+| request sizes   | akka.http.requests.bytes     |
+| responses       | akka.http.responses          |
+| errors          | akka.http.responses.errors   |
+| durations       | akka.http.responses.duration |
+| response sizes  | akka.http.responses.bytes    |
+
+**Important**: The `DropwizardRegistry` works with tags. This feature is only supported since dropwizard `v5`. 
+
 Add to your `build.sbt`:
 
 ```scala
@@ -147,7 +165,7 @@ libraryDependencies += "fr.davit" %% "akka-http-metrics-dropwizard" % <version>
 Create your registry
 
 ```scala
-import com.codahale.metrics.MetricRegistry
+import io.dropwizard.metrics5.MetricRegistry
 import fr.davit.akka.http.metrics.dropwizard.DropwizardRegistry
 
 val dropwizard: MetricRegistry = ... // your dropwizard registry
@@ -164,6 +182,16 @@ val route = (get & path("metrics"))(metrics(registry))
 ```
 
 ### [Prometheus](http://prometheus.io/)
+
+| metric          | prometheus                           |
+|-----------------|--------------------------------------|
+| requests        | akka_http_requests_total             |
+| active requests | akka_http_requests_active            |
+| request sizes   | akka_http_requests_size_bytes        |
+| responses       | akka_http_responses_total            |
+| errors          | akka_http_responses_errors_total     |
+| durations       | akka_http_responses_duration_seconds |
+| response sizes  | akka_http_responses_size_bytes       |
 
 Add to your `build.sbt`:
 
