@@ -4,7 +4,7 @@ val repo = "akka-http-metrics"
 
 lazy val commonSettings = Seq(
   organization := "fr.davit",
-  version := "0.2.1",
+  version := "0.3.0-SNAPSHOT",
   crossScalaVersions := Seq("2.11.12", "2.12.8"),
   scalaVersion := (ThisBuild / crossScalaVersions).value.last,
   Compile / compile / scalacOptions ++= Settings.scalacOptions(scalaVersion.value),
