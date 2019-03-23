@@ -1,6 +1,7 @@
 # akka-http-metrics
 
 [![Build Status](https://travis-ci.org/RustedBones/akka-http-metrics.svg?branch=master&style=flat)](https://travis-ci.org/RustedBones/akka-http-metrics)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/fr.davit/akka-http-metrics-core_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/fr.davit/akka-http-metrics-core_2.12)
 [![Software License](https://img.shields.io/badge/license-Apache%202-brightgreen.svg?style=flat)](LICENSE)
 
 Easily collect and expose metrics in your akka-http server.
