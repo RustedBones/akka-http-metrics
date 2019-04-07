@@ -1,31 +1,47 @@
 package fr.davit.akka.http.metrics.dropwizard
 
-import com.codahale.metrics.MetricRegistry
-import com.codahale.metrics.MetricRegistry.name
 import fr.davit.akka.http.metrics.core._
+import io.dropwizard.metrics5.{MetricName, MetricRegistry}
 
 import scala.concurrent.duration.FiniteDuration
 
 object DropwizardRegistry {
 
-  val AkkaPrefix = "akka.http"
+  val AkkaPrefix = Seq("akka", "http")
 
-  private implicit def toLongCounter(counter: com.codahale.metrics.Counter): Counter[Long] = new Counter[Long] {
-    override def inc(): Unit = counter.inc()
-  }
+  private implicit class RichMetricsRegistry(underlying: MetricRegistry) {
 
-  private implicit def toLongGauge(counter: com.codahale.metrics.Counter): Gauge[Long] = new Gauge[Long] {
-    override def inc(): Unit = counter.inc()
+    private def metricName(name: Seq[String], dimensions: Seq[Dimension]): MetricName = {
+      MetricName.build(AkkaPrefix ++ name: _*).tagged(dimensions.flatMap(d => Seq(d.key, d.value)): _*)
+    }
 
-    override def dec(): Unit = counter.dec()
-  }
+    def longCounter(name: String*): Counter[Long] = new Counter[Long] {
+      override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
+        underlying.counter(metricName(name, dimensions)).inc()
+      }
+    }
 
-  private implicit def toTimer(timer: com.codahale.metrics.Timer): Timer = new Timer {
-    override def observe(duration: FiniteDuration): Unit = timer.update(duration.length, duration.unit)
-  }
+    def longGauge(name: String*): Gauge[Long] = new Gauge[Long] {
+      override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
+        underlying.counter(metricName(name, dimensions)).inc()
+      }
 
-  private implicit def toLongHistogram(histogram: com.codahale.metrics.Histogram): Histogram[Long] = new Histogram[Long] {
-    override def update(value: Long): Unit = histogram.update(value)
+      override def dec(dimensions: Seq[Dimension] = Seq.empty): Unit = {
+        underlying.counter(metricName(name, dimensions)).dec()
+      }
+    }
+
+    def customTimer(name: String*): Timer = new Timer {
+      override def observe(duration: FiniteDuration, dimensions: Seq[Dimension] = Seq.empty): Unit = {
+        underlying.timer(metricName(name, dimensions)).update(duration.length, duration.unit)
+      }
+    }
+
+    def longHistogram(name: String*): Histogram[Long] = new Histogram[Long] {
+      override def update(value: Long, dimensions: Seq[Dimension] = Seq.empty): Unit = {
+        underlying.histogram(metricName(name, dimensions)).update(value)
+      }
+    }
   }
 
   def apply(registry: MetricRegistry = new MetricRegistry()): DropwizardRegistry = {
@@ -37,15 +53,17 @@ class DropwizardRegistry(val underlying: MetricRegistry) extends HttpMetricsRegi
 
   import DropwizardRegistry._
 
-  override val requests: Counter[Long] = underlying.counter(name(AkkaPrefix, "requests"))
+  override val active: Gauge[Long] = underlying.longGauge("requests", "active")
 
-  override val errors: Counter[Long] = underlying.counter(name(AkkaPrefix, "requests", "errors"))
+  override val requests: Counter[Long] = underlying.longCounter("requests")
 
-  override val active: Gauge[Long] = underlying.counter(name(AkkaPrefix,"requests", "active"))
+  override val receivedBytes: Histogram[Long] = underlying.longHistogram("requests", "bytes")
 
-  override val duration: Timer = underlying.timer(name(AkkaPrefix, "requests", "duration"))
+  override val responses: Counter[Long] = underlying.longCounter("responses")
 
-  override val receivedBytes: Histogram[Long] = underlying.histogram(name(AkkaPrefix, "requests", "bytes"))
+  override val errors: Counter[Long] = underlying.longCounter("responses", "errors")
 
-  override val sentBytes: Histogram[Long] = underlying.histogram(name(AkkaPrefix, "responses", "bytes"))
+  override val duration: Timer = underlying.customTimer("responses", "duration")
+
+  override val sentBytes: Histogram[Long] = underlying.longHistogram("responses", "bytes")
 }

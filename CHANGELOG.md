@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+Use status group dimension on responses and duration
+Change response metric names for more consistency
 
 ## 0.2.1 (2019-03-23)
 

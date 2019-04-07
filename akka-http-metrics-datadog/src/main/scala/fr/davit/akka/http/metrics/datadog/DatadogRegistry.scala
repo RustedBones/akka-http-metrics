@@ -11,27 +11,37 @@ object DatadogRegistry {
 
   def name(names: String*): String = s"$AkkaPrefix.${names.mkString("_")}"
 
-  private class RichStatsDClient(client: StatsDClient) {
+  def dimensionToTag(dimension: Dimension): String = s"${dimension.key}:${dimension.value}"
+
+  private implicit class RichStatsDClient(client: StatsDClient) {
     def longCounter(name: String): Counter[Long] = new Counter[Long] {
-      override def inc(): Unit = client.increment(name)
+      override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
+        client.increment(name, dimensions.map(dimensionToTag): _*)
+      }
     }
 
     def longGauge(name: String): Gauge[Long] = new Gauge[Long] {
-      override def inc(): Unit = client.increment(name)
+      override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
+        client.increment(name, dimensions.map(dimensionToTag): _*)
+      }
 
-      override def dec(): Unit = client.decrement(name)
+      override def dec(dimensions: Seq[Dimension] = Seq.empty): Unit = {
+        client.decrement(name, dimensions.map(dimensionToTag): _*)
+      }
     }
 
     def timer(name: String): Timer = new Timer {
-      override def observe(duration: FiniteDuration): Unit = client.distribution(name, duration.toMillis)
+      override def observe(duration: FiniteDuration, dimensions: Seq[Dimension] = Seq.empty): Unit = {
+        client.distribution(name, duration.toMillis, dimensions.map(dimensionToTag): _*)
+      }
     }
 
     def longHistogram(name: String): Histogram[Long] = new Histogram[Long] {
-      override def update(value: Long): Unit = client.distribution(name, value)
+      override def update(value: Long, dimensions: Seq[Dimension] = Seq.empty): Unit = {
+        client.distribution(name, value, dimensions.map(dimensionToTag): _*)
+      }
     }
   }
-
-  private implicit def enrichClient(client: StatsDClient): RichStatsDClient = new RichStatsDClient(client)
 
   def apply(client: StatsDClient): DatadogRegistry = new DatadogRegistry(client)
 }
@@ -44,15 +54,17 @@ class DatadogRegistry(client: StatsDClient) extends HttpMetricsRegistry {
 
   import DatadogRegistry._
 
-  override val requests: Counter[Long] = client.longCounter(name("requests", "count"))
-
-  override val errors: Counter[Long] = client.longCounter(name("requests", "errors", "count"))
-
   override val active: Gauge[Long] = client.longGauge(name("requests", "active"))
 
-  override val duration: Timer = client.timer(name("requests", "duration"))
+  override val requests: Counter[Long] = client.longCounter(name("requests", "count"))
 
   override val receivedBytes: Histogram[Long] = client.longHistogram(name("requests", "bytes"))
+
+  override val responses: Counter[Long] = client.longCounter(name("responses", "count"))
+
+  override val errors: Counter[Long] = client.longCounter(name("responses", "errors", "count"))
+
+  override val duration: Timer = client.timer(name("responses", "duration"))
 
   override val sentBytes: Histogram[Long] = client.longHistogram(name("responses", "bytes") )
 }
