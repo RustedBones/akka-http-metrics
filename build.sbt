@@ -4,7 +4,7 @@ val repo = "akka-http-metrics"
 
 lazy val commonSettings = Seq(
   organization := "fr.davit",
-  version := "0.3.0",
+  version := "0.3.1-SNAPSHOT",
   crossScalaVersions := Seq("2.11.12", "2.12.8"),
   scalaVersion := (ThisBuild / crossScalaVersions).value.last,
   Compile / compile / scalacOptions ++= Settings.scalacOptions(scalaVersion.value),
@@ -24,7 +24,7 @@ lazy val commonSettings = Seq(
   } yield Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", username, password)).toSeq
 )
 
-lazy val root = (project in file("."))
+lazy val `akka-http-metrics` = (project in file("."))
   .aggregate(`akka-http-metrics-core`, `akka-http-metrics-datadog`, `akka-http-metrics-dropwizard`, `akka-http-metrics-prometheus`)
   .settings(commonSettings: _*)
   .settings(
