@@ -63,4 +63,8 @@ final class TestRegistry extends HttpMetricsRegistry {
   override val duration = new TestTimer
 
   override val sentBytes = new TestHistogram
+
+  override val connected = new TestGauge
+
+  override val connections = new TestCounter
 }

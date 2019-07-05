@@ -59,6 +59,8 @@ class PrometheusMarshallersSpec extends FlatSpec with Matchers with ScalatestRou
         "akka_http_responses_size_bytes",
         "akka_http_responses_size_bytes_count",
         "akka_http_responses_size_bytes_sum",
+        "akka_http_connections_active",
+        "akka_http_connections_total",
         "other_metric"
       )
     }

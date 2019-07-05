@@ -99,4 +99,12 @@ class PrometheusRegistry(val underlying: CollectorRegistry) extends HttpMetricsR
     .quantile(0.99, Tolerance)
     .quantile(0.999, Tolerance)
     .register(underlying)
+
+  override val connected: Gauge[Long] = io.prometheus.client.Gauge
+    .build(name("connections", "active"), "Active TCP connections")
+    .register(underlying)
+
+  override val connections: Counter[Long] = io.prometheus.client.Counter
+    .build(name("connections", "total"), "Total TCP connections")
+    .register(underlying)
 }
