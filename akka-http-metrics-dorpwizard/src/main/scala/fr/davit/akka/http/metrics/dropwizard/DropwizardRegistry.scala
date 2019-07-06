@@ -66,4 +66,8 @@ class DropwizardRegistry(val underlying: MetricRegistry) extends HttpMetricsRegi
   override val duration: Timer = underlying.customTimer("responses", "duration")
 
   override val sentBytes: Histogram[Long] = underlying.longHistogram("responses", "bytes")
+
+  override val connected: Gauge[Long] = underlying.longGauge("connections", "active")
+
+  override val connections: Counter[Long] = underlying.longCounter("connections")
 }

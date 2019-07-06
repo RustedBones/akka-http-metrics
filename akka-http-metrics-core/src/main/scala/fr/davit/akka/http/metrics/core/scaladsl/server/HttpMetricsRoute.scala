@@ -63,7 +63,15 @@ class HttpMetricsRoute private (route: Route) extends HttpMetricsDirectives {
 
     {
       implicit val executionContext: ExecutionContextExecutor = effectiveEC
-      Flow[HttpRequest].mapAsync(1)(metricsHandler(registry, settings, Route.asyncHandler(route)))
+      Flow[HttpRequest]
+        .mapAsync(1)(metricsHandler(registry, settings, Route.asyncHandler(route)))
+        .watchTermination() { case (mat, completion) =>
+          // every connection materializes a stream
+          registry.connections.inc()
+          registry.connected.inc()
+          completion.onComplete(_ => registry.connected.dec())
+          mat
+        }
     }
   }
 }

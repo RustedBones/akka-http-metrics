@@ -66,5 +66,9 @@ class DatadogRegistry(client: StatsDClient) extends HttpMetricsRegistry {
 
   override val duration: Timer = client.timer(name("responses", "duration"))
 
-  override val sentBytes: Histogram[Long] = client.longHistogram(name("responses", "bytes") )
+  override val sentBytes: Histogram[Long] = client.longHistogram(name("responses", "bytes"))
+
+  override val connected: Gauge[Long] = client.longGauge(name("connections", "active"))
+
+  override val connections: Counter[Long] = client.longCounter(name("connections", "count"))
 }

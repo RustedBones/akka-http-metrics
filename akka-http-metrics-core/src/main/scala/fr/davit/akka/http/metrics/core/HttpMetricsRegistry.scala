@@ -62,4 +62,11 @@ trait HttpMetricsRegistry {
   def duration: Timer
 
   def sentBytes: Histogram[Long]
+
+  //--------------------------------------------------------------------------------------------------------------------
+  // Connections
+  //--------------------------------------------------------------------------------------------------------------------
+  def connected: Gauge[Long]
+
+  def connections: Counter[Long]
 }
