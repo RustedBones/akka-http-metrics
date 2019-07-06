@@ -5,8 +5,8 @@ val repo = "akka-http-metrics"
 lazy val commonSettings = Seq(
   organization := "fr.davit",
   version := "0.4.0-SNAPSHOT",
-  crossScalaVersions := Seq("2.11.12", "2.12.8"),
-  scalaVersion := (ThisBuild / crossScalaVersions).value.last,
+  crossScalaVersions := Seq("2.11.12", "2.12.8", "2.13.0"),
+  scalaVersion := crossScalaVersions.value.last,
   Compile / compile / scalacOptions ++= Settings.scalacOptions(scalaVersion.value),
 
   homepage := Some(url(s"https://github.com/$username/$repo")),
