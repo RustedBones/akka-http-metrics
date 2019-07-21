@@ -26,7 +26,6 @@ object HttpMetricsRoute {
   */
 class HttpMetricsRoute private (route: Route) extends HttpMetricsDirectives {
 
-
   private def buildPathLabel(path: Uri.Path, segmentLabels: List[SegmentLabelHeader]): PathDimension = {
     import fr.davit.akka.http.metrics.core.scaladsl.model.Extensions._
     val builder = new StringBuilder()
@@ -62,8 +61,8 @@ class HttpMetricsRoute private (route: Route) extends HttpMetricsDirectives {
 
       // compute dimensions
       val statusGroupDim = if (settings.includeStatusDimension) Some(StatusGroupDimension(r.status)) else None
-      val pathDim = if (settings.includePathDimension) Some(buildPathLabel(request.uri.path, segmentLabels)) else None
-      val dimensions = statusGroupDim.toSeq ++ pathDim
+      val pathDim        = if (settings.includePathDimension) Some(buildPathLabel(request.uri.path, segmentLabels)) else None
+      val dimensions     = statusGroupDim.toSeq ++ pathDim
 
       registry.active.dec()
       registry.responses.inc(dimensions)
@@ -90,7 +89,7 @@ class HttpMetricsRoute private (route: Route) extends HttpMetricsDirectives {
     {
       implicit val executionContext: ExecutionContextExecutor = effectiveEC
       Flow[HttpRequest]
-        .mapAsync(1)(metricsHandler(registry, settings, Route.asyncHandler(route)))
+        .mapAsync(1)(recordMetricsAsync(registry, settings))
         .watchTermination() {
           case (mat, completion) =>
             // every connection materializes a stream
@@ -100,5 +99,17 @@ class HttpMetricsRoute private (route: Route) extends HttpMetricsDirectives {
             mat
         }
     }
+  }
+
+  def recordMetricsAsync(registry: HttpMetricsRegistry, settings: HttpMetricsSettings = HttpMetricsSettings.default)(
+      implicit
+      routingSettings: RoutingSettings,
+      parserSettings: ParserSettings,
+      materializer: Materializer,
+      routingLog: RoutingLog,
+      executionContext: ExecutionContextExecutor = null,
+      rejectionHandler: RejectionHandler = RejectionHandler.default,
+      exceptionHandler: ExceptionHandler = null): HttpRequest => Future[HttpResponse] = {
+    metricsHandler(registry, settings, Route.asyncHandler(route))
   }
 }

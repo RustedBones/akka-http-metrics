@@ -93,6 +93,13 @@ Http().bindAndHandle(route.recordMetrics(registry, settings), "localhost", 8080)
 
 In this example, all responses with status >= 400 are considered as errors.
 
+For HTTP2 you must convert the `Route` to the handler function with `recordMetricsAsync`. In this case the connection
+metrics won't be available.
+
+```scala
+Http2().bindAndHandleAsync(route.recordMetricsAsync(registry), "localhost", 8080)
+```
+
 #### Labels
 
 By default metrics labels are disabled. You can enable them in the settings.
