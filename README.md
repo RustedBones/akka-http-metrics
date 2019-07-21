@@ -48,17 +48,15 @@ For more details, see the akka-http 10.1.x [release notes](https://doc.akka.io/d
 ### Server metrics
 
 The library enables you to easily record the following metrics from an akka-http server into a registry. The
-following metrics are recorded:
+following labeled metrics are recorded:
 
 - requests (`counter`)
 - active requests (`gauge`)
 - request sizes (`histogram`)
-- responses (`counter`)
-    - status group [1xx/|2xx|3xx|4xx|5xx|other]
-- errors
-- durations (`histogram`)
-    - status group [1xx/|2xx|3xx|4xx|5xx|other]
-- response sizes (`histogram`)
+- responses (`counter`) [status group | path]
+- errors [status group | path]
+- durations (`histogram`) [status group | path]
+- response sizes (`histogram`) [status group | path]
 - connections (`counter`)
 - active connections (`gauge`)
 
@@ -94,6 +92,38 @@ Http().bindAndHandle(route.recordMetrics(registry, settings), "localhost", 8080)
 ```
 
 In this example, all responses with status >= 400 are considered as errors.
+
+#### Labels
+
+By default metrics labels are disabled. You can enable them in the settings.
+
+```scala
+val settings = HttpMetricsSettings.default
+  .withIncludeStatusDimension(true)
+  .withIncludePathDimension(true)
+```
+
+##### Status group
+
+The status group labels creates the following dimensions on the metrics: `1xx|2xx|3xx|4xx|5xx|other`
+
+##### Path
+
+The path labels creates uses the path of the request as dimension on the metrics.
+
+When enabling this dimension, you must be careful about cardinality: see [here](https://prometheus.io/docs/practices/naming/#labels).
+If your path is contains unbounded dynamic segments, you must use the labeled path directives defined in `HttpMetricsDirectives`:
+
+```scala
+import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives._
+
+val route = pathLabeled("user" / JavaUUID, "user/:user-id") { userId =>
+...
+}
+```
+
+This will replace the dynamic segment with the provided label.
+
 
 ### Expose metrics
 
