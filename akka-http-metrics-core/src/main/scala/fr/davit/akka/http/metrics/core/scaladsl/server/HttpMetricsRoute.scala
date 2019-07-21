@@ -68,8 +68,8 @@ class HttpMetricsRoute private (route: Route) extends HttpMetricsDirectives {
       registry.active.dec()
       registry.responses.inc(dimensions)
       registry.duration.observe(Deadline.now - start, dimensions)
-      if (settings.defineError(r)) registry.errors.inc()
-      r.entity.contentLengthOption.foreach(registry.sentBytes.update(_))
+      if (settings.defineError(r)) registry.errors.inc(dimensions)
+      r.entity.contentLengthOption.foreach(registry.sentBytes.update(_, dimensions))
       r.withHeaders(headers) // clean the custom headers
     }
   }
