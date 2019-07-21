@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Add path label support
 
 ## 0.4.0 (2019-047-06)
 
