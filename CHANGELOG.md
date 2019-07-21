@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Add async handler api
 
 ## 0.4.0 (2019-047-06)
 

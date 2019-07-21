@@ -24,15 +24,17 @@ object HttpMetricsRoute {
   */
 class HttpMetricsRoute private (route: Route) extends HttpMetricsDirectives {
 
-  private def metricsHandler(registry: HttpMetricsRegistry, settings: HttpMetricsSettings, handler: HttpRequest => Future[HttpResponse])(
-      request: HttpRequest)(
+  private def metricsHandler(
+      registry: HttpMetricsRegistry,
+      settings: HttpMetricsSettings,
+      handler: HttpRequest => Future[HttpResponse])(request: HttpRequest)(
       implicit
       executionContext: ExecutionContext
   ): Future[HttpResponse] = {
     registry.active.inc()
     registry.requests.inc()
     registry.receivedBytes.update(request.entity.contentLengthOption.getOrElse(0L))
-    val start = Deadline.now
+    val start    = Deadline.now
     val response = handler(request)
     // no need to handle failures at this point. They will fail the stream hence the server
     response.map { r =>
@@ -46,9 +48,7 @@ class HttpMetricsRoute private (route: Route) extends HttpMetricsDirectives {
     }
   }
 
-  def recordMetrics(
-      registry: HttpMetricsRegistry,
-      settings: HttpMetricsSettings = HttpMetricsSettings.default)(
+  def recordMetrics(registry: HttpMetricsRegistry, settings: HttpMetricsSettings = HttpMetricsSettings.default)(
       implicit
       routingSettings: RoutingSettings,
       parserSettings: ParserSettings,
@@ -64,14 +64,27 @@ class HttpMetricsRoute private (route: Route) extends HttpMetricsDirectives {
     {
       implicit val executionContext: ExecutionContextExecutor = effectiveEC
       Flow[HttpRequest]
-        .mapAsync(1)(metricsHandler(registry, settings, Route.asyncHandler(route)))
-        .watchTermination() { case (mat, completion) =>
-          // every connection materializes a stream
-          registry.connections.inc()
-          registry.connected.inc()
-          completion.onComplete(_ => registry.connected.dec())
-          mat
+        .mapAsync(1)(recordMetricsAsync(registry, settings))
+        .watchTermination() {
+          case (mat, completion) =>
+            // every connection materializes a stream
+            registry.connections.inc()
+            registry.connected.inc()
+            completion.onComplete(_ => registry.connected.dec())
+            mat
         }
     }
+  }
+
+  def recordMetricsAsync(registry: HttpMetricsRegistry, settings: HttpMetricsSettings = HttpMetricsSettings.default)(
+      implicit
+      routingSettings: RoutingSettings,
+      parserSettings: ParserSettings,
+      materializer: Materializer,
+      routingLog: RoutingLog,
+      executionContext: ExecutionContextExecutor = null,
+      rejectionHandler: RejectionHandler = RejectionHandler.default,
+      exceptionHandler: ExceptionHandler = null): HttpRequest => Future[HttpResponse] = {
+    metricsHandler(registry, settings, Route.asyncHandler(route))
   }
 }
