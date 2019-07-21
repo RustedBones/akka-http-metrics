@@ -5,43 +5,64 @@ import java.util.concurrent.atomic.LongAdder
 import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
 import akka.http.scaladsl.model.HttpEntity
 
+import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
 
 object TestRegistry {
   implicit val marshaller: ToEntityMarshaller[TestRegistry] = Marshaller.opaque(_ => HttpEntity.Empty)
 
-  final class TestCounter extends Counter[Long] {
-    private val acc = new LongAdder()
+  private def keyer(dimensions: Seq[Dimension]): String = dimensions.mkString(":")
 
-    override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = acc.increment()
+  class TestCounter extends Counter[Long] {
+    protected val acc = mutable.Map[String, Long]()
 
-    def value: Long = acc.longValue()
+    override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
+      val key = keyer(dimensions)
+      acc.get(key) match {
+        case Some(v) => acc += (key -> (v + 1))
+        case None => acc += (key -> 1)
+      }
+    }
+
+    def value(dimensions: Seq[Dimension] = Seq.empty): Long = acc.getOrElse(keyer(dimensions), 0)
   }
 
-  final class TestGauge extends Gauge[Long] {
-    private val acc = new LongAdder()
-
-    override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = acc.increment()
-
-    override def dec(dimensions: Seq[Dimension] = Seq.empty): Unit = acc.decrement()
-
-    def value: Long = acc.longValue()
+  class TestGauge extends TestCounter with Gauge[Long] {
+    override def dec(dimensions: Seq[Dimension] = Seq.empty): Unit = {
+      val key = keyer(dimensions)
+      acc.get(key) match {
+        case Some(v) => acc += (key -> (v - 1))
+        case None => acc += (key -> -1)
+      }
+    }
   }
 
-  final class TestTimer extends Timer {
-    private val builder = Seq.newBuilder[FiniteDuration]
+  class TestTimer extends Timer {
+    protected val acc = mutable.Map[String, List[FiniteDuration]]()
 
-    override def observe(duration: FiniteDuration, dimensions: Seq[Dimension] = Seq.empty): Unit = builder += duration
+    override def observe(duration: FiniteDuration, dimensions: Seq[Dimension] = Seq.empty): Unit = {
+      val key = keyer(dimensions)
+      acc.get(key) match {
+        case Some(vs) => acc += (key -> (duration :: vs))
+        case None => acc += (key -> (duration :: Nil))
+      }
+    }
 
-    def values: Seq[FiniteDuration] = builder.result()
+    def values(dimensions: Seq[Dimension] = Seq.empty): List[FiniteDuration] = acc.getOrElse(keyer(dimensions), Nil)
   }
 
   final class TestHistogram extends Histogram[Long] {
-    private val builder = Seq.newBuilder[Long]
+    protected val acc = mutable.Map[String, List[Long]]()
 
-    override def update(value: Long, dimensions: Seq[Dimension] = Seq.empty): Unit = builder += value
+    override def update(value: Long, dimensions: Seq[Dimension] = Seq.empty): Unit = {
+      val key = keyer(dimensions)
+      acc.get(key) match {
+        case Some(vs) => acc += (key -> (value :: vs))
+        case None => acc += (key -> (value :: Nil))
+      }
+    }
 
-    def values: Seq[Long] = builder.result()
+    def values(dimensions: Seq[Dimension] = Seq.empty): List[Long] = acc.getOrElse(keyer(dimensions), Nil)
   }
 
 }

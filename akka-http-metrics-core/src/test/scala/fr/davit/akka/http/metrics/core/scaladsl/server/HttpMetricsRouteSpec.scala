@@ -8,6 +8,8 @@ import akka.stream.scaladsl.Source
 import akka.stream.scaladsl.{Keep, Sink}
 import akka.stream.testkit.scaladsl.{TestSink, TestSource}
 import akka.testkit.TestKit
+import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{PathDimension, StatusGroupDimension}
+import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.StatusGroupDimension.StatusGroup
 import fr.davit.akka.http.metrics.core.TestRegistry
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsRoute._
 import org.scalamock.scalatest.MockFactory
@@ -32,14 +34,14 @@ class HttpMetricsRouteSpec
   implicit val _            = system
   implicit val materializer = ActorMaterializer()
 
-  abstract class Fixture[T](testField: TestRegistry => T) {
+  abstract class Fixture[T](testField: TestRegistry => T, settings: HttpMetricsSettings = HttpMetricsSettings.default) {
     implicit val registry = new TestRegistry
 
     val server = mockFunction[RequestContext, Future[RouteResult]]
 
     val (source, sink) = TestSource
       .probe[HttpRequest]
-      .via(server.recordMetrics(registry))
+      .via(server.recordMetrics(registry, settings))
       .toMat(TestSink.probe[HttpResponse])(Keep.both)
       .run()
 
@@ -56,19 +58,19 @@ class HttpMetricsRouteSpec
     server.expects(*).onCall(complete(StatusCodes.OK))
     source.sendNext(HttpRequest())
     sink.expectNext()
-    actual.value shouldBe 1
+    actual.value() shouldBe 1
 
     sink.request(1)
     server.expects(*).onCall(reject)
     source.sendNext(HttpRequest())
     sink.expectNext()
-    actual.value shouldBe 2
+    actual.value() shouldBe 2
 
     sink.request(1)
     server.expects(*).onCall(failWith(new Exception("BOOM!")))
     source.sendNext(HttpRequest())
     sink.expectNext()
-    actual.value shouldBe 3
+    actual.value() shouldBe 3
   }
 
   it should "compute the number of errors" in new Fixture(_.errors) {
@@ -76,25 +78,25 @@ class HttpMetricsRouteSpec
     server.expects(*).onCall(complete(StatusCodes.OK))
     source.sendNext(HttpRequest())
     sink.expectNext()
-    actual.value shouldBe 0
+    actual.value() shouldBe 0
 
     sink.request(1)
     server.expects(*).onCall(reject)
     source.sendNext(HttpRequest())
     sink.expectNext()
-    actual.value shouldBe 0
+    actual.value() shouldBe 0
 
     sink.request(1)
     server.expects(*).onCall(complete(StatusCodes.InternalServerError))
     source.sendNext(HttpRequest())
     sink.expectNext()
-    actual.value shouldBe 1
+    actual.value() shouldBe 1
 
     sink.request(1)
     server.expects(*).onCall(failWith(new Exception("BOOM!")))
     source.sendNext(HttpRequest())
     sink.expectNext()
-    actual.value shouldBe 2
+    actual.value() shouldBe 2
   }
 
   it should "compute the number of active requests" in new Fixture(_.active) {
@@ -105,11 +107,11 @@ class HttpMetricsRouteSpec
     source.sendNext(HttpRequest())
 
     // wait for the request to be sent to the handler
-    eventually(actual.value shouldBe 1)
+    eventually(actual.value() shouldBe 1)
 
     promise.success(StatusCodes.OK)
     sink.expectNext()
-    actual.value shouldBe 0
+    actual.value() shouldBe 0
   }
 
   it should "compute the requests time" in new Fixture(_.duration) {
@@ -121,7 +123,7 @@ class HttpMetricsRouteSpec
     source.sendNext(HttpRequest())
     system.scheduler.scheduleOnce(duration)(promise.success(StatusCodes.OK))(system.dispatcher)
     sink.expectNext(duration * 2)
-    actual.values.head should be > duration
+    actual.values().head should be > duration
   }
 
   it should "compute the requests size" in new Fixture(_.receivedBytes) {
@@ -131,7 +133,7 @@ class HttpMetricsRouteSpec
     server.expects(*).onCall(complete(StatusCodes.OK))
     source.sendNext(HttpRequest(entity = HttpEntity(data)))
     sink.expectNext()
-    actual.values.head shouldBe data.getBytes.length
+    actual.values().head shouldBe data.getBytes.length
   }
 
   it should "compute the response size" in new Fixture(_.sentBytes) {
@@ -141,7 +143,7 @@ class HttpMetricsRouteSpec
     server.expects(*).onCall(complete(StatusCodes.OK -> data))
     source.sendNext(HttpRequest())
     sink.expectNext()
-    actual.values.head shouldBe data.getBytes.length
+    actual.values().head shouldBe data.getBytes.length
   }
 
   it should "compute the number of active connections" in {
@@ -150,11 +152,11 @@ class HttpMetricsRouteSpec
 
     val stream = Source.maybe.via(server.recordMetrics(registry)).toMat(Sink.ignore)(Keep.both)
     val conns  = (0 until 3).map(_ => stream.run())
-    registry.connected.value shouldBe 3
+    registry.connected.value() shouldBe 3
 
     conns.map { case (c, _) => c.success(None) }
     Future.sequence(conns.map { case (_, completion) => completion }).futureValue
-    registry.connected.value shouldBe 0
+    registry.connected.value() shouldBe 0
   }
 
   it should "compute the number of connections" in  {
@@ -164,6 +166,46 @@ class HttpMetricsRouteSpec
     val stream = Source((0 until 5).map(_ => HttpRequest())).via(server.recordMetrics(registry)).toMat(Sink.ignore)(Keep.right)
     val completions = (0 until 3).map(_ => stream.run())
     Future.sequence(completions).futureValue
-    registry.connections.value shouldBe 3
+    registry.connections.value() shouldBe 3
+  }
+
+  it should "add status code dimension when enabled" in new Fixture(_.responses, HttpMetricsSettings.default.withIncludeStatusDimension(true)) {
+    sink.request(1)
+    server.expects(*).onCall(complete(StatusCodes.OK))
+    source.sendNext(HttpRequest())
+    sink.expectNext()
+    actual.value(Seq(StatusGroupDimension(StatusGroup.`2xx`))) shouldBe 1
+    actual.value(Seq(StatusGroupDimension(StatusGroup.`3xx`))) shouldBe 0
+    actual.value(Seq(StatusGroupDimension(StatusGroup.`4xx`))) shouldBe 0
+    actual.value(Seq(StatusGroupDimension(StatusGroup.`5xx`))) shouldBe 0
+  }
+
+  it should "add path dimension when enabled" in new Fixture(_.responses, HttpMetricsSettings.default.withIncludePathDimension(true)) {
+    val path = "/this/is/the/path"
+    sink.request(1)
+    server.expects(*).onCall(complete(StatusCodes.OK))
+    source.sendNext(HttpRequest().withUri(path))
+    sink.expectNext()
+    actual.value(Seq(PathDimension(path))) shouldBe 1
+    actual.value(Seq(PathDimension("/other/path"))) shouldBe 0
+  }
+
+  it should "correctly replace segment labels in path" in new Fixture(_.responses, HttpMetricsSettings.default.withIncludePathDimension(true)) {
+    val path = "/this/is/the/path"
+    sink.request(1)
+    server.expects(*).onCall(respondWithHeader(SegmentLabelHeader(2, 6, "/label"))(complete(StatusCodes.OK)))
+    source.sendNext(HttpRequest().withUri(path))
+    sink.expectNext()
+    actual.value(Seq(PathDimension("/this/label/path"))) shouldBe 1
+    actual.value(Seq(PathDimension("/other/path"))) shouldBe 0
+  }
+
+
+  it should "not leak custom headers" in new Fixture(_.sentBytes) {
+    sink.request(1)
+    server.expects(*).onCall(respondWithHeader(SegmentLabelHeader(0, 1, "/label"))(complete(StatusCodes.OK)))
+    source.sendNext(HttpRequest())
+    val response = sink.expectNext()
+    response.header[SegmentLabelHeader] shouldBe empty
   }
 }

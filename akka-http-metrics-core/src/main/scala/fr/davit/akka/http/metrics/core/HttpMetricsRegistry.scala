@@ -1,12 +1,16 @@
 package fr.davit.akka.http.metrics.core
 
 import akka.http.scaladsl.model.{StatusCode, StatusCodes}
-import enumeratum.{Enum, EnumEntry}
 import enumeratum.EnumEntry.Lowercase
+import enumeratum.{Enum, EnumEntry}
 
 import scala.collection.immutable
 
 object HttpMetricsRegistry {
+
+  final case class PathDimension(value: String) extends Dimension {
+    override def key = "path"
+  }
 
   object StatusGroupDimension {
     sealed trait StatusGroup extends EnumEntry with Lowercase
@@ -35,7 +39,7 @@ object HttpMetricsRegistry {
   }
 
   final case class StatusGroupDimension(group: StatusGroupDimension.StatusGroup) extends Dimension {
-    override val key: String   = "status"
+    override def key: String   = "status"
     override def value: String = group.toString.toLowerCase
   }
 
