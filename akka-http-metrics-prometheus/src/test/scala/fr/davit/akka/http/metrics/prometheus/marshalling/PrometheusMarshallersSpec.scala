@@ -4,6 +4,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.StatusGroupDimension
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives.metrics
+import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsSettings
 import fr.davit.akka.http.metrics.prometheus.PrometheusRegistry
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
@@ -12,7 +13,7 @@ import scala.concurrent.duration._
 class PrometheusMarshallersSpec extends FlatSpec with Matchers with ScalatestRouteTest with BeforeAndAfterAll {
 
   trait Fixture extends PrometheusMarshallers {
-    val registry = PrometheusRegistry()
+    val registry = PrometheusRegistry(HttpMetricsSettings.default.withIncludeStatusDimension(true))
 
     io.prometheus.client.Counter
       .build("other_metric", "An other metric")
@@ -32,9 +33,9 @@ class PrometheusMarshallersSpec extends FlatSpec with Matchers with ScalatestRou
     registry.receivedBytes.update(10)
     registry.active.inc()
     registry.responses.inc(dimensions)
-    registry.errors.inc()
+    registry.errors.inc(dimensions)
     registry.duration.observe(1.second, dimensions)
-    registry.sentBytes.update(10)
+    registry.sentBytes.update(10, dimensions)
 
     Get() ~> metrics(registry) ~> check {
       response.entity.contentType shouldBe PrometheusMarshallers.PrometheusContentType

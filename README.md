@@ -253,9 +253,10 @@ Create your registry
 import io.prometheus.client.CollectorRegistry
 import fr.davit.akka.http.metrics.prometheus.PrometheusRegistry
 
+val settings: HttpMetricsSettings = ... // your http metrics settings
 val prometheus: CollectorRegistry = ... // your prometheus registry
 
-val registry = PrometheusRegistry(prometheus) // or PrometheusRegistry() to use the default registry
+val registry = PrometheusRegistry(settings, prometheus) // or PrometheusRegistry(settings) to use the default registry
 ```
 
 Expose the metrics

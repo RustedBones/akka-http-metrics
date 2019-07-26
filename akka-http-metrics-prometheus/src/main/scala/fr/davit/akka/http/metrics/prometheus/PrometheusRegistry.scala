@@ -1,6 +1,7 @@
 package fr.davit.akka.http.metrics.prometheus
 
 import fr.davit.akka.http.metrics.core._
+import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsSettings
 import io.prometheus.client.CollectorRegistry
 
 import scala.concurrent.duration.FiniteDuration
@@ -41,8 +42,8 @@ object PrometheusRegistry {
     }
   }
 
-  def apply(underlying: CollectorRegistry = CollectorRegistry.defaultRegistry): PrometheusRegistry = {
-    new PrometheusRegistry(underlying)
+  def apply(settings: HttpMetricsSettings, underlying: CollectorRegistry = CollectorRegistry.defaultRegistry): PrometheusRegistry = {
+    new PrometheusRegistry(settings, underlying)
   }
 }
 
@@ -51,9 +52,16 @@ object PrometheusRegistry {
   * Prometheus registry
   * For metrics naming see [https://prometheus.io/docs/practices/naming/]
   */
-class PrometheusRegistry(val underlying: CollectorRegistry) extends HttpMetricsRegistry {
+class PrometheusRegistry(settings: HttpMetricsSettings, val underlying: CollectorRegistry) extends HttpMetricsRegistry {
 
   import PrometheusRegistry._
+
+  private val labels: Seq[String] = {
+    val statusLabel = if (settings.includeStatusDimension) Some("status") else None
+    val pathLabel = if (settings.includePathDimension) Some("path") else None
+
+    statusLabel.toSeq ++ pathLabel
+  }
 
   override val active: Gauge[Long] = io.prometheus.client.Gauge
     .build(name("requests", "active"), "Active HTTP requests")
@@ -74,16 +82,17 @@ class PrometheusRegistry(val underlying: CollectorRegistry) extends HttpMetricsR
 
   override val responses: Counter[Long] = io.prometheus.client.Counter
     .build(name("responses", "total"), "HTTP responses")
-    .labelNames("status")
+    .labelNames(labels: _*)
     .register(underlying)
 
   override val errors: Counter[Long] = io.prometheus.client.Counter
     .build(name("responses", "errors", "total"), "Total HTTP errors")
+    .labelNames(labels: _*)
     .register(underlying)
 
   override val duration: Timer = io.prometheus.client.Summary
     .build(name("responses", "duration", "seconds"), "HTTP response duration")
-    .labelNames("status")
+    .labelNames(labels: _*)
     .quantile(0.75, Tolerance)
     .quantile(0.95, Tolerance)
     .quantile(0.98, Tolerance)
@@ -93,6 +102,7 @@ class PrometheusRegistry(val underlying: CollectorRegistry) extends HttpMetricsR
 
   override val sentBytes: Histogram[Long] = io.prometheus.client.Summary
     .build(name("responses", "size", "bytes"), "HTTP response size")
+    .labelNames(labels: _*)
     .quantile(0.75, Tolerance)
     .quantile(0.95, Tolerance)
     .quantile(0.98, Tolerance)
