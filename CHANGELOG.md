@@ -1,10 +1,14 @@
 # Changelog
 
 ## Unreleased
+
+## 0.5.0 (2019-07-27)
+
+- Update to akka-http 10.1.9
 - Add path label support
 - Add async handler api
 
-## 0.4.0 (2019-047-06)
+## 0.4.0 (2019-07-06)
 
 - Add scala 2.13 support
 - Add TCP connection metrics
