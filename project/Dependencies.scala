@@ -4,7 +4,7 @@ object Dependencies {
 
   object Versions {
     val akka       = "2.5.23"
-    val akkaHttp   = "10.1.8"
+    val akkaHttp   = "10.1.9"
     val datadog    = "2.8"
     val dropwizard = "5.0.0"
     val enumeratum = "1.5.13"
