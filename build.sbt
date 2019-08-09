@@ -81,6 +81,18 @@ lazy val `akka-http-metrics-dropwizard` = (project in file("akka-http-metrics-do
     )
   )
 
+lazy val `akka-http-metrics-graphite` = (project in file("akka-http-metrics-graphite"))
+  .dependsOn(`akka-http-metrics-core`)
+  .settings(commonSettings: _*)
+  .settings(
+    libraryDependencies ++= Seq(
+      Dependencies.Test.akkaHttpTestkit,
+      Dependencies.Test.akkaSlf4j,
+      Dependencies.Test.logback,
+      Dependencies.Test.scalaTest
+    ),
+  )
+
 lazy val `akka-http-metrics-prometheus` = (project in file("akka-http-metrics-prometheus"))
   .configs(IntegrationTest)
   .dependsOn(`akka-http-metrics-core`)
