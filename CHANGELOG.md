@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Use static path dimension to for unhandled requests 
+
 ## 0.5.0 (2019-07-27)
 
 - Update to akka-http 10.1.9

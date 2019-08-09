@@ -6,6 +6,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.PathMatchers.IntNumber
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import fr.davit.akka.http.metrics.core.TestRegistry
+import fr.davit.akka.http.metrics.core.scaladsl.model.SegmentLabelHeader
 import org.scalatest.{FlatSpec, Matchers}
 
 class HttpMetricsDirectivesSpec extends FlatSpec with Matchers with ScalatestRouteTest {
