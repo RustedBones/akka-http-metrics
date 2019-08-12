@@ -11,6 +11,7 @@ import akka.testkit.TestKit
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{PathDimension, StatusGroupDimension}
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.StatusGroupDimension.StatusGroup
 import fr.davit.akka.http.metrics.core.TestRegistry
+import fr.davit.akka.http.metrics.core.scaladsl.model.SegmentLabelHeader
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsRoute._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
@@ -200,6 +201,15 @@ class HttpMetricsRouteSpec
     actual.value(Seq(PathDimension("/other/path"))) shouldBe 0
   }
 
+  it should "add unhandled path dimension when request is rejected" in new Fixture(_.responses, HttpMetricsSettings.default.withIncludePathDimension(true)) {
+    val path = "/this/is/the/path"
+    sink.request(1)
+    server.expects(*).onCall(reject)
+    source.sendNext(HttpRequest().withUri(path))
+    val response = sink.expectNext()
+    actual.value(Seq(PathDimension("unhandled"))) shouldBe 1
+    actual.value(Seq(PathDimension(path))) shouldBe 0
+  }
 
   it should "not leak custom headers" in new Fixture(_.sentBytes) {
     sink.request(1)

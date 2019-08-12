@@ -132,6 +132,8 @@ val route = pathLabeled("user" / JavaUUID, "user/:user-id") { userId =>
 
 This will replace the dynamic segment with the provided label.
 
+Moreover, all unhandled requests will have path dimension set to `unhandled`.
+
 
 ### Expose metrics
 

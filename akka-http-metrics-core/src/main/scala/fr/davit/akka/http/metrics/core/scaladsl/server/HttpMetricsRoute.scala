@@ -1,18 +1,17 @@
 package fr.davit.akka.http.metrics.core.scaladsl.server
 
 import akka.NotUsed
-import akka.http.scaladsl.model.{HttpHeader, HttpRequest, HttpResponse}
+import akka.http.scaladsl.model.{HttpHeader, HttpRequest, HttpResponse, Uri}
 import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, RoutingLog}
 import akka.http.scaladsl.settings.{ParserSettings, RoutingSettings}
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{PathDimension, StatusGroupDimension}
+import fr.davit.akka.http.metrics.core.scaladsl.model.{PathLabelHeader, SegmentLabelHeader}
 
 import scala.concurrent.duration.Deadline
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
-
-import akka.http.scaladsl.model.Uri
 
 object HttpMetricsRoute {
 
@@ -26,17 +25,22 @@ object HttpMetricsRoute {
   */
 class HttpMetricsRoute private (route: Route) extends HttpMetricsDirectives {
 
-  private def buildPathLabel(path: Uri.Path, segmentLabels: List[SegmentLabelHeader]): PathDimension = {
+  private def buildPathLabel(path: Uri.Path, pathLabel: Option[PathLabelHeader], segmentLabels: List[SegmentLabelHeader]): PathDimension = {
     import fr.davit.akka.http.metrics.core.scaladsl.model.Extensions._
-    val builder = new StringBuilder()
-    val (rest, _) = segmentLabels.foldLeft((path, 0)) {
-      case ((r, idx), l) =>
-        builder.append(r.take(l.from - idx))
-        builder.append(l.label)
-        (r.drop(l.to - idx), l.to)
+    pathLabel match {
+      case Some(label) =>
+        PathDimension(label.value)
+      case None =>
+        val builder = new StringBuilder()
+        val (rest, _) = segmentLabels.foldLeft((path, 0)) {
+          case ((r, idx), l) =>
+            builder.append(r.take(l.from - idx))
+            builder.append(l.label)
+            (r.drop(l.to - idx), l.to)
+        }
+        builder.append(rest)
+        PathDimension(builder.result())
     }
-    builder.append(rest)
-    PathDimension(builder.result())
   }
 
   private def metricsHandler(
@@ -54,14 +58,16 @@ class HttpMetricsRoute private (route: Route) extends HttpMetricsDirectives {
     // no need to handle failures at this point. They will fail the stream hence the server
     response.map { r =>
       // extract custom segment headers
-      val (segmentLabels, headers) = r.headers.foldLeft((List.empty[SegmentLabelHeader], List.empty[HttpHeader])) {
-        case ((sls, hs), h: SegmentLabelHeader) => (h :: sls, hs)
-        case ((sls, hs), h: HttpHeader)         => (sls, h :: hs)
+      val (pathLabel, segmentLabels, headers) = r.headers
+        .foldLeft[(Option[PathLabelHeader], List[SegmentLabelHeader], List[HttpHeader])]((None, Nil, Nil)) {
+        case ((_, sls, hs), h: PathLabelHeader) => (Some(h), sls, hs)
+        case ((pl, sls, hs), h: SegmentLabelHeader) => (pl, h :: sls, hs)
+        case ((pl, sls, hs), h: HttpHeader)         => (pl, sls, h :: hs)
       }
 
       // compute dimensions
       val statusGroupDim = if (settings.includeStatusDimension) Some(StatusGroupDimension(r.status)) else None
-      val pathDim        = if (settings.includePathDimension) Some(buildPathLabel(request.uri.path, segmentLabels)) else None
+      val pathDim        = if (settings.includePathDimension) Some(buildPathLabel(request.uri.path, pathLabel, segmentLabels)) else None
       val dimensions     = statusGroupDim.toSeq ++ pathDim
 
       registry.active.dec()
@@ -83,11 +89,13 @@ class HttpMetricsRoute private (route: Route) extends HttpMetricsDirectives {
       rejectionHandler: RejectionHandler = RejectionHandler.default,
       exceptionHandler: ExceptionHandler = null): Flow[HttpRequest, HttpResponse, NotUsed] = {
 
-    // override the execution context passed as parameter
+    // override the execution context passed as parameter and the rejection handler
     val effectiveEC = if (executionContext ne null) executionContext else materializer.executionContext
+    val effectiveRejectionHandler = rejectionHandler.mapRejectionResponse(_.addHeader(new PathLabelHeader("unhandled")))
 
     {
       implicit val executionContext: ExecutionContextExecutor = effectiveEC
+      implicit val rejectionHandler: RejectionHandler         = effectiveRejectionHandler
       Flow[HttpRequest]
         .mapAsync(1)(recordMetricsAsync(registry, settings))
         .watchTermination() {
