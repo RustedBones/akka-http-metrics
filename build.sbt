@@ -2,7 +2,7 @@
 val username = "RustedBones"
 val repo = "akka-http-metrics"
 
-lazy val commonSettings = Seq(
+lazy val commonSettings = Defaults.itSettings ++ Seq(
   organization := "fr.davit",
   version := "0.5.1-SNAPSHOT",
   crossScalaVersions := Seq("2.11.12", "2.12.8", "2.13.0"),
@@ -32,6 +32,7 @@ lazy val `akka-http-metrics` = (project in file("."))
   )
 
 lazy val `akka-http-metrics-core` = (project in file("akka-http-metrics-core"))
+  .configs(IntegrationTest)
   .settings(commonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
@@ -48,12 +49,14 @@ lazy val `akka-http-metrics-core` = (project in file("akka-http-metrics-core"))
   )
 
 lazy val `akka-http-metrics-datadog` = (project in file("akka-http-metrics-datadog"))
+  .configs(IntegrationTest)
   .dependsOn(`akka-http-metrics-core`)
   .settings(commonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
       Dependencies.datadog,
       Dependencies.Test.akkaHttpTestkit,
+      Dependencies.Test.akkaStreamTestkit,
       Dependencies.Test.akkaSlf4j,
       Dependencies.Test.logback,
       Dependencies.Test.scalaTest
@@ -61,6 +64,7 @@ lazy val `akka-http-metrics-datadog` = (project in file("akka-http-metrics-datad
   )
 
 lazy val `akka-http-metrics-dropwizard` = (project in file("akka-http-metrics-dorpwizard"))
+  .configs(IntegrationTest)
   .dependsOn(`akka-http-metrics-core`)
   .settings(commonSettings: _*)
   .settings(
@@ -78,6 +82,7 @@ lazy val `akka-http-metrics-dropwizard` = (project in file("akka-http-metrics-do
   )
 
 lazy val `akka-http-metrics-prometheus` = (project in file("akka-http-metrics-prometheus"))
+  .configs(IntegrationTest)
   .dependsOn(`akka-http-metrics-core`)
   .settings(commonSettings: _*)
   .settings(
