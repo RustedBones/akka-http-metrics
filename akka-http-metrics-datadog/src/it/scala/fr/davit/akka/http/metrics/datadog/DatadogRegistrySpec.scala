@@ -39,17 +39,11 @@ class DatadogRegistrySpec extends TestKit(ActorSystem("DatadogRegistrySpec")) wi
   "DatadogRegistry" should "send active datagrams to the statsd server" in withFixture { (statsd, registry) =>
     registry.active.inc()
     statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.requests_active:1|c"
-
-    registry.active.dec(dimensions)
-    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.requests_active:-1|c|#path:/api,status:2xx"
   }
 
   it should "send requests datagrams to the statsd server" in withFixture { (statsd, registry) =>
     registry.requests.inc()
     statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.requests_count:1|c"
-
-    registry.requests.inc(dimensions)
-    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.requests_count:1|c|#path:/api,status:2xx"
   }
 
   it should "send receivedBytes datagrams to the statsd server" in withFixture { (statsd, registry) =>
@@ -95,15 +89,9 @@ class DatadogRegistrySpec extends TestKit(ActorSystem("DatadogRegistrySpec")) wi
   it should "send connected datagrams to the statsd server" in withFixture { (statsd, registry) =>
     registry.connected.inc()
     statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.connections_active:1|c"
-
-    registry.connected.dec(dimensions)
-    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.connections_active:-1|c|#path:/api,status:2xx"
   }
   it should "send connections datagrams to the statsd server" in withFixture { (statsd, registry) =>
     registry.connections.inc()
     statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.connections_count:1|c"
-
-    registry.connections.inc(dimensions)
-    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.connections_count:1|c|#path:/api,status:2xx"
   }
 }

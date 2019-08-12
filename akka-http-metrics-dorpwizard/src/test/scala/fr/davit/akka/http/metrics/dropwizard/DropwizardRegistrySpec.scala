@@ -14,7 +14,6 @@ class DropwizardRegistrySpec extends FlatSpec with Matchers {
 
   val dimensions = Seq(StatusGroupDimension(StatusCodes.OK), PathDimension("/api"))
 
-
   trait Fixture {
     val registry = DropwizardRegistry()
 
@@ -38,25 +37,16 @@ class DropwizardRegistrySpec extends FlatSpec with Matchers {
   "DropwizardRegistry" should "set active metrics in the underlying registry" in new Fixture {
     registry.active.inc()
     underlyingCounter("akka.http.requests.active") shouldBe 1L
-
-    registry.active.dec(dimensions)
-    underlyingCounter("akka.http.requests.active", dimensions) shouldBe -1L
   }
 
   it  should "set requests metrics in the underlying registry" in new Fixture {
     registry.requests.inc()
     underlyingCounter("akka.http.requests") shouldBe 1L
-
-    registry.requests.inc(dimensions)
-    underlyingCounter("akka.http.requests", dimensions) shouldBe 1L
   }
 
   it  should "set receivedBytes metrics in the underlying registry" in new Fixture {
     registry.receivedBytes.update(3)
     underlyingHistogram("akka.http.requests.bytes") shouldBe 3L
-
-    registry.receivedBytes.update(3, dimensions)
-    underlyingHistogram("akka.http.requests.bytes", dimensions) shouldBe 3L
   }
 
   it  should "set responses metrics in the underlying registry" in new Fixture {
@@ -94,16 +84,10 @@ class DropwizardRegistrySpec extends FlatSpec with Matchers {
   it  should "set connected metrics in the underlying registry" in new Fixture {
     registry.connected.inc()
     underlyingCounter("akka.http.connections.active") shouldBe 1L
-
-    registry.connected.dec(dimensions)
-    underlyingCounter("akka.http.connections.active", dimensions) shouldBe -1L
   }
 
   it  should "set connections metrics in the underlying registry" in new Fixture {
     registry.connections.inc()
     underlyingCounter("akka.http.connections") shouldBe 1L
-
-    registry.connections.inc(dimensions)
-    underlyingCounter("akka.http.connections", dimensions) shouldBe 1L
   }
 }
