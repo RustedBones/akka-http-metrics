@@ -6,16 +6,13 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes
 import akka.io.{IO, Udp}
 import akka.testkit.{TestKit, TestProbe}
-import akka.util.Timeout
 import com.timgroup.statsd.NonBlockingStatsDClient
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{PathDimension, StatusGroupDimension}
-import org.scalatest.{FlatSpecLike, Matchers}
+import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 
 import scala.concurrent.duration._
 
-class DatadogRegistrySpec extends TestKit(ActorSystem("DatadogRegistrySpec")) with FlatSpecLike with Matchers {
-
-  implicit val timeout: Timeout = 3.seconds
+class DatadogRegistrySpec extends TestKit(ActorSystem("DatadogRegistrySpec")) with FlatSpecLike with Matchers with BeforeAndAfterAll {
 
   val dimensions = Seq(StatusGroupDimension(StatusCodes.OK), PathDimension("/api"))
 
@@ -32,6 +29,11 @@ class DatadogRegistrySpec extends TestKit(ActorSystem("DatadogRegistrySpec")) wi
       client.close()
       socket ! Udp.Unbind
     }
+  }
+
+  override def afterAll(): Unit = {
+    shutdown()
+    super.afterAll()
   }
 
   "DatadogRegistry" should "send active datagrams to the statsd server" in withFixture { (statsd, registry) =>
