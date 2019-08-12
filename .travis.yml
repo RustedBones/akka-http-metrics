@@ -1,7 +1,10 @@
 language: scala
+dist: trusty
 jdk: oraclejdk8
 sudo: false
 scala:
   - 2.11.12
   - 2.12.8
   - 2.13.0
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION test it:test

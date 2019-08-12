@@ -6,6 +6,7 @@ import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.StatusGroupDimension
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives.metrics
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsSettings
 import fr.davit.akka.http.metrics.prometheus.PrometheusRegistry
+import io.prometheus.client.CollectorRegistry
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
 import scala.concurrent.duration._
@@ -13,7 +14,10 @@ import scala.concurrent.duration._
 class PrometheusMarshallersSpec extends FlatSpec with Matchers with ScalatestRouteTest with BeforeAndAfterAll {
 
   trait Fixture extends PrometheusMarshallers {
-    val registry = PrometheusRegistry(HttpMetricsSettings.default.withIncludeStatusDimension(true))
+    val registry = PrometheusRegistry(
+      HttpMetricsSettings.default.withIncludeStatusDimension(true),
+      new CollectorRegistry()
+    )
 
     io.prometheus.client.Counter
       .build("other_metric", "An other metric")

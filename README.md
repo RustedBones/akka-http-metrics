@@ -239,8 +239,8 @@ val route = (get & path("metrics"))(metrics(registry))
 | errors             | akka_http_responses_errors_total     |
 | durations          | akka_http_responses_duration_seconds |
 | response sizes     | akka_http_responses_size_bytes       |
-| connections        | akka.http.connections_total          |
-| active connections | akka.http.connections_active         |
+| connections        | akka_http_connections_total          |
+| active connections | akka_http_connections_active         |
 
 Add to your `build.sbt`:
 

@@ -27,14 +27,14 @@ object Dependencies {
   }
 
   object Test {
-    val akkaHttpJson      = "com.typesafe.akka" %% "akka-http-spray-json" % Versions.akkaHttp  % "test"
-    val akkaHttpTestkit   = "com.typesafe.akka" %% "akka-http-testkit"    % Versions.akkaHttp  % "test"
-    val akkaSlf4j         = "com.typesafe.akka" %% "akka-slf4j"           % Versions.akka      % "test"
-    val akkaStreamTestkit = "com.typesafe.akka" %% "akka-stream-testkit"  % Versions.akka      % "test"
-    val akkaTestkit       = "com.typesafe.akka" %% "akka-testkit"         % Versions.akka      % "test"
-    val logback           = "ch.qos.logback"    % "logback-classic"       % Versions.logback   % "test"
-    val scalaMock         = "org.scalamock"     %% "scalamock"            % Versions.scalaMock % "test"
-    val scalaTest         = "org.scalatest"     %% "scalatest"            % Versions.scalaTest % "test"
+    val akkaHttpJson      = "com.typesafe.akka" %% "akka-http-spray-json" % Versions.akkaHttp  % "it,test"
+    val akkaHttpTestkit   = "com.typesafe.akka" %% "akka-http-testkit"    % Versions.akkaHttp  % "it,test"
+    val akkaSlf4j         = "com.typesafe.akka" %% "akka-slf4j"           % Versions.akka      % "it,test"
+    val akkaStreamTestkit = "com.typesafe.akka" %% "akka-stream-testkit"  % Versions.akka      % "it,test"
+    val akkaTestkit       = "com.typesafe.akka" %% "akka-testkit"         % Versions.akka      % "it,test"
+    val logback           = "ch.qos.logback"    % "logback-classic"       % Versions.logback   % "it,test"
+    val scalaMock         = "org.scalamock"     %% "scalamock"            % Versions.scalaMock % "it,test"
+    val scalaTest         = "org.scalatest"     %% "scalatest"            % Versions.scalaTest % "it,test"
   }
 
 }
