@@ -82,10 +82,12 @@ lazy val `akka-http-metrics-dropwizard` = (project in file("akka-http-metrics-do
   )
 
 lazy val `akka-http-metrics-graphite` = (project in file("akka-http-metrics-graphite"))
+  .configs(IntegrationTest)
   .dependsOn(`akka-http-metrics-core`)
   .settings(commonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
+      Dependencies.Provided.akkaStream,
       Dependencies.Test.akkaHttpTestkit,
       Dependencies.Test.akkaSlf4j,
       Dependencies.Test.logback,
