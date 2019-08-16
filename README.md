@@ -10,6 +10,7 @@ The following implementations are supported:
 
 * [datadog](#datadog) (via StatsD)
 * [dropwizard](#dropwizard)
+* [graphite](#graphite) (via Carbon)
 * [prometheus](#prometheus)
 
 ## Versions
@@ -228,6 +229,36 @@ Expose the metrics
 import fr.davit.akka.http.metrics.dropwizard.marshalling.DropwizardMarshallers._
 
 val route = (get & path("metrics"))(metrics(registry))
+```
+
+### [Graphite](https://graphiteapp.org/)
+
+| metric             | dropwizard                   |
+|--------------------|------------------------------|
+| requests           | akka.http.requests           |
+| active requests    | akka.http.requests.active    |
+| request sizes      | akka.http.requests.bytes     |
+| responses          | akka.http.responses          |
+| errors             | akka.http.responses.errors   |
+| durations          | akka.http.responses.duration |
+| response sizes     | akka.http.responses.bytes    |
+| connections        | akka.http.connections        |
+| active connections | akka.http.connections.active |
+
+Add to your `build.sbt`:
+
+```scala
+libraryDependencies += "fr.davit" %% "akka-http-metrics-graphite" % <version>
+```
+
+Create your carbon client and your registry
+
+```scala
+import fr.davit.akka.http.metrics.graphite.{CarbonClient, GraphiteRegistry}
+
+val carbonClient: CarbonClient = CarbonClient("hostnale", 2003)
+
+val registry = GraphiteRegistry(carbonClient)
 ```
 
 ### [Prometheus](http://prometheus.io/)
