@@ -7,7 +7,7 @@ import scala.concurrent.duration.FiniteDuration
 
 object DropwizardRegistry {
 
-  val AkkaPrefix = Seq("akka", "http")
+  private val AkkaPrefix = Seq("akka", "http")
 
   private implicit class RichMetricsRegistry(underlying: MetricRegistry) {
 
