@@ -256,7 +256,7 @@ Create your carbon client and your registry
 ```scala
 import fr.davit.akka.http.metrics.graphite.{CarbonClient, GraphiteRegistry}
 
-val carbonClient: CarbonClient = CarbonClient("hostnale", 2003)
+val carbonClient: CarbonClient = CarbonClient("hostname", 2003)
 
 val registry = GraphiteRegistry(carbonClient)
 ```
