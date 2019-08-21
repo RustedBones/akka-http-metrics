@@ -25,7 +25,13 @@ lazy val commonSettings = Defaults.itSettings ++ Seq(
 )
 
 lazy val `akka-http-metrics` = (project in file("."))
-  .aggregate(`akka-http-metrics-core`, `akka-http-metrics-datadog`, `akka-http-metrics-dropwizard`, `akka-http-metrics-prometheus`)
+  .aggregate(
+    `akka-http-metrics-core`,
+    `akka-http-metrics-datadog`,
+    `akka-http-metrics-graphite`,
+    `akka-http-metrics-dropwizard`,
+    `akka-http-metrics-prometheus`
+  )
   .settings(commonSettings: _*)
   .settings(
     publishArtifact := false
@@ -79,6 +85,21 @@ lazy val `akka-http-metrics-dropwizard` = (project in file("akka-http-metrics-do
       Dependencies.Test.logback,
       Dependencies.Test.scalaTest
     )
+  )
+
+lazy val `akka-http-metrics-graphite` = (project in file("akka-http-metrics-graphite"))
+  .configs(IntegrationTest)
+  .dependsOn(`akka-http-metrics-core`)
+  .settings(commonSettings: _*)
+  .settings(
+    libraryDependencies ++= Seq(
+      Dependencies.Provided.akkaStream,
+      Dependencies.Test.akkaHttpTestkit,
+      Dependencies.Test.akkaStreamTestkit,
+      Dependencies.Test.akkaSlf4j,
+      Dependencies.Test.logback,
+      Dependencies.Test.scalaTest
+    ),
   )
 
 lazy val `akka-http-metrics-prometheus` = (project in file("akka-http-metrics-prometheus"))
