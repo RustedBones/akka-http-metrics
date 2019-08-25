@@ -2,7 +2,10 @@
 
 ## Unreleased
 
-- Use static path dimension to for unhandled requests 
+## 0.6.0 (2019-08-25)
+
+- Use static path dimension to for unhandled requests
+- Add graphite carbon support
 
 ## 0.5.0 (2019-07-27)
 
