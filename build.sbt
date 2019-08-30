@@ -37,7 +37,7 @@ lazy val `akka-http-metrics` = (project in file("."))
     publishArtifact := false
   )
 
-lazy val `akka-http-metrics-core` = (project in file("akka-http-metrics-core"))
+lazy val `akka-http-metrics-core` = (project in file("core"))
   .configs(IntegrationTest)
   .settings(commonSettings: _*)
   .settings(
@@ -54,7 +54,7 @@ lazy val `akka-http-metrics-core` = (project in file("akka-http-metrics-core"))
     ),
   )
 
-lazy val `akka-http-metrics-datadog` = (project in file("akka-http-metrics-datadog"))
+lazy val `akka-http-metrics-datadog` = (project in file("datadog"))
   .configs(IntegrationTest)
   .dependsOn(`akka-http-metrics-core`)
   .settings(commonSettings: _*)
@@ -69,7 +69,7 @@ lazy val `akka-http-metrics-datadog` = (project in file("akka-http-metrics-datad
     ),
   )
 
-lazy val `akka-http-metrics-dropwizard` = (project in file("akka-http-metrics-dorpwizard"))
+lazy val `akka-http-metrics-dropwizard` = (project in file("dorpwizard"))
   .configs(IntegrationTest)
   .dependsOn(`akka-http-metrics-core`)
   .settings(commonSettings: _*)
@@ -87,7 +87,7 @@ lazy val `akka-http-metrics-dropwizard` = (project in file("akka-http-metrics-do
     )
   )
 
-lazy val `akka-http-metrics-graphite` = (project in file("akka-http-metrics-graphite"))
+lazy val `akka-http-metrics-graphite` = (project in file("graphite"))
   .configs(IntegrationTest)
   .dependsOn(`akka-http-metrics-core`)
   .settings(commonSettings: _*)
@@ -102,7 +102,7 @@ lazy val `akka-http-metrics-graphite` = (project in file("akka-http-metrics-grap
     ),
   )
 
-lazy val `akka-http-metrics-prometheus` = (project in file("akka-http-metrics-prometheus"))
+lazy val `akka-http-metrics-prometheus` = (project in file("prometheus"))
   .configs(IntegrationTest)
   .dependsOn(`akka-http-metrics-core`)
   .settings(commonSettings: _*)
