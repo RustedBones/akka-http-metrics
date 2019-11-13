@@ -69,7 +69,7 @@ lazy val `akka-http-metrics-datadog` = (project in file("datadog"))
     ),
   )
 
-lazy val `akka-http-metrics-dropwizard` = (project in file("dorpwizard"))
+lazy val `akka-http-metrics-dropwizard` = (project in file("dropwizard"))
   .configs(IntegrationTest)
   .dependsOn(`akka-http-metrics-core`)
   .settings(commonSettings: _*)
