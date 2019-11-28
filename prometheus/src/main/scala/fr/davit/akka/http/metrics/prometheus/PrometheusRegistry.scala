@@ -26,8 +26,6 @@ object PrometheusRegistry {
 
   private val AkkaPrefix = "akka_http"
 
-  private val Tolerance = 0.05
-
   private def name(names: String*): String = (AkkaPrefix +: names).mkString("_")
 
   private implicit def toLongCounter(counter: io.prometheus.client.Counter): Counter[Long] = new Counter[Long] {
@@ -46,13 +44,13 @@ object PrometheusRegistry {
     }
   }
 
-  private implicit def toTimer(summary: io.prometheus.client.Summary): Timer = new Timer {
+  private implicit def toTimer(summary: io.prometheus.client.Histogram): Timer = new Timer {
     override def observe(duration: FiniteDuration, dimensions: Seq[Dimension] = Seq.empty): Unit = {
       summary.labels(dimensions.map(_.value): _*).observe(duration.toMillis.toDouble / 1000.0)
     }
   }
 
-  private implicit def toLongHistogram(summary: io.prometheus.client.Summary): Histogram[Long] = new Histogram[Long] {
+  private implicit def toLongHistogram(summary: io.prometheus.client.Histogram): Histogram[Long] = new Histogram[Long] {
     override def update(value: Long, dimensions: Seq[Dimension] = Seq.empty): Unit = {
       summary.labels(dimensions.map(_.value): _*).observe(value.toDouble)
     }
@@ -70,7 +68,7 @@ object PrometheusRegistry {
   * Prometheus registry
   * For metrics naming see [https://prometheus.io/docs/practices/naming/]
   */
-class PrometheusRegistry(settings: HttpMetricsSettings, val underlying: CollectorRegistry) extends HttpMetricsRegistry {
+class PrometheusRegistry(settings: HttpMetricsSettings, val underlying: CollectorRegistry, val prometheusSettings: PrometheusSettings = PrometheusSettings()) extends HttpMetricsRegistry {
 
   import PrometheusRegistry._
 
@@ -89,13 +87,9 @@ class PrometheusRegistry(settings: HttpMetricsSettings, val underlying: Collecto
     .build(name("requests", "total"), "Total HTTP requests")
     .register(underlying)
 
-  override val receivedBytes: Histogram[Long] = io.prometheus.client.Summary
+  override val receivedBytes: Histogram[Long] = io.prometheus.client.Histogram
     .build(name("requests", "size", "bytes"), "HTTP request size")
-    .quantile(0.75, Tolerance)
-    .quantile(0.95, Tolerance)
-    .quantile(0.98, Tolerance)
-    .quantile(0.99, Tolerance)
-    .quantile(0.999, Tolerance)
+    .buckets(prometheusSettings.requestSizeBuckets :_*)
     .register(underlying)
 
   override val responses: Counter[Long] = io.prometheus.client.Counter
@@ -108,24 +102,16 @@ class PrometheusRegistry(settings: HttpMetricsSettings, val underlying: Collecto
     .labelNames(labels: _*)
     .register(underlying)
 
-  override val duration: Timer = io.prometheus.client.Summary
+  override val duration: Timer = io.prometheus.client.Histogram
     .build(name("responses", "duration", "seconds"), "HTTP response duration")
     .labelNames(labels: _*)
-    .quantile(0.75, Tolerance)
-    .quantile(0.95, Tolerance)
-    .quantile(0.98, Tolerance)
-    .quantile(0.99, Tolerance)
-    .quantile(0.999, Tolerance)
+    .buckets(prometheusSettings.durationBuckets :_*)
     .register(underlying)
 
-  override val sentBytes: Histogram[Long] = io.prometheus.client.Summary
+  override val sentBytes: Histogram[Long] = io.prometheus.client.Histogram
     .build(name("responses", "size", "bytes"), "HTTP response size")
     .labelNames(labels: _*)
-    .quantile(0.75, Tolerance)
-    .quantile(0.95, Tolerance)
-    .quantile(0.98, Tolerance)
-    .quantile(0.99, Tolerance)
-    .quantile(0.999, Tolerance)
+    .buckets(prometheusSettings.responseSizeBuckets :_*)
     .register(underlying)
 
   override val connected: Gauge[Long] = io.prometheus.client.Gauge
