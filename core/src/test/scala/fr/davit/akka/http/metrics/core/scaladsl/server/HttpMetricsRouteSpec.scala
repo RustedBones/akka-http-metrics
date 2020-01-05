@@ -31,6 +31,7 @@ import fr.davit.akka.http.metrics.core.scaladsl.model.SegmentLabelHeader
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsRoute._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
+import org.scalatest.time.{Millis, Span}
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 
 import scala.concurrent.duration._
@@ -48,8 +49,12 @@ class HttpMetricsRouteSpec
 
   import Directives._
 
-  implicit val _            = system
-  implicit val materializer = ActorMaterializer()
+  implicit override val patienceConfig = PatienceConfig(
+    timeout = scaled(Span(300, Millis)),
+    interval = scaled(Span(15, Millis))
+  )
+
+  implicit val _ = system
 
   abstract class Fixture[T](testField: TestRegistry => T, settings: HttpMetricsSettings = HttpMetricsSettings.default) {
     implicit val registry = new TestRegistry
