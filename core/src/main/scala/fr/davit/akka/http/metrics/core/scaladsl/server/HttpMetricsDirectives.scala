@@ -47,7 +47,7 @@ trait HttpMetricsDirectives {
           tprovide(values) & mapRequestContext(_ withUnmatchedPath rest) & mapResponse { response =>
             val path = ctx.request.uri.path
             val from = path.length - ctx.unmatchedPath.length
-            val to = path.length - rest.length
+            val to   = path.length - rest.length
             response.addHeader(new SegmentLabelHeader(from, to, "/" + label)) // path matchers always match the / prefix
           }
         case Unmatched =>

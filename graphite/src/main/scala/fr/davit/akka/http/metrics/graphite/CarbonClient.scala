@@ -38,7 +38,7 @@ class CarbonClient(host: String, port: Int)(implicit system: ActorSystem) extend
 
   implicit private lazy val materializer: Materializer = ActorMaterializer()
 
-  private val logger = Logging(system.eventStream, classOf[CarbonClient])
+  private val logger         = Logging(system.eventStream, classOf[CarbonClient])
   protected val clock: Clock = Clock.systemUTC()
 
   private def serialize[T](name: String, value: T, ts: Instant): ByteString = {
@@ -46,14 +46,16 @@ class CarbonClient(host: String, port: Int)(implicit system: ActorSystem) extend
   }
 
   // TODO read backoff from config
-  private def connection: Flow[ByteString, ByteString, NotUsed]  = RestartFlow.withBackoff(
-    minBackoff = 3.seconds,
-    maxBackoff = 30.seconds,
-    randomFactor = 0.2, // adds 20% "noise" to vary the intervals slightly
-    maxRestarts = -1 // keep retrying forever
-  )(() => Tcp().outgoingConnection(host, port))
+  private def connection: Flow[ByteString, ByteString, NotUsed] =
+    RestartFlow.withBackoff(
+      minBackoff = 3.seconds,
+      maxBackoff = 30.seconds,
+      randomFactor = 0.2, // adds 20% "noise" to vary the intervals slightly
+      maxRestarts = -1 // keep retrying forever
+    )(() => Tcp().outgoingConnection(host, port))
 
-  private val queue = Source.queue[ByteString](19, OverflowStrategy.dropHead)
+  private val queue = Source
+    .queue[ByteString](19, OverflowStrategy.dropHead)
     .via(connection)
     .toMat(Sink.ignore)(Keep.left)
     .run()
@@ -61,9 +63,9 @@ class CarbonClient(host: String, port: Int)(implicit system: ActorSystem) extend
   def publish[T](name: String, value: T, ts: Instant = Instant.now(clock)): Unit = {
     // it's reasonable to block until the message in enqueued
     Await.result(queue.offer(serialize(name, value, ts)), Duration.Inf) match {
-      case QueueOfferResult.Enqueued => logger.debug("Metric {} enqueued", name)
-      case QueueOfferResult.Dropped => logger.debug("Metric {} dropped", name)
-      case QueueOfferResult.Failure(e) => logger.error(e, s"Failed publishing metric $name")
+      case QueueOfferResult.Enqueued    => logger.debug("Metric {} enqueued", name)
+      case QueueOfferResult.Dropped     => logger.debug("Metric {} dropped", name)
+      case QueueOfferResult.Failure(e)  => logger.error(e, s"Failed publishing metric $name")
       case QueueOfferResult.QueueClosed => throw new Exception("Failed publishing metric to closed carbon client")
     }
   }

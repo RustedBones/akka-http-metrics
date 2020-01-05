@@ -30,6 +30,7 @@ import scala.concurrent.duration._
 class PrometheusMarshallersSpec extends FlatSpec with Matchers with ScalatestRouteTest with BeforeAndAfterAll {
 
   trait Fixture extends PrometheusMarshallers {
+
     val registry = PrometheusRegistry(
       HttpMetricsSettings.default.withIncludeStatusDimension(true),
       new CollectorRegistry()

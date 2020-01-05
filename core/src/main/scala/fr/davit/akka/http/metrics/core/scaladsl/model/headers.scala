@@ -32,7 +32,8 @@ private[core] object PathLabelHeader extends ModeledCustomHeaderCompanion[PathLa
   override def parse(value: String) = Try(PathLabelHeader(value))
 }
 
-private[core] final case class SegmentLabelHeader(from: Int, to: Int, label: String) extends ModeledCustomHeader[SegmentLabelHeader] {
+private[core] final case class SegmentLabelHeader(from: Int, to: Int, label: String)
+    extends ModeledCustomHeader[SegmentLabelHeader] {
   override def renderInRequests  = true
   override def renderInResponses = true
   override val companion         = SegmentLabelHeader

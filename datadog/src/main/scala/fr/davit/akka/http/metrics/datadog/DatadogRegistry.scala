@@ -30,6 +30,7 @@ object DatadogRegistry {
   def dimensionToTag(dimension: Dimension): String = s"${dimension.key}:${dimension.value}"
 
   private implicit class RichStatsDClient(client: StatsDClient) {
+
     def longCounter(name: String): Counter[Long] = new Counter[Long] {
       override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
         client.increment(name, dimensions.map(dimensionToTag): _*)

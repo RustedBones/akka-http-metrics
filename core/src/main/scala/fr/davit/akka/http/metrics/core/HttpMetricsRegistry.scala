@@ -50,7 +50,6 @@ object HttpMetricsRegistry {
       override val values: immutable.IndexedSeq[StatusGroup] = findValues
     }
 
-
     def apply(status: StatusCode): StatusGroupDimension = new StatusGroupDimension(StatusGroup(status))
   }
 

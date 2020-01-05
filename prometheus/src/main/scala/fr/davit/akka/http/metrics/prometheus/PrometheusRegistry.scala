@@ -58,11 +58,13 @@ object PrometheusRegistry {
     }
   }
 
-  def apply(settings: HttpMetricsSettings, underlying: CollectorRegistry = CollectorRegistry.defaultRegistry): PrometheusRegistry = {
+  def apply(
+      settings: HttpMetricsSettings,
+      underlying: CollectorRegistry = CollectorRegistry.defaultRegistry
+  ): PrometheusRegistry = {
     new PrometheusRegistry(settings, underlying)
   }
 }
-
 
 /**
   * Prometheus registry
@@ -74,7 +76,7 @@ class PrometheusRegistry(settings: HttpMetricsSettings, val underlying: Collecto
 
   private val labels: Seq[String] = {
     val statusLabel = if (settings.includeStatusDimension) Some("status") else None
-    val pathLabel = if (settings.includePathDimension) Some("path") else None
+    val pathLabel   = if (settings.includePathDimension) Some("path") else None
 
     statusLabel.toSeq ++ pathLabel
   }

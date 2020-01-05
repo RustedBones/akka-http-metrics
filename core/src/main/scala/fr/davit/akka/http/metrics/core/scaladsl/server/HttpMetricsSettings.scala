@@ -52,7 +52,8 @@ object HttpMetricsSettings {
   def apply(
       defineError: HttpResponse => Boolean,
       includeStatusDimension: Boolean,
-      includePathDimension: Boolean): HttpMetricsSettings = HttpMetricsSettingsImpl(
+      includePathDimension: Boolean
+  ): HttpMetricsSettings = HttpMetricsSettingsImpl(
     defineError,
     includeStatusDimension,
     includePathDimension

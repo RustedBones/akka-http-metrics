@@ -36,7 +36,7 @@ object TestRegistry {
       val key = keyer(dimensions)
       acc.get(key) match {
         case Some(v) => acc += (key -> (v + 1))
-        case None => acc += (key -> 1)
+        case None    => acc += (key -> 1)
       }
     }
 
@@ -48,7 +48,7 @@ object TestRegistry {
       val key = keyer(dimensions)
       acc.get(key) match {
         case Some(v) => acc += (key -> (v - 1))
-        case None => acc += (key -> -1)
+        case None    => acc += (key -> -1)
       }
     }
   }
@@ -60,7 +60,7 @@ object TestRegistry {
       val key = keyer(dimensions)
       acc.get(key) match {
         case Some(vs) => acc += (key -> (duration :: vs))
-        case None => acc += (key -> (duration :: Nil))
+        case None     => acc += (key -> (duration :: Nil))
       }
     }
 
@@ -74,7 +74,7 @@ object TestRegistry {
       val key = keyer(dimensions)
       acc.get(key) match {
         case Some(vs) => acc += (key -> (value :: vs))
-        case None => acc += (key -> (value :: Nil))
+        case None     => acc += (key -> (value :: Nil))
       }
     }
 
