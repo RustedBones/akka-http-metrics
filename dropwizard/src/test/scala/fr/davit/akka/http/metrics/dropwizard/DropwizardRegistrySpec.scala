@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Michel Davit
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package fr.davit.akka.http.metrics.dropwizard
 
 import akka.http.scaladsl.model.StatusCodes
@@ -39,17 +55,17 @@ class DropwizardRegistrySpec extends FlatSpec with Matchers {
     underlyingCounter("akka.http.requests.active") shouldBe 1L
   }
 
-  it  should "set requests metrics in the underlying registry" in new Fixture {
+  it should "set requests metrics in the underlying registry" in new Fixture {
     registry.requests.inc()
     underlyingCounter("akka.http.requests") shouldBe 1L
   }
 
-  it  should "set receivedBytes metrics in the underlying registry" in new Fixture {
+  it should "set receivedBytes metrics in the underlying registry" in new Fixture {
     registry.receivedBytes.update(3)
     underlyingHistogram("akka.http.requests.bytes") shouldBe 3L
   }
 
-  it  should "set responses metrics in the underlying registry" in new Fixture {
+  it should "set responses metrics in the underlying registry" in new Fixture {
     registry.responses.inc()
     underlyingCounter("akka.http.responses") shouldBe 1L
 
@@ -57,7 +73,7 @@ class DropwizardRegistrySpec extends FlatSpec with Matchers {
     underlyingCounter("akka.http.responses", dimensions) shouldBe 1L
   }
 
-  it  should "set errors metrics in the underlying registry" in new Fixture {
+  it should "set errors metrics in the underlying registry" in new Fixture {
     registry.errors.inc()
     underlyingCounter("akka.http.responses.errors") shouldBe 1L
 
@@ -65,7 +81,7 @@ class DropwizardRegistrySpec extends FlatSpec with Matchers {
     underlyingCounter("akka.http.responses.errors", dimensions) shouldBe 1L
   }
 
-  it  should "set duration metrics in the underlying registry" in new Fixture {
+  it should "set duration metrics in the underlying registry" in new Fixture {
     registry.duration.observe(3.seconds)
     underlyingTimer("akka.http.responses.duration") shouldBe 3000000000L
 
@@ -73,7 +89,7 @@ class DropwizardRegistrySpec extends FlatSpec with Matchers {
     underlyingTimer("akka.http.responses.duration", dimensions) shouldBe 3000000000L
   }
 
-  it  should "set sentBytes metrics in the underlying registry" in new Fixture {
+  it should "set sentBytes metrics in the underlying registry" in new Fixture {
     registry.sentBytes.update(3)
     underlyingHistogram("akka.http.responses.bytes") shouldBe 3L
 
@@ -81,12 +97,12 @@ class DropwizardRegistrySpec extends FlatSpec with Matchers {
     underlyingHistogram("akka.http.responses.bytes", dimensions) shouldBe 3L
   }
 
-  it  should "set connected metrics in the underlying registry" in new Fixture {
+  it should "set connected metrics in the underlying registry" in new Fixture {
     registry.connected.inc()
     underlyingCounter("akka.http.connections.active") shouldBe 1L
   }
 
-  it  should "set connections metrics in the underlying registry" in new Fixture {
+  it should "set connections metrics in the underlying registry" in new Fixture {
     registry.connections.inc()
     underlyingCounter("akka.http.connections") shouldBe 1L
   }

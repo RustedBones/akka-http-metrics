@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Michel Davit
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package fr.davit.akka.http.metrics.core.scaladsl.server
 
 import akka.actor.ActorSystem
@@ -149,7 +165,7 @@ class HttpMetricsRouteSpec
 
   it should "compute the number of active connections" in {
     implicit val registry = new TestRegistry
-    val server = mockFunction[RequestContext, Future[RouteResult]]
+    val server            = mockFunction[RequestContext, Future[RouteResult]]
 
     val stream = Source.maybe.via(server.recordMetrics(registry)).toMat(Sink.ignore)(Keep.both)
     val conns  = (0 until 3).map(_ => stream.run())
@@ -160,17 +176,21 @@ class HttpMetricsRouteSpec
     registry.connected.value() shouldBe 0
   }
 
-  it should "compute the number of connections" in  {
+  it should "compute the number of connections" in {
     implicit val registry = new TestRegistry
-    val server = mockFunction[RequestContext, Future[RouteResult]]
+    val server            = mockFunction[RequestContext, Future[RouteResult]]
 
-    val stream = Source((0 until 5).map(_ => HttpRequest())).via(server.recordMetrics(registry)).toMat(Sink.ignore)(Keep.right)
+    val stream =
+      Source((0 until 5).map(_ => HttpRequest())).via(server.recordMetrics(registry)).toMat(Sink.ignore)(Keep.right)
     val completions = (0 until 3).map(_ => stream.run())
     Future.sequence(completions).futureValue
     registry.connections.value() shouldBe 3
   }
 
-  it should "add status code dimension when enabled" in new Fixture(_.responses, HttpMetricsSettings.default.withIncludeStatusDimension(true)) {
+  it should "add status code dimension when enabled" in new Fixture(
+    _.responses,
+    HttpMetricsSettings.default.withIncludeStatusDimension(true)
+  ) {
     sink.request(1)
     server.expects(*).onCall(complete(StatusCodes.OK))
     source.sendNext(HttpRequest())
@@ -181,7 +201,10 @@ class HttpMetricsRouteSpec
     actual.value(Seq(StatusGroupDimension(StatusGroup.`5xx`))) shouldBe 0
   }
 
-  it should "add path dimension when enabled" in new Fixture(_.responses, HttpMetricsSettings.default.withIncludePathDimension(true)) {
+  it should "add path dimension when enabled" in new Fixture(
+    _.responses,
+    HttpMetricsSettings.default.withIncludePathDimension(true)
+  ) {
     val path = "/this/is/the/path"
     sink.request(1)
     server.expects(*).onCall(complete(StatusCodes.OK))
@@ -191,7 +214,10 @@ class HttpMetricsRouteSpec
     actual.value(Seq(PathDimension("/other/path"))) shouldBe 0
   }
 
-  it should "correctly replace segment labels in path" in new Fixture(_.responses, HttpMetricsSettings.default.withIncludePathDimension(true)) {
+  it should "correctly replace segment labels in path" in new Fixture(
+    _.responses,
+    HttpMetricsSettings.default.withIncludePathDimension(true)
+  ) {
     val path = "/this/is/the/path"
     sink.request(1)
     server.expects(*).onCall(respondWithHeader(SegmentLabelHeader(2, 6, "/label"))(complete(StatusCodes.OK)))
@@ -201,7 +227,10 @@ class HttpMetricsRouteSpec
     actual.value(Seq(PathDimension("/other/path"))) shouldBe 0
   }
 
-  it should "add unhandled path dimension when request is rejected" in new Fixture(_.responses, HttpMetricsSettings.default.withIncludePathDimension(true)) {
+  it should "add unhandled path dimension when request is rejected" in new Fixture(
+    _.responses,
+    HttpMetricsSettings.default.withIncludePathDimension(true)
+  ) {
     val path = "/this/is/the/path"
     sink.request(1)
     server.expects(*).onCall(reject)

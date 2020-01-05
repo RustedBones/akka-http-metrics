@@ -5,13 +5,13 @@ object Dependencies {
   object Versions {
     val akka       = "2.6.1"
     val akkaHttp   = "10.1.11"
-    val datadog    = "2.8"
+    val datadog    = "2.8.1"
     val dropwizard = "5.0.0"
-    val enumeratum = "1.5.14"
+    val enumeratum = "1.5.15"
     val logback    = "1.2.3"
     val prometheus = "0.8.0"
     val scalaMock  = "4.4.0"
-    val scalaTest  = "3.0.8"
+    val scalaTest  = "3.1.0"
   }
 
   val akkaHttp             = "com.typesafe.akka"      %% "akka-http"              % Versions.akkaHttp

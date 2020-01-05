@@ -6,4 +6,8 @@ scala:
   - 2.12.10
   - 2.13.1
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION test it:test
+  - >
+    sbt ++$TRAVIS_SCALA_VERSION
+    scalafmtCheckAll
+    headerCheck test:headerCheck it:headerCheck
+    test it:test
