@@ -7,8 +7,8 @@ lazy val commonSettings = Defaults.itSettings ++
   Seq(
   organization := "fr.davit",
   organizationName := "Michel Davit",
-  version := "0.6.1-SNAPSHOT",
-  crossScalaVersions := Seq("2.11.12", "2.12.10", "2.13.1"),
+  version := "0.7.0-SNAPSHOT",
+  crossScalaVersions := Seq("2.12.10", "2.13.1"),
   scalaVersion := crossScalaVersions.value.last,
   Compile / compile / scalacOptions ++= Settings.scalacOptions(scalaVersion.value),
   homepage := Some(url(s"https://github.com/$username/$repo")),

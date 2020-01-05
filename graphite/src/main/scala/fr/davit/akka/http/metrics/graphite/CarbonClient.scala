@@ -22,12 +22,11 @@ import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.stream.scaladsl.{Flow, Keep, RestartFlow, Sink, Source, Tcp}
-import akka.stream.{ActorMaterializer, Materializer, OverflowStrategy, QueueOfferResult}
+import akka.stream.{OverflowStrategy, QueueOfferResult}
 import akka.util.ByteString
 
 import scala.concurrent.Await
-import scala.concurrent.duration.Duration
-import scala.concurrent.duration._
+import scala.concurrent.duration.{Duration, _}
 
 object CarbonClient {
 
@@ -35,8 +34,6 @@ object CarbonClient {
 }
 
 class CarbonClient(host: String, port: Int)(implicit system: ActorSystem) extends AutoCloseable {
-
-  implicit private lazy val materializer: Materializer = ActorMaterializer()
 
   private val logger         = Logging(system.eventStream, classOf[CarbonClient])
   protected val clock: Clock = Clock.systemUTC()
