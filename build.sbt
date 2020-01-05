@@ -2,15 +2,18 @@
 val username = "RustedBones"
 val repo = "akka-http-metrics"
 
-lazy val commonSettings = Defaults.itSettings ++ Seq(
+lazy val commonSettings = Defaults.itSettings ++
+  headerSettings(Configurations.IntegrationTest) ++
+  Seq(
   organization := "fr.davit",
+  organizationName := "Michel Davit",
   version := "0.6.1-SNAPSHOT",
   crossScalaVersions := Seq("2.11.12", "2.12.10", "2.13.1"),
   scalaVersion := crossScalaVersions.value.last,
   Compile / compile / scalacOptions ++= Settings.scalacOptions(scalaVersion.value),
-
   homepage := Some(url(s"https://github.com/$username/$repo")),
-  licenses += "APACHE" -> url(s"https://github.com/$username/$repo/blob/master/LICENSE"),
+  licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.txt")),
+  startYear := Some(2019),
   scmInfo := Some(ScmInfo(url(s"https://github.com/$username/$repo"), s"git@github.com:$username/$repo.git")),
   developers := List(
     Developer(id = s"$username", name = "Michel Davit", email = "michel@davit.fr", url = url(s"https://github.com/$username"))
