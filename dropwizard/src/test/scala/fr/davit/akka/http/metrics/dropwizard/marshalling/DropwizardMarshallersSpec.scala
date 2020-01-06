@@ -68,7 +68,7 @@ class DropwizardMarshallersSpec extends AnyFlatSpec with Matchers with Scalatest
         "akka.http.responses.duration{status=2xx}",
         "akka.http.responses.bytes",
         "other.metric"
-      )
+      ).toSet
     }
   }
 

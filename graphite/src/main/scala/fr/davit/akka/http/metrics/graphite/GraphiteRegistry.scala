@@ -16,72 +16,29 @@
 
 package fr.davit.akka.http.metrics.graphite
 
-import fr.davit.akka.http.metrics.core.{Counter, Dimension, Gauge, Histogram, HttpMetricsRegistry, Timer}
-
-import scala.concurrent.duration.FiniteDuration
+import fr.davit.akka.http.metrics.core._
 
 object GraphiteRegistry {
-
-  val AkkaPrefix = "akka.http."
-
-  private implicit class RichCarbonClient(client: CarbonClient) {
-
-    private def metricName(name: String, dimensions: Seq[Dimension]): String = {
-      val tags = dimensions.map(d => d.key + "=" + d.value).toList
-      (AkkaPrefix + name :: tags).mkString(";")
-    }
-
-    def counter[T](name: String): Counter[T] = new Counter[T] {
-      override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
-        client.publish(metricName(name, dimensions), 1)
-      }
-    }
-
-    def gauge[T](name: String): Gauge[T] = new Gauge[T] {
-      override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
-        client.publish(metricName(name, dimensions), 1)
-      }
-
-      override def dec(dimensions: Seq[Dimension] = Seq.empty): Unit = {
-        client.publish(metricName(name, dimensions), -1)
-      }
-    }
-
-    def timer(name: String): Timer = new Timer {
-      override def observe(duration: FiniteDuration, dimensions: Seq[Dimension] = Seq.empty): Unit = {
-        client.publish(metricName(name, dimensions), duration.toMillis)
-      }
-    }
-
-    def histogram[T](name: String): Histogram[T] = new Histogram[T] {
-      override def update(value: T, dimensions: Seq[Dimension] = Seq.empty): Unit = {
-        client.publish(metricName(name, dimensions), value)
-      }
-    }
-  }
-
-  def apply(client: CarbonClient): GraphiteRegistry = new GraphiteRegistry(client)
+  def apply(client: CarbonClient): GraphiteRegistry = new GraphiteRegistry()(client)
 }
 
-class GraphiteRegistry(client: CarbonClient) extends HttpMetricsRegistry {
+class GraphiteRegistry()(implicit client: CarbonClient) extends HttpMetricsRegistry {
 
-  import GraphiteRegistry._
+  override lazy val active: Gauge = new CarbonGauge("akka.http.requests.active")
 
-  override def active: Gauge[Long] = client.gauge("requests.active")
+  override lazy val requests: Counter = new CarbonCounter("akka.http.requests")
 
-  override def requests: Counter[Long] = client.counter("requests")
+  override lazy val receivedBytes: Histogram = new CarbonHistogram("akka.http.requests.bytes")
 
-  override def receivedBytes: Histogram[Long] = client.histogram("requests.bytes")
+  override lazy val responses: Counter = new CarbonCounter("akka.http.responses")
 
-  override def responses: Counter[Long] = client.counter("responses")
+  override lazy val errors: Counter = new CarbonCounter("akka.http.responses.errors")
 
-  override def errors: Counter[Long] = client.counter("responses.errors")
+  override lazy val duration: Timer = new CarbonTimer("akka.http.responses.duration")
 
-  override def duration: Timer = client.timer("responses.duration")
+  override lazy val sentBytes: Histogram = new CarbonHistogram("akka.http.responses.bytes")
 
-  override def sentBytes: Histogram[Long] = client.histogram("responses.bytes")
+  override lazy val connected: Gauge = new CarbonGauge("akka.http.connections.active")
 
-  override def connected: Gauge[Long] = client.gauge("connections.active")
-
-  override def connections: Counter[Long] = client.counter("connections")
+  override lazy val connections: Counter = new CarbonCounter("akka.http.connections")
 }

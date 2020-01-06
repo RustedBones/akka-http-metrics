@@ -23,11 +23,11 @@ trait Dimension {
   def value: String
 }
 
-trait Counter[T] {
+trait Counter {
   def inc(dimensions: Seq[Dimension] = Seq.empty): Unit
 }
 
-trait Gauge[T] {
+trait Gauge {
   def inc(dimensions: Seq[Dimension] = Seq.empty): Unit
 
   def dec(dimensions: Seq[Dimension] = Seq.empty): Unit
@@ -37,6 +37,6 @@ trait Timer {
   def observe(duration: FiniteDuration, dimensions: Seq[Dimension] = Seq.empty): Unit
 }
 
-trait Histogram[T] {
-  def update(value: T, dimensions: Seq[Dimension] = Seq.empty): Unit
+trait Histogram {
+  def update[T: Numeric](value: T, dimensions: Seq[Dimension] = Seq.empty): Unit
 }

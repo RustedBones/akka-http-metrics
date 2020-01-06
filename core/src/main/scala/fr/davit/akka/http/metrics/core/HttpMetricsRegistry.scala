@@ -65,27 +65,27 @@ trait HttpMetricsRegistry {
   //--------------------------------------------------------------------------------------------------------------------
   // requests
   //--------------------------------------------------------------------------------------------------------------------
-  def active: Gauge[Long]
+  def active: Gauge
 
-  def requests: Counter[Long]
+  def requests: Counter
 
-  def receivedBytes: Histogram[Long]
+  def receivedBytes: Histogram
 
   //--------------------------------------------------------------------------------------------------------------------
   // responses
   //--------------------------------------------------------------------------------------------------------------------
-  def responses: Counter[Long]
+  def responses: Counter
 
-  def errors: Counter[Long]
+  def errors: Counter
 
   def duration: Timer
 
-  def sentBytes: Histogram[Long]
+  def sentBytes: Histogram
 
   //--------------------------------------------------------------------------------------------------------------------
   // Connections
   //--------------------------------------------------------------------------------------------------------------------
-  def connected: Gauge[Long]
+  def connected: Gauge
 
-  def connections: Counter[Long]
+  def connections: Counter
 }

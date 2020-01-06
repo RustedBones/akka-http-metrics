@@ -27,7 +27,7 @@ object TestRegistry {
 
   private def keyer(dimensions: Seq[Dimension]): String = dimensions.mkString(":")
 
-  class TestCounter extends Counter[Long] {
+  class TestCounter extends Counter {
     protected val acc = mutable.Map[String, Long]()
 
     override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
@@ -41,7 +41,7 @@ object TestRegistry {
     def value(dimensions: Seq[Dimension] = Seq.empty): Long = acc.getOrElse(keyer(dimensions), 0)
   }
 
-  class TestGauge extends TestCounter with Gauge[Long] {
+  class TestGauge extends TestCounter with Gauge {
     override def dec(dimensions: Seq[Dimension] = Seq.empty): Unit = {
       val key = keyer(dimensions)
       acc.get(key) match {
@@ -65,14 +65,14 @@ object TestRegistry {
     def values(dimensions: Seq[Dimension] = Seq.empty): List[FiniteDuration] = acc.getOrElse(keyer(dimensions), Nil)
   }
 
-  final class TestHistogram extends Histogram[Long] {
+  final class TestHistogram extends Histogram {
     protected val acc = mutable.Map[String, List[Long]]()
 
-    override def update(value: Long, dimensions: Seq[Dimension] = Seq.empty): Unit = {
+    override def update[T](value: T, dimensions: Seq[Dimension] = Seq.empty)(implicit numeric: Numeric[T]): Unit = {
       val key = keyer(dimensions)
       acc.get(key) match {
-        case Some(vs) => acc += (key -> (value :: vs))
-        case None     => acc += (key -> (value :: Nil))
+        case Some(vs) => acc += (key -> (numeric.toLong(value) :: vs))
+        case None     => acc += (key -> (numeric.toLong(value) :: Nil))
       }
     }
 
