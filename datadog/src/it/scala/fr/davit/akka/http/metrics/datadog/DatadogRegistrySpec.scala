@@ -24,11 +24,13 @@ import akka.io.{IO, Udp}
 import akka.testkit.{TestKit, TestProbe}
 import com.timgroup.statsd.NonBlockingStatsDClient
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{PathDimension, StatusGroupDimension}
-import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.flatspec.AnyFlatSpecLike
+import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
 
-class DatadogRegistrySpec extends TestKit(ActorSystem("DatadogRegistrySpec")) with FlatSpecLike with Matchers with BeforeAndAfterAll {
+class DatadogRegistrySpec extends TestKit(ActorSystem("DatadogRegistrySpec")) with AnyFlatSpecLike with Matchers with BeforeAndAfterAll {
 
   val dimensions = Seq(StatusGroupDimension(StatusCodes.OK), PathDimension("/api"))
 

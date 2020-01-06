@@ -16,8 +16,6 @@
 
 package fr.davit.akka.http.metrics.core
 
-import java.util.concurrent.atomic.LongAdder
-
 import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
 import akka.http.scaladsl.model.HttpEntity
 

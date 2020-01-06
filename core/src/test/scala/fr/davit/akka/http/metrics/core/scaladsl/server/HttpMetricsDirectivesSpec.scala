@@ -23,9 +23,10 @@ import akka.http.scaladsl.server.PathMatchers.IntNumber
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import fr.davit.akka.http.metrics.core.TestRegistry
 import fr.davit.akka.http.metrics.core.scaladsl.model.SegmentLabelHeader
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class HttpMetricsDirectivesSpec extends FlatSpec with Matchers with ScalatestRouteTest {
+class HttpMetricsDirectivesSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest {
 
   import HttpMetricsDirectives._
 

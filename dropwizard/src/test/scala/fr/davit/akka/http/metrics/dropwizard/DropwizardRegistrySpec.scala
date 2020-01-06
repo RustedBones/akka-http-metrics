@@ -19,14 +19,15 @@ package fr.davit.akka.http.metrics.dropwizard
 import akka.http.scaladsl.model.StatusCodes
 import fr.davit.akka.http.metrics.core.Dimension
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{PathDimension, StatusGroupDimension}
-import io.dropwizard.metrics5.{Counter, MetricName, MetricRegistry}
-import org.scalatest.{FlatSpec, Matchers}
+import io.dropwizard.metrics5.MetricName
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
 
 import scala.collection.JavaConverters._
 
-class DropwizardRegistrySpec extends FlatSpec with Matchers {
+class DropwizardRegistrySpec extends AnyFlatSpec with Matchers {
 
   val dimensions = Seq(StatusGroupDimension(StatusCodes.OK), PathDimension("/api"))
 

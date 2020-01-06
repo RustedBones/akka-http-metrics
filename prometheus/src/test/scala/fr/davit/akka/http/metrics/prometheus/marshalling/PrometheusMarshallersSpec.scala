@@ -23,11 +23,13 @@ import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives.met
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsSettings
 import fr.davit.akka.http.metrics.prometheus.PrometheusRegistry
 import io.prometheus.client.CollectorRegistry
-import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
 
-class PrometheusMarshallersSpec extends FlatSpec with Matchers with ScalatestRouteTest with BeforeAndAfterAll {
+class PrometheusMarshallersSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest with BeforeAndAfterAll {
 
   trait Fixture extends PrometheusMarshallers {
 

@@ -17,9 +17,10 @@
 package fr.davit.akka.http.metrics.core.scaladsl.model
 
 import akka.http.scaladsl.model.Uri
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class ExtensionsSpec extends FlatSpec with Matchers {
+class ExtensionsSpec extends AnyFlatSpec with Matchers {
 
   import Extensions._
 

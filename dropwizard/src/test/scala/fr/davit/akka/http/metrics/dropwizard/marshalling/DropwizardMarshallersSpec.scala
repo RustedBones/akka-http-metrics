@@ -22,16 +22,18 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.StatusGroupDimension
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives._
 import fr.davit.akka.http.metrics.dropwizard.DropwizardRegistry
-import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import spray.json.{DefaultJsonProtocol, JsValue}
 
 import scala.concurrent.duration._
 
-class DropwizardMarshallersSpec extends FlatSpec with Matchers with ScalatestRouteTest with BeforeAndAfterAll {
+class DropwizardMarshallersSpec extends AnyFlatSpec with Matchers with ScalatestRouteTest with BeforeAndAfterAll {
 
-  final case class JsonResponse(metrics: Map[String, JsValue])
+  private case class JsonResponse(metrics: Map[String, JsValue])
 
-  trait Fixture extends SprayJsonSupport with DefaultJsonProtocol with DropwizardMarshallers {
+  private trait Fixture extends SprayJsonSupport with DefaultJsonProtocol with DropwizardMarshallers {
     implicit val metricsFormat = jsonFormat1(JsonResponse)
 
     val registry = DropwizardRegistry()

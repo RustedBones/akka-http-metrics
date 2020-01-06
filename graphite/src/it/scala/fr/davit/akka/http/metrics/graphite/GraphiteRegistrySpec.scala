@@ -24,13 +24,15 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.io.{IO, Tcp}
 import akka.testkit.{TestActor, TestKit, TestProbe}
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{PathDimension, StatusGroupDimension}
-import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.flatspec.AnyFlatSpecLike
+import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
 
 class GraphiteRegistrySpec
     extends TestKit(ActorSystem("GraphiteRegistrySpec"))
-    with FlatSpecLike
+    with AnyFlatSpecLike
     with Matchers
     with BeforeAndAfterAll {
 

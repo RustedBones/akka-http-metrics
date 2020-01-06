@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Update libraries
+
 ## 0.6.0 (2019-08-25)
 
 - Use static path dimension to for unhandled requests

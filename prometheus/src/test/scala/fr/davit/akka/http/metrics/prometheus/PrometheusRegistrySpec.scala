@@ -21,11 +21,12 @@ import fr.davit.akka.http.metrics.core.Dimension
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{PathDimension, StatusGroupDimension}
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsSettings
 import io.prometheus.client.CollectorRegistry
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
 
-class PrometheusRegistrySpec extends FlatSpec with Matchers {
+class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
 
   val dimensions = Seq(StatusGroupDimension(StatusCodes.OK), PathDimension("/api"))
 
