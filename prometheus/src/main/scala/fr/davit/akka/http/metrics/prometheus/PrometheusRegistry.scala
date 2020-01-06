@@ -68,7 +68,11 @@ object PrometheusRegistry {
   * Prometheus registry
   * For metrics naming see [https://prometheus.io/docs/practices/naming/]
   */
-class PrometheusRegistry(settings: HttpMetricsSettings, val underlying: CollectorRegistry, val prometheusSettings: PrometheusSettings = PrometheusSettings()) extends HttpMetricsRegistry {
+class PrometheusRegistry(
+    settings: HttpMetricsSettings,
+    val underlying: CollectorRegistry,
+    val prometheusSettings: PrometheusSettings = PrometheusSettings()
+) extends HttpMetricsRegistry {
 
   import PrometheusRegistry._
 
@@ -89,7 +93,7 @@ class PrometheusRegistry(settings: HttpMetricsSettings, val underlying: Collecto
 
   override val receivedBytes: Histogram[Long] = io.prometheus.client.Histogram
     .build(name("requests", "size", "bytes"), "HTTP request size")
-    .buckets(prometheusSettings.requestSizeBuckets :_*)
+    .buckets(prometheusSettings.requestSizeBuckets: _*)
     .register(underlying)
 
   override val responses: Counter[Long] = io.prometheus.client.Counter
@@ -105,13 +109,13 @@ class PrometheusRegistry(settings: HttpMetricsSettings, val underlying: Collecto
   override val duration: Timer = io.prometheus.client.Histogram
     .build(name("responses", "duration", "seconds"), "HTTP response duration")
     .labelNames(labels: _*)
-    .buckets(prometheusSettings.durationBuckets :_*)
+    .buckets(prometheusSettings.durationBuckets: _*)
     .register(underlying)
 
   override val sentBytes: Histogram[Long] = io.prometheus.client.Histogram
     .build(name("responses", "size", "bytes"), "HTTP response size")
     .labelNames(labels: _*)
-    .buckets(prometheusSettings.responseSizeBuckets :_*)
+    .buckets(prometheusSettings.responseSizeBuckets: _*)
     .register(underlying)
 
   override val connected: Gauge[Long] = io.prometheus.client.Gauge
