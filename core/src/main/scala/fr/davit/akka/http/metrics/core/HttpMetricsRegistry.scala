@@ -16,11 +16,17 @@
 
 package fr.davit.akka.http.metrics.core
 
-import akka.http.scaladsl.model.{StatusCode, StatusCodes}
+import akka.Done
+import akka.http.scaladsl.model._
 import enumeratum.EnumEntry.Lowercase
 import enumeratum.{Enum, EnumEntry}
+import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{PathDimension, StatusGroupDimension}
+import fr.davit.akka.http.metrics.core.scaladsl.model.{PathLabelHeader, SegmentLabelHeader}
+import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsSettings
 
 import scala.collection.immutable
+import scala.concurrent.duration.Deadline
+import scala.concurrent.{ExecutionContext, Future}
 
 object HttpMetricsRegistry {
 
@@ -60,7 +66,7 @@ object HttpMetricsRegistry {
 
 }
 
-trait HttpMetricsRegistry {
+abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMetricsHandler {
 
   //--------------------------------------------------------------------------------------------------------------------
   // requests
@@ -88,4 +94,61 @@ trait HttpMetricsRegistry {
   def connected: Gauge
 
   def connections: Counter
+
+  private def buildPathLabel(
+      path: Uri.Path,
+      pathLabel: Option[PathLabelHeader],
+      segmentLabels: Seq[SegmentLabelHeader]
+  ): PathDimension = {
+    import fr.davit.akka.http.metrics.core.scaladsl.model.Extensions._
+    pathLabel match {
+      case Some(label) =>
+        PathDimension(label.value)
+      case None =>
+        val builder = new StringBuilder()
+        val (rest, _) = segmentLabels.foldLeft((path, 0)) {
+          case ((r, idx), l) =>
+            builder.append(r.take(l.from - idx))
+            builder.append(l.label)
+            (r.drop(l.to - idx), l.to)
+        }
+        builder.append(rest)
+        PathDimension(builder.result())
+    }
+  }
+
+  override def onRequest(request: HttpRequest, response: Future[HttpResponse])(
+      implicit executionContext: ExecutionContext
+  ): Unit = {
+    active.inc()
+    requests.inc()
+    receivedBytes.update(request.entity.contentLengthOption.getOrElse(0L))
+    val start = Deadline.now
+
+    response.foreach { r =>
+      // extract custom segment headers
+      val pathLabel     = r.header[PathLabelHeader]
+      val segmentLabels = r.headers[SegmentLabelHeader]
+
+      // compute dimensions
+      val statusGroupDim = if (settings.includeStatusDimension) Some(StatusGroupDimension(r.status)) else None
+      val pathDim =
+        if (settings.includePathDimension) Some(buildPathLabel(request.uri.path, pathLabel, segmentLabels)) else None
+      val dimensions = statusGroupDim.toSeq ++ pathDim
+
+      active.dec()
+      responses.inc(dimensions)
+      duration.observe(Deadline.now - start, dimensions)
+      if (settings.defineError(r)) {
+        errors.inc(dimensions)
+      }
+      r.entity.contentLengthOption.foreach(sentBytes.update(_, dimensions))
+    }
+  }
+
+  override def onConnection(completion: Future[Done])(implicit executionContext: ExecutionContext): Unit = {
+    connections.inc()
+    connected.inc()
+    completion.onComplete(_ => connected.dec())
+  }
 }

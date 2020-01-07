@@ -25,8 +25,8 @@ object PrometheusRegistry {
   private val Tolerance = 0.05
 
   def apply(
-      settings: HttpMetricsSettings,
-      underlying: CollectorRegistry = CollectorRegistry.defaultRegistry
+      underlying: CollectorRegistry = CollectorRegistry.defaultRegistry,
+      settings: HttpMetricsSettings = HttpMetricsSettings.default
   ): PrometheusRegistry = {
     new PrometheusRegistry(settings, underlying)
   }
@@ -36,7 +36,8 @@ object PrometheusRegistry {
   * Prometheus registry
   * For metrics naming see [https://prometheus.io/docs/practices/naming/]
   */
-class PrometheusRegistry(settings: HttpMetricsSettings, val underlying: CollectorRegistry) extends HttpMetricsRegistry {
+class PrometheusRegistry(settings: HttpMetricsSettings, val underlying: CollectorRegistry)
+    extends HttpMetricsRegistry(settings) {
 
   import PrometheusRegistry._
   import PrometheusConverters._

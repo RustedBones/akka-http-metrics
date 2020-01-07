@@ -119,7 +119,7 @@ The status group labels creates the following dimensions on the metrics: `1xx|2x
 
 ##### Path
 
-The path labels creates uses the path of the request as dimension on the metrics.
+The path labels uses the path of the request as dimension on the metrics.
 
 When enabling this dimension, you must be careful about cardinality: see [here](https://prometheus.io/docs/practices/naming/#labels).
 If your path is contains unbounded dynamic segments, you must use the labeled path directives defined in `HttpMetricsDirectives`:

@@ -17,12 +17,17 @@
 package fr.davit.akka.http.metrics.graphite
 
 import fr.davit.akka.http.metrics.core._
+import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsSettings
 
 object GraphiteRegistry {
-  def apply(client: CarbonClient): GraphiteRegistry = new GraphiteRegistry()(client)
+
+  def apply(client: CarbonClient, settings: HttpMetricsSettings = HttpMetricsSettings.default): GraphiteRegistry = {
+    new GraphiteRegistry(settings)(client)
+  }
 }
 
-class GraphiteRegistry()(implicit client: CarbonClient) extends HttpMetricsRegistry {
+class GraphiteRegistry(settings: HttpMetricsSettings)(implicit client: CarbonClient)
+    extends HttpMetricsRegistry(settings) {
 
   override lazy val active: Gauge = new CarbonGauge("akka.http.requests.active")
 

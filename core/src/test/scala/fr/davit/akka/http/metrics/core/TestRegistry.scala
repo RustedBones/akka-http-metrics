@@ -18,6 +18,7 @@ package fr.davit.akka.http.metrics.core
 
 import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
 import akka.http.scaladsl.model.HttpEntity
+import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsSettings
 
 import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
@@ -81,7 +82,8 @@ object TestRegistry {
 
 }
 
-final class TestRegistry extends HttpMetricsRegistry {
+final class TestRegistry(settings: HttpMetricsSettings = HttpMetricsSettings.default)
+    extends HttpMetricsRegistry(settings) {
 
   import TestRegistry._
 

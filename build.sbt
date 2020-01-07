@@ -64,6 +64,7 @@ lazy val `akka-http-metrics-datadog` = (project in file("datadog"))
   .settings(
     libraryDependencies ++= Seq(
       Dependencies.datadog,
+      Dependencies.Provided.akkaStream,
       Dependencies.Test.akkaHttpTestkit,
       Dependencies.Test.akkaStreamTestkit,
       Dependencies.Test.akkaSlf4j,

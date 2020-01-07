@@ -18,17 +18,21 @@ package fr.davit.akka.http.metrics.datadog
 
 import com.timgroup.statsd.StatsDClient
 import fr.davit.akka.http.metrics.core._
+import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsSettings
 
 object DatadogRegistry {
 
-  def apply(client: StatsDClient): DatadogRegistry = new DatadogRegistry()(client)
+  def apply(client: StatsDClient, settings: HttpMetricsSettings = HttpMetricsSettings.default): DatadogRegistry = {
+    new DatadogRegistry(settings)(client)
+  }
 }
 
 /**
   * see [https://docs.datadoghq.com/developers/faq/what-best-practices-are-recommended-for-naming-metrics-and-tags/]
   * @param client
   */
-class DatadogRegistry()(implicit client: StatsDClient) extends HttpMetricsRegistry {
+class DatadogRegistry(settings: HttpMetricsSettings)(implicit client: StatsDClient)
+    extends HttpMetricsRegistry(settings) {
 
   override lazy val active: Gauge = new StatsDGauge("akka.http.requests_active")
 
@@ -47,4 +51,5 @@ class DatadogRegistry()(implicit client: StatsDClient) extends HttpMetricsRegist
   override lazy val connected: Gauge = new StatsDGauge("akka.http.connections_active")
 
   override lazy val connections: Counter = new StatsDCounter("akka.http.connections_count")
+
 }

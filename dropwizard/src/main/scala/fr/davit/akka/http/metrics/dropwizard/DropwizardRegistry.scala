@@ -17,16 +17,21 @@
 package fr.davit.akka.http.metrics.dropwizard
 
 import fr.davit.akka.http.metrics.core._
+import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsSettings
 import io.dropwizard.metrics5.MetricRegistry
 
 object DropwizardRegistry {
 
-  def apply(registry: MetricRegistry = new MetricRegistry()): DropwizardRegistry = {
-    new DropwizardRegistry()(registry)
+  def apply(
+      registry: MetricRegistry = new MetricRegistry(),
+      settings: HttpMetricsSettings = HttpMetricsSettings.default
+  ): DropwizardRegistry = {
+    new DropwizardRegistry(settings)(registry)
   }
 }
 
-class DropwizardRegistry()(implicit val underlying: MetricRegistry) extends HttpMetricsRegistry {
+class DropwizardRegistry(settings: HttpMetricsSettings)(implicit val underlying: MetricRegistry)
+    extends HttpMetricsRegistry(settings) {
 
   override lazy val active: Gauge = new DropwizardGauge("akka.http.requests.active")
 
