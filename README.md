@@ -119,7 +119,7 @@ The status group labels creates the following dimensions on the metrics: `1xx|2x
 
 ##### Path
 
-The path labels creates uses the path of the request as dimension on the metrics.
+The path labels uses the path of the request as dimension on the metrics.
 
 When enabling this dimension, you must be careful about cardinality: see [here](https://prometheus.io/docs/practices/naming/#labels).
 If your path is contains unbounded dynamic segments, you must use the labeled path directives defined in `HttpMetricsDirectives`:
@@ -291,7 +291,7 @@ import fr.davit.akka.http.metrics.prometheus.PrometheusRegistry
 val settings: HttpMetricsSettings = ... // your http metrics settings
 val prometheus: CollectorRegistry = ... // your prometheus registry
 
-val registry = PrometheusRegistry(settings, prometheus) // or PrometheusRegistry(settings) to use the default registry
+val registry = PrometheusRegistry(prometheus, settings) // or PrometheusRegistry(settings = settings) to use the default registry
 ```
 
 Expose the metrics

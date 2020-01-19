@@ -31,7 +31,7 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
   val dimensions = Seq(StatusGroupDimension(StatusCodes.OK), PathDimension("/api"))
 
   trait Fixture {
-    val registry = PrometheusRegistry(HttpMetricsSettings.default, new CollectorRegistry())
+    val registry = PrometheusRegistry(new CollectorRegistry())
 
     def underlyingCounterValue(name: String, dims: Seq[Dimension] = Seq.empty): Long = {
       registry.underlying.getSampleValue(name, dims.map(_.key).toArray, dims.map(_.value).toArray).toLong
@@ -44,8 +44,8 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
 
   trait DimensionFixture extends Fixture {
     override val registry = PrometheusRegistry(
-      HttpMetricsSettings.default.withIncludeStatusDimension(true).withIncludePathDimension(true),
-      new CollectorRegistry()
+      new CollectorRegistry(),
+      HttpMetricsSettings.default.withIncludeStatusDimension(true).withIncludePathDimension(true)
     )
   }
 

@@ -18,74 +18,38 @@ package fr.davit.akka.http.metrics.datadog
 
 import com.timgroup.statsd.StatsDClient
 import fr.davit.akka.http.metrics.core._
-
-import scala.concurrent.duration.FiniteDuration
+import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsSettings
 
 object DatadogRegistry {
 
-  val AkkaPrefix = "akka.http"
-
-  def name(names: String*): String = s"$AkkaPrefix.${names.mkString("_")}"
-
-  def dimensionToTag(dimension: Dimension): String = s"${dimension.key}:${dimension.value}"
-
-  private implicit class RichStatsDClient(client: StatsDClient) {
-
-    def longCounter(name: String): Counter[Long] = new Counter[Long] {
-      override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
-        client.increment(name, dimensions.map(dimensionToTag): _*)
-      }
-    }
-
-    def longGauge(name: String): Gauge[Long] = new Gauge[Long] {
-      override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
-        client.increment(name, dimensions.map(dimensionToTag): _*)
-      }
-
-      override def dec(dimensions: Seq[Dimension] = Seq.empty): Unit = {
-        client.decrement(name, dimensions.map(dimensionToTag): _*)
-      }
-    }
-
-    def timer(name: String): Timer = new Timer {
-      override def observe(duration: FiniteDuration, dimensions: Seq[Dimension] = Seq.empty): Unit = {
-        client.distribution(name, duration.toMillis, dimensions.map(dimensionToTag): _*)
-      }
-    }
-
-    def longHistogram(name: String): Histogram[Long] = new Histogram[Long] {
-      override def update(value: Long, dimensions: Seq[Dimension] = Seq.empty): Unit = {
-        client.distribution(name, value, dimensions.map(dimensionToTag): _*)
-      }
-    }
+  def apply(client: StatsDClient, settings: HttpMetricsSettings = HttpMetricsSettings.default): DatadogRegistry = {
+    new DatadogRegistry(settings)(client)
   }
-
-  def apply(client: StatsDClient): DatadogRegistry = new DatadogRegistry(client)
 }
 
 /**
   * see [https://docs.datadoghq.com/developers/faq/what-best-practices-are-recommended-for-naming-metrics-and-tags/]
   * @param client
   */
-class DatadogRegistry(client: StatsDClient) extends HttpMetricsRegistry {
+class DatadogRegistry(settings: HttpMetricsSettings)(implicit client: StatsDClient)
+    extends HttpMetricsRegistry(settings) {
 
-  import DatadogRegistry._
+  override lazy val active: Gauge = new StatsDGauge("akka.http.requests_active")
 
-  override val active: Gauge[Long] = client.longGauge(name("requests", "active"))
+  override lazy val requests: Counter = new StatsDCounter("akka.http.requests_count")
 
-  override val requests: Counter[Long] = client.longCounter(name("requests", "count"))
+  override lazy val receivedBytes: Histogram = new StatsDHistogram("akka.http.requests_bytes")
 
-  override val receivedBytes: Histogram[Long] = client.longHistogram(name("requests", "bytes"))
+  override lazy val responses: Counter = new StatsDCounter("akka.http.responses_count")
 
-  override val responses: Counter[Long] = client.longCounter(name("responses", "count"))
+  override lazy val errors: Counter = new StatsDCounter("akka.http.responses_errors_count")
 
-  override val errors: Counter[Long] = client.longCounter(name("responses", "errors", "count"))
+  override lazy val duration: Timer = new StatsDTimer("akka.http.responses_duration")
 
-  override val duration: Timer = client.timer(name("responses", "duration"))
+  override lazy val sentBytes: Histogram = new StatsDHistogram("akka.http.responses_bytes")
 
-  override val sentBytes: Histogram[Long] = client.longHistogram(name("responses", "bytes"))
+  override lazy val connected: Gauge = new StatsDGauge("akka.http.connections_active")
 
-  override val connected: Gauge[Long] = client.longGauge(name("connections", "active"))
+  override lazy val connections: Counter = new StatsDCounter("akka.http.connections_count")
 
-  override val connections: Counter[Long] = client.longCounter(name("connections", "count"))
 }

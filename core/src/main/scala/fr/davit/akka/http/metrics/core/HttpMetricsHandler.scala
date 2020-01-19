@@ -16,27 +16,14 @@
 
 package fr.davit.akka.http.metrics.core
 
-import scala.concurrent.duration.FiniteDuration
+import akka.Done
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 
-trait Dimension {
-  def key: String
-  def value: String
-}
+import scala.concurrent.{ExecutionContext, Future}
 
-trait Counter {
-  def inc(dimensions: Seq[Dimension] = Seq.empty): Unit
-}
+trait HttpMetricsHandler {
 
-trait Gauge {
-  def inc(dimensions: Seq[Dimension] = Seq.empty): Unit
+  def onRequest(request: HttpRequest, response: Future[HttpResponse])(implicit executionContext: ExecutionContext): Unit
 
-  def dec(dimensions: Seq[Dimension] = Seq.empty): Unit
-}
-
-trait Timer {
-  def observe(duration: FiniteDuration, dimensions: Seq[Dimension] = Seq.empty): Unit
-}
-
-trait Histogram {
-  def update[T: Numeric](value: T, dimensions: Seq[Dimension] = Seq.empty): Unit
+  def onConnection(completion: Future[Done])(implicit executionContext: ExecutionContext): Unit
 }

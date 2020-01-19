@@ -7,7 +7,7 @@ lazy val commonSettings = Defaults.itSettings ++
   Seq(
   organization := "fr.davit",
   organizationName := "Michel Davit",
-  version := "0.7.0-SNAPSHOT",
+  version := "1.0.0-SNAPSHOT",
   crossScalaVersions := Seq("2.12.10", "2.13.1"),
   scalaVersion := crossScalaVersions.value.last,
   Compile / compile / scalacOptions ++= Settings.scalacOptions(scalaVersion.value),
@@ -64,6 +64,7 @@ lazy val `akka-http-metrics-datadog` = (project in file("datadog"))
   .settings(
     libraryDependencies ++= Seq(
       Dependencies.datadog,
+      Dependencies.Provided.akkaStream,
       Dependencies.Test.akkaHttpTestkit,
       Dependencies.Test.akkaStreamTestkit,
       Dependencies.Test.akkaSlf4j,
