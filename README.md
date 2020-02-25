@@ -111,6 +111,8 @@ By default metrics labels are disabled. You can enable them in the settings.
 val settings = HttpMetricsSettings.default
   .withIncludeStatusDimension(true)
   .withIncludePathDimension(true)
+
+Http().bindAndHandle(route.recordMetrics(registry, settings), "localhost", 8080)
 ```
 
 ##### Status group
