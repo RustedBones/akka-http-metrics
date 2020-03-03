@@ -23,35 +23,62 @@ import scala.concurrent.duration.FiniteDuration
 
 object DropwizardMetrics {
 
-  def name(name: String, dimensions: Seq[Dimension]): MetricName = {
-    MetricName.build(name).tagged(dimensions.flatMap(d => Seq(d.key, d.value)): _*)
+  implicit class RichMetricsName(val metricName: MetricName) extends AnyVal {
+
+    def tagged(dimensions: Seq[Dimension]): MetricName =
+      metricName.tagged(dimensions.flatMap(d => Seq(d.key, d.value)): _*)
+
   }
 }
 
-class DropwizardCounter(name: String)(implicit registry: MetricRegistry) extends Counter {
+abstract class DropwizardMetrics(namespace: String, name: String) {
+  protected lazy val metricName: MetricName = MetricName.build(namespace, name)
+}
+
+class DropwizardCounter(namespace: String, name: String)(implicit registry: MetricRegistry)
+    extends DropwizardMetrics(namespace, name)
+    with Counter {
+
+  import DropwizardMetrics._
+
   override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
-    registry.counter(DropwizardMetrics.name(name, dimensions)).inc()
+    registry.counter(metricName.tagged(dimensions)).inc()
   }
 }
 
-class DropwizardGauge(name: String)(implicit registry: MetricRegistry) extends Gauge {
+class DropwizardGauge(namespace: String, name: String)(implicit registry: MetricRegistry)
+    extends DropwizardMetrics(namespace, name)
+    with Gauge {
+
+  import DropwizardMetrics._
+
   override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
-    registry.counter(DropwizardMetrics.name(name, dimensions)).inc()
+    registry.counter(metricName.tagged(dimensions)).inc()
   }
 
   override def dec(dimensions: Seq[Dimension] = Seq.empty): Unit = {
-    registry.counter(DropwizardMetrics.name(name, dimensions)).dec()
+    registry.counter(metricName.tagged(dimensions)).dec()
   }
 }
 
-class DropwizardTimer(name: String)(implicit registry: MetricRegistry) extends Timer {
+class DropwizardTimer(namespace: String, name: String)(implicit registry: MetricRegistry)
+    extends DropwizardMetrics(namespace, name)
+    with Timer {
+
+  import DropwizardMetrics._
+
   override def observe(duration: FiniteDuration, dimensions: Seq[Dimension] = Seq.empty): Unit = {
-    registry.timer(DropwizardMetrics.name(name, dimensions)).update(duration.length, duration.unit)
+    registry.timer(metricName.tagged(dimensions)).update(duration.length, duration.unit)
   }
 }
 
-class DropwizardHistogram(name: String)(implicit registry: MetricRegistry) extends Histogram {
+class DropwizardHistogram(namespace: String, name: String)(implicit registry: MetricRegistry)
+    extends DropwizardMetrics(namespace, name)
+    with Histogram {
+
+  import DropwizardMetrics._
+
   override def update[T](value: T, dimensions: Seq[Dimension] = Seq.empty)(implicit numeric: Numeric[T]): Unit = {
-    registry.histogram(DropwizardMetrics.name(name, dimensions)).update(numeric.toLong(value))
+    registry.histogram(metricName.tagged(dimensions)).update(numeric.toLong(value))
   }
 }

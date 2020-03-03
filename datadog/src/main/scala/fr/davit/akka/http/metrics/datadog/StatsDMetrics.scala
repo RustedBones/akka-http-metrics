@@ -25,30 +25,42 @@ object StatsDMetrics {
   def dimensionToTag(dimension: Dimension): String = s"${dimension.key}:${dimension.value}"
 }
 
-class StatsDCounter(name: String)(implicit client: StatsDClient) extends Counter {
+abstract class StatsDMetrics(namespace: String, name: String) {
+  protected lazy val metricName: String = s"$namespace.$name"
+}
+
+class StatsDCounter(namespace: String, name: String)(implicit client: StatsDClient)
+    extends StatsDMetrics(namespace: String, name: String)
+    with Counter {
   override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
-    client.increment(name, dimensions.map(StatsDMetrics.dimensionToTag): _*)
+    client.increment(metricName, dimensions.map(StatsDMetrics.dimensionToTag): _*)
   }
 }
 
-class StatsDGauge(name: String)(implicit client: StatsDClient) extends Gauge {
+class StatsDGauge(namespace: String, name: String)(implicit client: StatsDClient)
+    extends StatsDMetrics(namespace: String, name: String)
+    with Gauge {
   override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
-    client.increment(name, dimensions.map(StatsDMetrics.dimensionToTag): _*)
+    client.increment(metricName, dimensions.map(StatsDMetrics.dimensionToTag): _*)
   }
 
   override def dec(dimensions: Seq[Dimension] = Seq.empty): Unit = {
-    client.decrement(name, dimensions.map(StatsDMetrics.dimensionToTag): _*)
+    client.decrement(metricName, dimensions.map(StatsDMetrics.dimensionToTag): _*)
   }
 }
 
-class StatsDTimer(name: String)(implicit client: StatsDClient) extends Timer {
+class StatsDTimer(namespace: String, name: String)(implicit client: StatsDClient)
+    extends StatsDMetrics(namespace: String, name: String)
+    with Timer {
   override def observe(duration: FiniteDuration, dimensions: Seq[Dimension] = Seq.empty): Unit = {
-    client.distribution(name, duration.toMillis, dimensions.map(StatsDMetrics.dimensionToTag): _*)
+    client.distribution(metricName, duration.toMillis, dimensions.map(StatsDMetrics.dimensionToTag): _*)
   }
 }
 
-class StatsDHistogram(name: String)(implicit client: StatsDClient) extends Histogram {
+class StatsDHistogram(namespace: String, name: String)(implicit client: StatsDClient)
+    extends StatsDMetrics(namespace: String, name: String)
+    with Histogram {
   override def update[T](value: T, dimensions: Seq[Dimension] = Seq.empty)(implicit numeric: Numeric[T]): Unit = {
-    client.distribution(name, numeric.toDouble(value), dimensions.map(StatsDMetrics.dimensionToTag): _*)
+    client.distribution(metricName, numeric.toDouble(value), dimensions.map(StatsDMetrics.dimensionToTag): _*)
   }
 }

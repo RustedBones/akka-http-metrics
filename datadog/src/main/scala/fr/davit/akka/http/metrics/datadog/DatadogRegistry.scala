@@ -34,22 +34,22 @@ object DatadogRegistry {
 class DatadogRegistry(settings: HttpMetricsSettings)(implicit client: StatsDClient)
     extends HttpMetricsRegistry(settings) {
 
-  override lazy val active: Gauge = new StatsDGauge("akka.http.requests_active")
+  override lazy val active: Gauge = new StatsDGauge(settings.namespace, "requests_active")
 
-  override lazy val requests: Counter = new StatsDCounter("akka.http.requests_count")
+  override lazy val requests: Counter = new StatsDCounter(settings.namespace, "requests_count")
 
-  override lazy val receivedBytes: Histogram = new StatsDHistogram("akka.http.requests_bytes")
+  override lazy val receivedBytes: Histogram = new StatsDHistogram(settings.namespace, "requests_bytes")
 
-  override lazy val responses: Counter = new StatsDCounter("akka.http.responses_count")
+  override lazy val responses: Counter = new StatsDCounter(settings.namespace, "responses_count")
 
-  override lazy val errors: Counter = new StatsDCounter("akka.http.responses_errors_count")
+  override lazy val errors: Counter = new StatsDCounter(settings.namespace, "responses_errors_count")
 
-  override lazy val duration: Timer = new StatsDTimer("akka.http.responses_duration")
+  override lazy val duration: Timer = new StatsDTimer(settings.namespace, "responses_duration")
 
-  override lazy val sentBytes: Histogram = new StatsDHistogram("akka.http.responses_bytes")
+  override lazy val sentBytes: Histogram = new StatsDHistogram(settings.namespace, "responses_bytes")
 
-  override lazy val connected: Gauge = new StatsDGauge("akka.http.connections_active")
+  override lazy val connected: Gauge = new StatsDGauge(settings.namespace, "connections_active")
 
-  override lazy val connections: Counter = new StatsDCounter("akka.http.connections_count")
+  override lazy val connections: Counter = new StatsDCounter(settings.namespace, "connections_count")
 
 }

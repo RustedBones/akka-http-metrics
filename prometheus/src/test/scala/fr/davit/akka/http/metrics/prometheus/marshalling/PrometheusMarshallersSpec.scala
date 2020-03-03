@@ -35,7 +35,7 @@ class PrometheusMarshallersSpec extends AnyFlatSpec with Matchers with Scalatest
 
     val registry = PrometheusRegistry(
       new CollectorRegistry(),
-      HttpMetricsSettings.default.withIncludeStatusDimension(true)
+      PrometheusRegistry.defaultSettings.withIncludeStatusDimension(true)
     )
 
     io.prometheus.client.Counter

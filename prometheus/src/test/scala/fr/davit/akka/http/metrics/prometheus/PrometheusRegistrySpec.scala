@@ -45,7 +45,7 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
   trait DimensionFixture extends Fixture {
     override val registry = PrometheusRegistry(
       new CollectorRegistry(),
-      HttpMetricsSettings.default.withIncludeStatusDimension(true).withIncludePathDimension(true)
+      PrometheusRegistry.defaultSettings.withIncludeStatusDimension(true).withIncludePathDimension(true)
     )
   }
 

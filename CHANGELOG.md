@@ -3,6 +3,8 @@
 ## Unreleased
 
 - Update libraries
+- Decorrelate routes from registry
+- Ad namespace setting
 
 ## 0.6.0 (2019-08-25)
 

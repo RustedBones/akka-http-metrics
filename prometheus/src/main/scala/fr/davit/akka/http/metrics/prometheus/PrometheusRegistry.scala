@@ -24,9 +24,12 @@ object PrometheusRegistry {
 
   private val Tolerance = 0.05
 
+  val defaultSettings: HttpMetricsSettings = HttpMetricsSettings.default
+    .withNamespace("akka_http")
+
   def apply(
       underlying: CollectorRegistry = CollectorRegistry.defaultRegistry,
-      settings: HttpMetricsSettings = HttpMetricsSettings.default
+      settings: HttpMetricsSettings = defaultSettings
   ): PrometheusRegistry = {
     new PrometheusRegistry(settings, underlying)
   }
@@ -50,15 +53,24 @@ class PrometheusRegistry(settings: HttpMetricsSettings, val underlying: Collecto
   }
 
   override lazy val active: Gauge = io.prometheus.client.Gauge
-    .build("akka_http_requests_active", "Active HTTP requests")
+    .build()
+    .namespace(settings.namespace)
+    .name("requests_active")
+    .help("Active HTTP requests")
     .register(underlying)
 
   override lazy val requests: Counter = io.prometheus.client.Counter
-    .build("akka_http_requests_total", "Total HTTP requests")
+    .build()
+    .namespace(settings.namespace)
+    .name("requests_total")
+    .help("Total HTTP requests")
     .register(underlying)
 
   override lazy val receivedBytes: Histogram = io.prometheus.client.Summary
-    .build("akka_http_requests_size_bytes", "HTTP request size")
+    .build()
+    .namespace(settings.namespace)
+    .name("requests_size_bytes")
+    .help("HTTP request size")
     .quantile(0.75, Tolerance)
     .quantile(0.95, Tolerance)
     .quantile(0.98, Tolerance)
@@ -67,17 +79,26 @@ class PrometheusRegistry(settings: HttpMetricsSettings, val underlying: Collecto
     .register(underlying)
 
   override lazy val responses: Counter = io.prometheus.client.Counter
-    .build("akka_http_responses_total", "HTTP responses")
+    .build()
+    .namespace(settings.namespace)
+    .name("responses_total")
+    .help("HTTP responses")
     .labelNames(labels: _*)
     .register(underlying)
 
   override lazy val errors: Counter = io.prometheus.client.Counter
-    .build("akka_http_responses_errors_total", "Total HTTP errors")
+    .build()
+    .namespace(settings.namespace)
+    .name("responses_errors_total")
+    .help("Total HTTP errors")
     .labelNames(labels: _*)
     .register(underlying)
 
   override lazy val duration: Timer = io.prometheus.client.Summary
-    .build("akka_http_responses_duration_seconds", "HTTP response duration")
+    .build()
+    .namespace(settings.namespace)
+    .name("responses_duration_seconds")
+    .help("HTTP response duration")
     .labelNames(labels: _*)
     .quantile(0.75, Tolerance)
     .quantile(0.95, Tolerance)
@@ -87,7 +108,10 @@ class PrometheusRegistry(settings: HttpMetricsSettings, val underlying: Collecto
     .register(underlying)
 
   override lazy val sentBytes: Histogram = io.prometheus.client.Summary
-    .build("akka_http_responses_size_bytes", "HTTP response size")
+    .build()
+    .namespace(settings.namespace)
+    .name("responses_size_bytes")
+    .help("HTTP response size")
     .labelNames(labels: _*)
     .quantile(0.75, Tolerance)
     .quantile(0.95, Tolerance)
@@ -97,10 +121,16 @@ class PrometheusRegistry(settings: HttpMetricsSettings, val underlying: Collecto
     .register(underlying)
 
   override val connected: Gauge = io.prometheus.client.Gauge
-    .build("akka_http_connections_active", "Active TCP connections")
+    .build()
+    .namespace(settings.namespace)
+    .name("connections_active")
+    .help("Active TCP connections")
     .register(underlying)
 
   override val connections: Counter = io.prometheus.client.Counter
-    .build("akka_http_connections_total", "Total TCP connections")
+    .build()
+    .namespace(settings.namespace)
+    .name("connections_total")
+    .help("Total TCP connections")
     .register(underlying)
 }

@@ -20,6 +20,8 @@ import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 
 trait HttpMetricsSettings {
 
+  def namespace: String
+
   /**
     * Function that defines if the http response should be
     * counted as an error
@@ -36,6 +38,7 @@ trait HttpMetricsSettings {
     */
   def includePathDimension: Boolean
 
+  def withNamespace(namespace: String): HttpMetricsSettings
   def withDefineError(fn: HttpResponse => Boolean): HttpMetricsSettings
   def withIncludeStatusDimension(include: Boolean): HttpMetricsSettings
   def withIncludePathDimension(include: Boolean): HttpMetricsSettings
@@ -44,26 +47,33 @@ trait HttpMetricsSettings {
 object HttpMetricsSettings {
 
   val default: HttpMetricsSettings = apply(
+    "akka.http",
     _.status.isInstanceOf[StatusCodes.ServerError],
     includeStatusDimension = false,
     includePathDimension = false
   )
 
   def apply(
+      namespace: String,
       defineError: HttpResponse => Boolean,
       includeStatusDimension: Boolean,
       includePathDimension: Boolean
   ): HttpMetricsSettings = HttpMetricsSettingsImpl(
+    namespace,
     defineError,
     includeStatusDimension,
     includePathDimension
   )
 
   private case class HttpMetricsSettingsImpl(
+      namespace: String,
       defineError: HttpResponse => Boolean,
       includeStatusDimension: Boolean,
       includePathDimension: Boolean
   ) extends HttpMetricsSettings {
+
+    override def withNamespace(namespace: String): HttpMetricsSettings =
+      copy(namespace = namespace)
 
     override def withDefineError(fn: HttpResponse => Boolean): HttpMetricsSettings =
       copy(defineError = fn)

@@ -20,38 +20,42 @@ import fr.davit.akka.http.metrics.core.{Counter, Dimension, Gauge, Histogram, Ti
 
 import scala.concurrent.duration.FiniteDuration
 
-object CarbonMetrics {
+abstract class CarbonMetrics(namespace: String, name: String) {
+  protected lazy val metricName: String = s"$namespace.$name"
+}
 
-  def name(name: String, dimensions: Seq[Dimension]): String = {
-    val tags = dimensions.map(d => d.key + "=" + d.value).toList
-    (name :: tags).mkString(";")
+class CarbonCounter(namespace: String, name: String)(implicit client: CarbonClient)
+    extends CarbonMetrics(namespace, name)
+    with Counter {
+  override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
+    client.publish(metricName, 1, dimensions)
   }
 }
 
-class CarbonCounter(name: String)(implicit client: CarbonClient) extends Counter {
+class CarbonGauge(namespace: String, name: String)(implicit client: CarbonClient)
+    extends CarbonMetrics(namespace, name)
+    with Gauge {
   override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
-    client.publish(CarbonMetrics.name(name, dimensions), 1)
-  }
-}
-
-class CarbonGauge(name: String)(implicit client: CarbonClient) extends Gauge {
-  override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
-    client.publish(CarbonMetrics.name(name, dimensions), 1)
+    client.publish(metricName, 1, dimensions)
   }
 
   override def dec(dimensions: Seq[Dimension] = Seq.empty): Unit = {
-    client.publish(CarbonMetrics.name(name, dimensions), -1)
+    client.publish(metricName, -1, dimensions)
   }
 }
 
-class CarbonTimer(name: String)(implicit client: CarbonClient) extends Timer {
+class CarbonTimer(namespace: String, name: String)(implicit client: CarbonClient)
+    extends CarbonMetrics(namespace, name)
+    with Timer {
   override def observe(duration: FiniteDuration, dimensions: Seq[Dimension] = Seq.empty): Unit = {
-    client.publish(CarbonMetrics.name(name, dimensions), duration.toMillis)
+    client.publish(metricName, duration.toMillis, dimensions)
   }
 }
 
-class CarbonHistogram(name: String)(implicit client: CarbonClient) extends Histogram {
+class CarbonHistogram(namespace: String, name: String)(implicit client: CarbonClient)
+    extends CarbonMetrics(namespace, name)
+    with Histogram {
   override def update[T: Numeric](value: T, dimensions: Seq[Dimension] = Seq.empty): Unit = {
-    client.publish(CarbonMetrics.name(name, dimensions), value)
+    client.publish(metricName, value, dimensions)
   }
 }

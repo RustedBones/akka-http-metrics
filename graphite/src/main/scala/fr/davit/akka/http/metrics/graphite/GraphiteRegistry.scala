@@ -20,7 +20,6 @@ import fr.davit.akka.http.metrics.core._
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsSettings
 
 object GraphiteRegistry {
-
   def apply(client: CarbonClient, settings: HttpMetricsSettings = HttpMetricsSettings.default): GraphiteRegistry = {
     new GraphiteRegistry(settings)(client)
   }
@@ -29,21 +28,21 @@ object GraphiteRegistry {
 class GraphiteRegistry(settings: HttpMetricsSettings)(implicit client: CarbonClient)
     extends HttpMetricsRegistry(settings) {
 
-  override lazy val active: Gauge = new CarbonGauge("akka.http.requests.active")
+  override lazy val active: Gauge = new CarbonGauge(settings.namespace, "requests.active")
 
-  override lazy val requests: Counter = new CarbonCounter("akka.http.requests")
+  override lazy val requests: Counter = new CarbonCounter(settings.namespace,"requests")
 
-  override lazy val receivedBytes: Histogram = new CarbonHistogram("akka.http.requests.bytes")
+  override lazy val receivedBytes: Histogram = new CarbonHistogram(settings.namespace,"requests.bytes")
 
-  override lazy val responses: Counter = new CarbonCounter("akka.http.responses")
+  override lazy val responses: Counter = new CarbonCounter(settings.namespace,"responses")
 
-  override lazy val errors: Counter = new CarbonCounter("akka.http.responses.errors")
+  override lazy val errors: Counter = new CarbonCounter(settings.namespace,"responses.errors")
 
-  override lazy val duration: Timer = new CarbonTimer("akka.http.responses.duration")
+  override lazy val duration: Timer = new CarbonTimer(settings.namespace,"responses.duration")
 
-  override lazy val sentBytes: Histogram = new CarbonHistogram("akka.http.responses.bytes")
+  override lazy val sentBytes: Histogram = new CarbonHistogram(settings.namespace,"responses.bytes")
 
-  override lazy val connected: Gauge = new CarbonGauge("akka.http.connections.active")
+  override lazy val connected: Gauge = new CarbonGauge(settings.namespace,"connections.active")
 
-  override lazy val connections: Counter = new CarbonCounter("akka.http.connections")
+  override lazy val connections: Counter = new CarbonCounter(settings.namespace,"connections")
 }
