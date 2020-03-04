@@ -40,7 +40,7 @@ class CarbonClient(host: String, port: Int)(implicit system: ActorSystem) extend
   protected val clock: Clock = Clock.systemUTC()
 
   private def serialize[T](name: String, value: T, dimensions: Seq[Dimension], ts: Instant): ByteString = {
-    val tags = dimensions.map(d => d.key + "=" + d.value).toList
+    val tags         = dimensions.map(d => d.key + "=" + d.value).toList
     val taggedMetric = (name :: tags).mkString(";")
     ByteString(s"$taggedMetric $value ${ts.getEpochSecond}\n")
   }

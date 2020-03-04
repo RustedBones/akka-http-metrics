@@ -35,19 +35,19 @@ class DropwizardRegistry(settings: HttpMetricsSettings)(implicit val underlying:
 
   override lazy val active: Gauge = new DropwizardGauge(settings.namespace, "requests.active")
 
-  override lazy val requests: Counter = new DropwizardCounter(settings.namespace,"requests")
+  override lazy val requests: Counter = new DropwizardCounter(settings.namespace, "requests")
 
-  override lazy val receivedBytes: Histogram = new DropwizardHistogram(settings.namespace,"requests.bytes")
+  override lazy val receivedBytes: Histogram = new DropwizardHistogram(settings.namespace, "requests.bytes")
 
-  override lazy val responses: Counter = new DropwizardCounter(settings.namespace,"responses")
+  override lazy val responses: Counter = new DropwizardCounter(settings.namespace, "responses")
 
-  override lazy val errors: Counter = new DropwizardCounter(settings.namespace,"responses.errors")
+  override lazy val errors: Counter = new DropwizardCounter(settings.namespace, "responses.errors")
 
-  override lazy val duration: Timer = new DropwizardTimer(settings.namespace,"responses.duration")
+  override lazy val duration: Timer = new DropwizardTimer(settings.namespace, "responses.duration")
 
-  override lazy val sentBytes: Histogram = new DropwizardHistogram(settings.namespace,"responses.bytes")
+  override lazy val sentBytes: Histogram = new DropwizardHistogram(settings.namespace, "responses.bytes")
 
-  override lazy val connected: Gauge = new DropwizardGauge(settings.namespace,"connections.active")
+  override lazy val connected: Gauge = new DropwizardGauge(settings.namespace, "connections.active")
 
-  override lazy val connections: Counter = new DropwizardCounter(settings.namespace,"connections")
+  override lazy val connections: Counter = new DropwizardCounter(settings.namespace, "connections")
 }
