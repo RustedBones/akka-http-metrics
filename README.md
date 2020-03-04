@@ -1,5 +1,5 @@
 # akka-http-metrics
-![Scala CI](https://github.com/RustedBones/akka-http-metrics/workflows/Scala%20CI/badge.svg)
+[![Scala CI](https://github.com/RustedBones/akka-http-metrics/workflows/Scala%20CI/badge.svg)](https://github.com/RustedBones/akka-http-metrics/actions?query=workflow%3A"Scala+CI")
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/fr.davit/akka-http-metrics-core_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/fr.davit/akka-http-metrics-core_2.12)
 [![Software License](https://img.shields.io/badge/license-Apache%202-brightgreen.svg?style=flat)](LICENSE)
 
