@@ -4,7 +4,7 @@
 
 - Update libraries
 - Decorrelate routes from registry
-- Ad namespace setting
+- Add namespace setting
 
 ## 0.6.0 (2019-08-25)
 
