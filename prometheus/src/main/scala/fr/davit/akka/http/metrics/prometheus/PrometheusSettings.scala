@@ -51,13 +51,13 @@ object Buckets {
 }
 
 final case class PrometheusSettings(
-                                     namespace: String,
-                                     defineError: HttpResponse => Boolean,
-                                     includeStatusDimension: Boolean,
-                                     includePathDimension: Boolean,
-                                     receivedBytesConfig: HistogramConfig,
-                                     durationConfig: TimerConfig,
-                                     sentBytesConfig: HistogramConfig
+    namespace: String,
+    defineError: HttpResponse => Boolean,
+    includeStatusDimension: Boolean,
+    includePathDimension: Boolean,
+    receivedBytesConfig: HistogramConfig,
+    durationConfig: TimerConfig,
+    sentBytesConfig: HistogramConfig
 ) extends HttpMetricsSettings {
 
   override def withNamespace(namespace: String): PrometheusSettings =

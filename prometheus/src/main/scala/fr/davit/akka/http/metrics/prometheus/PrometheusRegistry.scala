@@ -119,7 +119,7 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
 
     settings.durationConfig match {
       case Quantiles(qs, maxAge, ageBuckets) =>
-          io.prometheus.client.Summary
+        io.prometheus.client.Summary
           .build()
           .namespace(settings.namespace)
           .name(name)
