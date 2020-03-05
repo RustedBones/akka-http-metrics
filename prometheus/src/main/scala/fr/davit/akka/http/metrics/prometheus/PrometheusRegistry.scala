@@ -17,9 +17,20 @@
 package fr.davit.akka.http.metrics.prometheus
 
 import fr.davit.akka.http.metrics.core._
+import fr.davit.akka.http.metrics.prometheus.Quantiles.Quantile
 import io.prometheus.client.CollectorRegistry
 
 object PrometheusRegistry {
+
+  implicit private class RichSummaryBuilder(val builder: io.prometheus.client.Summary.Builder) extends AnyVal {
+
+    def quantiles(qs: Quantile*): io.prometheus.client.Summary.Builder = {
+      qs.foldLeft(builder) {
+        case (b, q) => b.quantile(q.percentile, q.error)
+      }
+    }
+
+  }
 
   def apply(
       underlying: CollectorRegistry = CollectorRegistry.defaultRegistry,
@@ -37,6 +48,7 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
     extends HttpMetricsRegistry(settings) {
 
   import PrometheusConverters._
+  import PrometheusRegistry._
 
   private val labels: Seq[String] = {
     val statusLabel = if (settings.includeStatusDimension) Some("status") else None
@@ -62,19 +74,16 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
   override lazy val receivedBytes: Histogram = {
     val name = "requests_size_bytes"
     val help = "HTTP request size"
-    settings.receivedBytesSettings match {
+    settings.receivedBytesConfig match {
       case Quantiles(qs, maxAge, ageBuckets) =>
-        val builder = io.prometheus.client.Summary
+        io.prometheus.client.Summary
           .build()
           .namespace(settings.namespace)
           .name(name)
           .help(help)
+          .quantiles(qs: _*)
           .maxAgeSeconds(maxAge.toSeconds)
           .ageBuckets(ageBuckets)
-
-        qs.foldLeft(builder) {
-            case (b, q) => b.quantile(q.percentile, q.error)
-          }
           .register(underlying)
 
       case Buckets(bs) =>
@@ -104,41 +113,49 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
     .labelNames(labels: _*)
     .register(underlying)
 
-  override lazy val duration: Timer = settings.durationSettings match {
-    case Quantiles(qs, maxAge, ageBuckets) =>
-      val builder = io.prometheus.client.Summary
-        .build()
-        .namespace(settings.namespace)
-        .name("responses_duration_seconds")
-        .help("HTTP response duration")
-        .labelNames(labels: _*)
-        .maxAgeSeconds(maxAge.toSeconds)
-        .ageBuckets(ageBuckets)
+  override lazy val duration: Timer = {
+    val name = "responses_duration_seconds"
+    val help = "HTTP response duration"
 
-      qs.foldLeft(builder) {
-          case (b, q) => b.quantile(q.percentile, q.error)
-        }
-        .register(underlying)
+    settings.durationConfig match {
+      case Quantiles(qs, maxAge, ageBuckets) =>
+          io.prometheus.client.Summary
+          .build()
+          .namespace(settings.namespace)
+          .name(name)
+          .help(help)
+          .labelNames(labels: _*)
+          .quantiles(qs: _*)
+          .maxAgeSeconds(maxAge.toSeconds)
+          .ageBuckets(ageBuckets)
+          .register(underlying)
+      case Buckets(bs) =>
+        io.prometheus.client.Histogram
+          .build()
+          .namespace(settings.namespace)
+          .name(name)
+          .help(help)
+          .labelNames(labels: _*)
+          .buckets(bs: _*)
+          .register(underlying)
+    }
   }
 
   override lazy val sentBytes: Histogram = {
     val name = "responses_size_bytes"
     val help = "HTTP response size"
 
-    settings.sentBytesSettings match {
+    settings.sentBytesConfig match {
       case Quantiles(qs, maxAge, ageBuckets) =>
-        val builder = io.prometheus.client.Summary
+        io.prometheus.client.Summary
           .build()
           .namespace(settings.namespace)
           .name(name)
           .help(help)
           .labelNames(labels: _*)
+          .quantiles(qs: _*)
           .maxAgeSeconds(maxAge.toSeconds)
           .ageBuckets(ageBuckets)
-
-        qs.foldLeft(builder) {
-            case (b, q) => b.quantile(q.percentile, q.error)
-          }
           .register(underlying)
 
       case Buckets(bs) =>

@@ -6,13 +6,13 @@ import fr.davit.akka.http.metrics.prometheus.Quantiles.Quantile
 
 import scala.concurrent.duration._
 
-sealed trait HistogramSettings
+sealed trait HistogramConfig
 
-sealed trait TimerSettings
+sealed trait TimerConfig
 
-final case class Quantiles(qs: Array[Quantile], maxAge: FiniteDuration = 10.minutes, ageBuckets: Int = 5)
-    extends HistogramSettings
-    with TimerSettings
+final case class Quantiles(qs: List[Quantile], maxAge: FiniteDuration = 10.minutes, ageBuckets: Int = 5)
+    extends HistogramConfig
+    with TimerConfig
 
 object Quantiles {
 
@@ -24,24 +24,24 @@ object Quantiles {
       val error = (1 - p) / 10
       Quantile(p, error)
     }
-    Quantiles(quantiles.toArray)
+    Quantiles(quantiles.toList)
   }
 }
 
-final case class Buckets(bs: Array[Double]) extends HistogramSettings
+final case class Buckets(bs: List[Double]) extends HistogramConfig with TimerConfig
 
 object Buckets {
-  def apply(b: Double*): Buckets = Buckets(b.toArray)
+  def apply(b: Double*): Buckets = Buckets(b.toList)
 }
 
 final case class PrometheusSettings(
-    namespace: String,
-    defineError: HttpResponse => Boolean,
-    includeStatusDimension: Boolean,
-    includePathDimension: Boolean,
-    receivedBytesSettings: HistogramSettings,
-    durationSettings: TimerSettings,
-    sentBytesSettings: HistogramSettings
+                                     namespace: String,
+                                     defineError: HttpResponse => Boolean,
+                                     includeStatusDimension: Boolean,
+                                     includePathDimension: Boolean,
+                                     receivedBytesConfig: HistogramConfig,
+                                     durationConfig: TimerConfig,
+                                     sentBytesConfig: HistogramConfig
 ) extends HttpMetricsSettings {
 
   override def withNamespace(namespace: String): PrometheusSettings =
@@ -56,35 +56,40 @@ final case class PrometheusSettings(
   override def withIncludePathDimension(include: Boolean): PrometheusSettings =
     copy(includePathDimension = include)
 
-  def withReceivedBytesSettings(settings: HistogramSettings): PrometheusSettings =
-    copy(receivedBytesSettings = settings)
+  def withReceivedBytesConfig(config: HistogramConfig): PrometheusSettings =
+    copy(receivedBytesConfig = config)
 
-  def withDurationSettings(settings: TimerSettings): PrometheusSettings =
-    copy(durationSettings = settings)
+  def withDurationConfig(config: TimerConfig): PrometheusSettings =
+    copy(durationConfig = config)
 
-  def withSentBytesSettings(settings: HistogramSettings): PrometheusSettings =
-    copy(sentBytesSettings = settings)
+  def withSentBytesConfig(config: HistogramConfig): PrometheusSettings =
+    copy(sentBytesConfig = config)
 }
 
 object PrometheusSettings {
 
-  // generic buckets addapted to network packet sized
-  private val bytesBuckets = {
-    val buckets = Range(100, 1000, 100) ++ Range(1000, 10000, 1000) ++ Range(10000, 100000, 10000)
-    Buckets(buckets.map(_.toDouble).toArray)
+  // generic durations adapted to network durations in seconds
+  val DurationBuckets: Buckets = {
+    Buckets(0.005, 0.01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10)
+  }
+
+  // generic buckets adapted to network messages sized
+  val BytesBuckets: Buckets = {
+    val buckets = Range(0, 1000, 100) ++ Range(1000, 10000, 1000) ++ Range(10000, 100000, 10000)
+    Buckets(buckets.map(_.toDouble).toList)
   }
 
   // basic quantiles
-  private val quantiles = Quantiles(0.75, 0.95, 0.98, 0.99, 0.999)
+  val DefaultQuantiles: Quantiles = Quantiles(0.75, 0.95, 0.98, 0.99, 0.999)
 
   val default: PrometheusSettings = PrometheusSettings(
-    "akka_http",
-    _.status.isInstanceOf[StatusCodes.ServerError],
+    namespace = "akka_http",
+    defineError = _.status.isInstanceOf[StatusCodes.ServerError],
     includeStatusDimension = false,
     includePathDimension = false,
-    bytesBuckets,
-    quantiles,
-    bytesBuckets
+    receivedBytesConfig = BytesBuckets,
+    durationConfig = DurationBuckets,
+    sentBytesConfig = BytesBuckets
   )
 
 }

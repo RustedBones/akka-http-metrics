@@ -289,14 +289,25 @@ Create your registry
 
 ```scala
 import io.prometheus.client.CollectorRegistry
-import fr.davit.akka.http.metrics.core.HttpMetricsSettings
-import fr.davit.akka.http.metrics.prometheus.PrometheusRegistry
+import fr.davit.akka.http.metrics.prometheus.{PrometheusRegistry, PrometheusSettings}
 
-val settings: HttpMetricsSettings = ... // your http metrics settings
+val settings: PrometheusSettings = ... // your http metrics settings
 val prometheus: CollectorRegistry = ... // your prometheus registry
 
 val registry = PrometheusRegistry(prometheus, settings) // or PrometheusRegistry(settings = settings) to use the default registry
 ```
+
+You can fine-tune the `histogram/summary` configuration of `buckets/quantiles` for the `request
+ sizes`, `durations` and `response sizes` metrics.
+ 
+```scala
+val settings: PrometheusSettings = PrometheusSettings
+  .default
+  .withDurationConfig(Buckets(1, 2, 3, 5, 8, 13, 21, 34))
+  .withReceivedBytesConfig(Quantiles(0.5, 0.75, 0.9, 0.95, 0.99))
+  .withSentBytesConfig(PrometheusSettings.DefaultQuantiles)
+```
+
 
 Expose the metrics
 

@@ -36,7 +36,13 @@ class PrometheusGauge(gauge: io.prometheus.client.Gauge) extends Gauge {
   }
 }
 
-class PrometheusTimer(summary: io.prometheus.client.Summary) extends Timer {
+class PrometheusSummaryTimer(summary: io.prometheus.client.Summary) extends Timer {
+  override def observe(duration: FiniteDuration, dimensions: Seq[Dimension] = Seq.empty): Unit = {
+    summary.labels(dimensions.map(_.value): _*).observe(duration.toMillis.toDouble / 1000.0)
+  }
+}
+
+class PrometheusHistogramTimer(summary: io.prometheus.client.Histogram) extends Timer {
   override def observe(duration: FiniteDuration, dimensions: Seq[Dimension] = Seq.empty): Unit = {
     summary.labels(dimensions.map(_.value): _*).observe(duration.toMillis.toDouble / 1000.0)
   }
