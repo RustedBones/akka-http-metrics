@@ -24,6 +24,7 @@ import akka.event.Logging
 import akka.stream.scaladsl.{Flow, Keep, RestartFlow, Sink, Source, Tcp}
 import akka.stream.{OverflowStrategy, QueueOfferResult}
 import akka.util.ByteString
+import fr.davit.akka.http.metrics.core.Dimension
 
 import scala.concurrent.Await
 import scala.concurrent.duration.{Duration, _}
@@ -38,8 +39,10 @@ class CarbonClient(host: String, port: Int)(implicit system: ActorSystem) extend
   private val logger         = Logging(system.eventStream, classOf[CarbonClient])
   protected val clock: Clock = Clock.systemUTC()
 
-  private def serialize[T](name: String, value: T, ts: Instant): ByteString = {
-    ByteString(s"$name $value ${ts.getEpochSecond}\n")
+  private def serialize[T](name: String, value: T, dimensions: Seq[Dimension], ts: Instant): ByteString = {
+    val tags         = dimensions.map(d => d.key + "=" + d.value).toList
+    val taggedMetric = (name :: tags).mkString(";")
+    ByteString(s"$taggedMetric $value ${ts.getEpochSecond}\n")
   }
 
   // TODO read backoff from config
@@ -57,9 +60,15 @@ class CarbonClient(host: String, port: Int)(implicit system: ActorSystem) extend
     .toMat(Sink.ignore)(Keep.left)
     .run()
 
-  def publish[T](name: String, value: T, ts: Instant = Instant.now(clock)): Unit = {
+  def publish[T](
+      name: String,
+      value: T,
+      dimensions: Seq[Dimension] = Seq.empty,
+      ts: Instant = Instant
+        .now(clock)
+  ): Unit = {
     // it's reasonable to block until the message in enqueued
-    Await.result(queue.offer(serialize(name, value, ts)), Duration.Inf) match {
+    Await.result(queue.offer(serialize(name, value, dimensions, ts)), Duration.Inf) match {
       case QueueOfferResult.Enqueued    => logger.debug("Metric {} enqueued", name)
       case QueueOfferResult.Dropped     => logger.debug("Metric {} dropped", name)
       case QueueOfferResult.Failure(e)  => logger.error(e, s"Failed publishing metric $name")

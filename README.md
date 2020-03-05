@@ -71,11 +71,15 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
-import fr.davit.akka.http.metrics.core.HttpMetricsRegistry
+import fr.davit.akka.http.metrics.core.{HttpMetricsRegistry, HttpMetricsSettings}
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsRoute._
 
 implicit val system = ActorSystem()
 implicit val materializer = ActorMaterializer()
+
+val settings: HttpMetricsSettings = HttpMetricsSettings
+                                      .default
+                                      .withNamespace("com.example.service")
 
 val registry: HttpMetricsRegistry = ... // concrete registry implementation
 
@@ -88,9 +92,9 @@ By default, the errored request counter will be incremented when the served resp
 You can override this behaviour in the settings.
 
 ```scala
-val settings = HttpMetricsSettings.default.withDefineError(_.status.isFailure)
-
-Http().bindAndHandle(route.recordMetrics(registry, settings), "localhost", 8080)
+val settings = HttpMetricsSettings
+  .default
+  .withDefineError(_.status.isFailure)
 ```
 
 In this example, all responses with status >= 400 are considered as errors.
@@ -155,17 +159,17 @@ Of course, you will also need to have the implicit marshaller for your registry 
 
 ### [Datadog]( https://docs.datadoghq.com/developers/dogstatsd/)
 
-| metric             | name                             |
-|--------------------|----------------------------------|
-| requests           | akka.http.requests_count         |
-| active requests    | akka.http.requests_active        |
-| request sizes      | akka.http.requests_bytes         |
-| responses          | akka.http.responses_count        |
-| errors             | akka.http.responses_errors_count |
-| durations          | akka.http.responses_duration     |
-| response sizes     | akka.http.response_bytes         |
-| connections        | akka.http.connections_count      |
-| active connections | akka.http.connections_active     |
+| metric             | name                   |
+|--------------------|------------------------|
+| requests           | requests_count         |
+| active requests    | requests_active        |
+| request sizes      | requests_bytes         |
+| responses          | responses_count        |
+| errors             | responses_errors_count |
+| durations          | responses_duration     |
+| response sizes     | response_bytes         |
+| connections        | connections_count      |
+| active connections | connections_active     |
 
 The `DatadogRegistry` is just a facade to publish to your StatsD server. The registry itself not located in the JVM, 
 for this reason it is not possible to expose the metrics in your API.
@@ -192,17 +196,17 @@ See datadog's [documentation](https://github.com/dataDog/java-dogstatsd-client) 
 
 ### [Dropwizard](https://metrics.dropwizard.io/)
 
-| metric             | dropwizard                   |
-|--------------------|------------------------------|
-| requests           | akka.http.requests           |
-| active requests    | akka.http.requests.active    |
-| request sizes      | akka.http.requests.bytes     |
-| responses          | akka.http.responses          |
-| errors             | akka.http.responses.errors   |
-| durations          | akka.http.responses.duration |
-| response sizes     | akka.http.responses.bytes    |
-| connections        | akka.http.connections        |
-| active connections | akka.http.connections.active |
+| metric             | name               |
+|--------------------|--------------------|
+| requests           | requests           |
+| active requests    | requests.active    |
+| request sizes      | requests.bytes     |
+| responses          | responses          |
+| errors             | responses.errors   |
+| durations          | responses.duration |
+| response sizes     | responses.bytes    |
+| connections        | connections        |
+| active connections | connections.active |
 
 **Important**: The `DropwizardRegistry` works with tags. This feature is only supported since dropwizard `v5`. 
 
@@ -233,17 +237,17 @@ val route = (get & path("metrics"))(metrics(registry))
 
 ### [Graphite](https://graphiteapp.org/)
 
-| metric             | dropwizard                   |
-|--------------------|------------------------------|
-| requests           | akka.http.requests           |
-| active requests    | akka.http.requests.active    |
-| request sizes      | akka.http.requests.bytes     |
-| responses          | akka.http.responses          |
-| errors             | akka.http.responses.errors   |
-| durations          | akka.http.responses.duration |
-| response sizes     | akka.http.responses.bytes    |
-| connections        | akka.http.connections        |
-| active connections | akka.http.connections.active |
+| metric             | name               |
+|--------------------|--------------------|
+| requests           | requests           |
+| active requests    | requests.active    |
+| request sizes      | requests.bytes     |
+| responses          | responses          |
+| errors             | responses.errors   |
+| durations          | responses.duration |
+| response sizes     | responses.bytes    |
+| connections        | connections        |
+| active connections | connections.active |
 
 Add to your `build.sbt`:
 
@@ -263,17 +267,17 @@ val registry = GraphiteRegistry(carbonClient)
 
 ### [Prometheus](http://prometheus.io/)
 
-| metric             | prometheus                           |
-|--------------------|--------------------------------------|
-| requests           | akka_http_requests_total             |
-| active requests    | akka_http_requests_active            |
-| request sizes      | akka_http_requests_size_bytes        |
-| responses          | akka_http_responses_total            |
-| errors             | akka_http_responses_errors_total     |
-| durations          | akka_http_responses_duration_seconds |
-| response sizes     | akka_http_responses_size_bytes       |
-| connections        | akka_http_connections_total          |
-| active connections | akka_http_connections_active         |
+| metric             | name                       |
+|--------------------|----------------------------|
+| requests           | requests_total             |
+| active requests    | requests_active            |
+| request sizes      | requests_size_bytes        |
+| responses          | responses_total            |
+| errors             | responses_errors_total     |
+| durations          | responses_duration_seconds |
+| response sizes     | responses_size_bytes       |
+| connections        | connections_total          |
+| active connections | connections_active         |
 
 Add to your `build.sbt`:
 
@@ -285,6 +289,7 @@ Create your registry
 
 ```scala
 import io.prometheus.client.CollectorRegistry
+import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsSettings
 import fr.davit.akka.http.metrics.prometheus.PrometheusRegistry
 
 val settings: HttpMetricsSettings = ... // your http metrics settings
