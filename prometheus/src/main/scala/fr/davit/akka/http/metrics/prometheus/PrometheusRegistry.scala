@@ -17,19 +17,13 @@
 package fr.davit.akka.http.metrics.prometheus
 
 import fr.davit.akka.http.metrics.core._
-import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsSettings
 import io.prometheus.client.CollectorRegistry
 
 object PrometheusRegistry {
 
-  private val Tolerance = 0.05
-
-  val defaultSettings: HttpMetricsSettings = HttpMetricsSettings.default
-    .withNamespace("akka_http")
-
   def apply(
       underlying: CollectorRegistry = CollectorRegistry.defaultRegistry,
-      settings: HttpMetricsSettings = defaultSettings
+      settings: PrometheusSettings = PrometheusSettings.default
   ): PrometheusRegistry = {
     new PrometheusRegistry(settings, underlying)
   }
@@ -39,10 +33,9 @@ object PrometheusRegistry {
   * Prometheus registry
   * For metrics naming see [https://prometheus.io/docs/practices/naming/]
   */
-class PrometheusRegistry(settings: HttpMetricsSettings, val underlying: CollectorRegistry)
+class PrometheusRegistry(settings: PrometheusSettings, val underlying: CollectorRegistry)
     extends HttpMetricsRegistry(settings) {
 
-  import PrometheusRegistry._
   import PrometheusConverters._
 
   private val labels: Seq[String] = {
@@ -66,17 +59,34 @@ class PrometheusRegistry(settings: HttpMetricsSettings, val underlying: Collecto
     .help("Total HTTP requests")
     .register(underlying)
 
-  override lazy val receivedBytes: Histogram = io.prometheus.client.Summary
-    .build()
-    .namespace(settings.namespace)
-    .name("requests_size_bytes")
-    .help("HTTP request size")
-    .quantile(0.75, Tolerance)
-    .quantile(0.95, Tolerance)
-    .quantile(0.98, Tolerance)
-    .quantile(0.99, Tolerance)
-    .quantile(0.999, Tolerance)
-    .register(underlying)
+  override lazy val receivedBytes: Histogram = {
+    val name = "requests_size_bytes"
+    val help = "HTTP request size"
+    settings.receivedBytesSettings match {
+      case Quantiles(qs, maxAge, ageBuckets) =>
+        val builder = io.prometheus.client.Summary
+          .build()
+          .namespace(settings.namespace)
+          .name(name)
+          .help(help)
+          .maxAgeSeconds(maxAge.toSeconds)
+          .ageBuckets(ageBuckets)
+
+        qs.foldLeft(builder) {
+            case (b, q) => b.quantile(q.percentile, q.error)
+          }
+          .register(underlying)
+
+      case Buckets(bs) =>
+        io.prometheus.client.Histogram
+          .build()
+          .namespace(settings.namespace)
+          .name(name)
+          .help(help)
+          .buckets(bs: _*)
+          .register(underlying)
+    }
+  }
 
   override lazy val responses: Counter = io.prometheus.client.Counter
     .build()
@@ -94,31 +104,54 @@ class PrometheusRegistry(settings: HttpMetricsSettings, val underlying: Collecto
     .labelNames(labels: _*)
     .register(underlying)
 
-  override lazy val duration: Timer = io.prometheus.client.Summary
-    .build()
-    .namespace(settings.namespace)
-    .name("responses_duration_seconds")
-    .help("HTTP response duration")
-    .labelNames(labels: _*)
-    .quantile(0.75, Tolerance)
-    .quantile(0.95, Tolerance)
-    .quantile(0.98, Tolerance)
-    .quantile(0.99, Tolerance)
-    .quantile(0.999, Tolerance)
-    .register(underlying)
+  override lazy val duration: Timer = settings.durationSettings match {
+    case Quantiles(qs, maxAge, ageBuckets) =>
+      val builder = io.prometheus.client.Summary
+        .build()
+        .namespace(settings.namespace)
+        .name("responses_duration_seconds")
+        .help("HTTP response duration")
+        .labelNames(labels: _*)
+        .maxAgeSeconds(maxAge.toSeconds)
+        .ageBuckets(ageBuckets)
 
-  override lazy val sentBytes: Histogram = io.prometheus.client.Summary
-    .build()
-    .namespace(settings.namespace)
-    .name("responses_size_bytes")
-    .help("HTTP response size")
-    .labelNames(labels: _*)
-    .quantile(0.75, Tolerance)
-    .quantile(0.95, Tolerance)
-    .quantile(0.98, Tolerance)
-    .quantile(0.99, Tolerance)
-    .quantile(0.999, Tolerance)
-    .register(underlying)
+      qs.foldLeft(builder) {
+          case (b, q) => b.quantile(q.percentile, q.error)
+        }
+        .register(underlying)
+  }
+
+  override lazy val sentBytes: Histogram = {
+    val name = "responses_size_bytes"
+    val help = "HTTP response size"
+
+    settings.sentBytesSettings match {
+      case Quantiles(qs, maxAge, ageBuckets) =>
+        val builder = io.prometheus.client.Summary
+          .build()
+          .namespace(settings.namespace)
+          .name(name)
+          .help(help)
+          .labelNames(labels: _*)
+          .maxAgeSeconds(maxAge.toSeconds)
+          .ageBuckets(ageBuckets)
+
+        qs.foldLeft(builder) {
+            case (b, q) => b.quantile(q.percentile, q.error)
+          }
+          .register(underlying)
+
+      case Buckets(bs) =>
+        io.prometheus.client.Histogram
+          .build()
+          .namespace(settings.namespace)
+          .name(name)
+          .help(help)
+          .labelNames(labels: _*)
+          .buckets(bs: _*)
+          .register(underlying)
+    }
+  }
 
   override val connected: Gauge = io.prometheus.client.Gauge
     .build()

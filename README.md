@@ -289,7 +289,7 @@ Create your registry
 
 ```scala
 import io.prometheus.client.CollectorRegistry
-import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsSettings
+import fr.davit.akka.http.metrics.core.HttpMetricsSettings
 import fr.davit.akka.http.metrics.prometheus.PrometheusRegistry
 
 val settings: HttpMetricsSettings = ... // your http metrics settings

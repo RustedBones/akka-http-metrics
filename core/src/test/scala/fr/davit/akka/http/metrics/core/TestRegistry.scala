@@ -18,7 +18,6 @@ package fr.davit.akka.http.metrics.core
 
 import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
 import akka.http.scaladsl.model.HttpEntity
-import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsSettings
 
 import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration

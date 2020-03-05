@@ -22,7 +22,6 @@ import enumeratum.EnumEntry.Lowercase
 import enumeratum.{Enum, EnumEntry}
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{PathDimension, StatusGroupDimension}
 import fr.davit.akka.http.metrics.core.scaladsl.model.{PathLabelHeader, SegmentLabelHeader}
-import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsSettings
 
 import scala.collection.immutable
 import scala.concurrent.duration.Deadline

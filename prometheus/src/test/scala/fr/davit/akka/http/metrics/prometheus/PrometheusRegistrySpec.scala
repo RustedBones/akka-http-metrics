@@ -17,9 +17,8 @@
 package fr.davit.akka.http.metrics.prometheus
 
 import akka.http.scaladsl.model.StatusCodes
-import fr.davit.akka.http.metrics.core.Dimension
+import fr.davit.akka.http.metrics.core.{Dimension, HttpMetricsSettings}
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{PathDimension, StatusGroupDimension}
-import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsSettings
 import io.prometheus.client.CollectorRegistry
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -45,7 +44,7 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
   trait DimensionFixture extends Fixture {
     override val registry = PrometheusRegistry(
       new CollectorRegistry(),
-      PrometheusRegistry.defaultSettings.withIncludeStatusDimension(true).withIncludePathDimension(true)
+      PrometheusSettings.default.withIncludeStatusDimension(true).withIncludePathDimension(true)
     )
   }
 
