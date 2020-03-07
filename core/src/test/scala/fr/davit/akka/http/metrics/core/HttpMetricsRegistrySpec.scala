@@ -23,7 +23,6 @@ import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.StatusGroupDimension.StatusGroup
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{PathDimension, StatusGroupDimension}
 import fr.davit.akka.http.metrics.core.scaladsl.model.{PathLabelHeader, SegmentLabelHeader}
-import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsSettings
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

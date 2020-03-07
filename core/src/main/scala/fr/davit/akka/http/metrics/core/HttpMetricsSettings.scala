@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package fr.davit.akka.http.metrics.core.scaladsl.server
+package fr.davit.akka.http.metrics.core
 
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 

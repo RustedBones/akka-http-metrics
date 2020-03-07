@@ -17,8 +17,7 @@
 package fr.davit.akka.http.metrics.datadog
 
 import com.timgroup.statsd.StatsDClient
-import fr.davit.akka.http.metrics.core._
-import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsSettings
+import fr.davit.akka.http.metrics.core.{HttpMetricsSettings, _}
 
 object DatadogRegistry {
 
