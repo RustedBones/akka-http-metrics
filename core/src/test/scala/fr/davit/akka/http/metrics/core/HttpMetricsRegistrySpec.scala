@@ -19,9 +19,8 @@ package fr.davit.akka.http.metrics.core
 import java.util.concurrent.Executor
 
 import akka.Done
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
-import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.StatusGroupDimension.StatusGroup
-import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{PathDimension, StatusGroupDimension}
+import akka.http.scaladsl.model.{HttpMethods, HttpRequest, HttpResponse, StatusCodes}
+import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{MethodDimension, PathDimension, StatusGroupDimension}
 import fr.davit.akka.http.metrics.core.scaladsl.model.{PathLabelHeader, SegmentLabelHeader}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpec
@@ -116,10 +115,18 @@ class HttpMetricsRegistrySpec extends AnyFlatSpec with Matchers with Eventually 
     HttpMetricsSettings.default.withIncludeStatusDimension(true)
   ) {
     registry.onRequest(HttpRequest(), Future.successful(HttpResponse()))
-    registry.responses.value(Seq(StatusGroupDimension(StatusGroup.`2xx`))) shouldBe 1
-    registry.responses.value(Seq(StatusGroupDimension(StatusGroup.`3xx`))) shouldBe 0
-    registry.responses.value(Seq(StatusGroupDimension(StatusGroup.`4xx`))) shouldBe 0
-    registry.responses.value(Seq(StatusGroupDimension(StatusGroup.`5xx`))) shouldBe 0
+    registry.responses.value(Seq(StatusGroupDimension(StatusCodes.OK))) shouldBe 1
+    registry.responses.value(Seq(StatusGroupDimension(StatusCodes.Found))) shouldBe 0
+    registry.responses.value(Seq(StatusGroupDimension(StatusCodes.BadRequest))) shouldBe 0
+    registry.responses.value(Seq(StatusGroupDimension(StatusCodes.InternalServerError))) shouldBe 0
+  }
+
+  it should "add method dimension when enabled" in new Fixture(
+    HttpMetricsSettings.default.withIncludeMethodDimension(true)
+  ) {
+    registry.onRequest(HttpRequest(), Future.successful(HttpResponse()))
+    registry.responses.value(Seq(MethodDimension(HttpMethods.GET))) shouldBe 1
+    registry.responses.value(Seq(MethodDimension(HttpMethods.PUT))) shouldBe 0
   }
 
   it should "add path dimension when enabled" in new Fixture(

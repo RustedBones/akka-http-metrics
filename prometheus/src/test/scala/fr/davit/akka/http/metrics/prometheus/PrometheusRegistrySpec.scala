@@ -16,9 +16,9 @@
 
 package fr.davit.akka.http.metrics.prometheus
 
-import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.{HttpMethods, StatusCodes}
 import fr.davit.akka.http.metrics.core.{Dimension, HttpMetricsSettings}
-import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{PathDimension, StatusGroupDimension}
+import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{MethodDimension, PathDimension, StatusGroupDimension}
 import io.prometheus.client.CollectorRegistry
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -27,7 +27,11 @@ import scala.concurrent.duration._
 
 class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
 
-  val dimensions = Seq(StatusGroupDimension(StatusCodes.OK), PathDimension("/api"))
+  val dimensions = Seq(
+    MethodDimension(HttpMethods.GET),
+    PathDimension("/api"),
+    StatusGroupDimension(StatusCodes.OK)
+  )
 
   trait Fixture {
     val registry = PrometheusRegistry(new CollectorRegistry())
@@ -44,7 +48,10 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
   trait DimensionFixture extends Fixture {
     override val registry = PrometheusRegistry(
       new CollectorRegistry(),
-      PrometheusSettings.default.withIncludeStatusDimension(true).withIncludePathDimension(true)
+      PrometheusSettings.default
+        .withIncludeMethodDimension(true)
+        .withIncludePathDimension(true)
+        .withIncludeStatusDimension(true)
     )
   }
 

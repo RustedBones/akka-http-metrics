@@ -53,8 +53,9 @@ object Buckets {
 final case class PrometheusSettings(
     namespace: String,
     defineError: HttpResponse => Boolean,
-    includeStatusDimension: Boolean,
+    includeMethodDimension: Boolean,
     includePathDimension: Boolean,
+    includeStatusDimension: Boolean,
     receivedBytesConfig: HistogramConfig,
     durationConfig: TimerConfig,
     sentBytesConfig: HistogramConfig
@@ -66,11 +67,14 @@ final case class PrometheusSettings(
   override def withDefineError(fn: HttpResponse => Boolean): PrometheusSettings =
     copy(defineError = defineError)
 
-  override def withIncludeStatusDimension(include: Boolean): PrometheusSettings =
-    copy(includeStatusDimension = include)
+  override def withIncludeMethodDimension(include: Boolean): PrometheusSettings =
+    copy(includeMethodDimension = include)
 
   override def withIncludePathDimension(include: Boolean): PrometheusSettings =
     copy(includePathDimension = include)
+
+  override def withIncludeStatusDimension(include: Boolean): PrometheusSettings =
+    copy(includeStatusDimension = include)
 
   def withReceivedBytesConfig(config: HistogramConfig): PrometheusSettings =
     copy(receivedBytesConfig = config)
@@ -101,8 +105,9 @@ object PrometheusSettings {
   val default: PrometheusSettings = PrometheusSettings(
     namespace = "akka_http",
     defineError = _.status.isInstanceOf[StatusCodes.ServerError],
-    includeStatusDimension = false,
+    includeMethodDimension = false,
     includePathDimension = false,
+    includeStatusDimension = false,
     receivedBytesConfig = BytesBuckets,
     durationConfig = DurationBuckets,
     sentBytesConfig = BytesBuckets

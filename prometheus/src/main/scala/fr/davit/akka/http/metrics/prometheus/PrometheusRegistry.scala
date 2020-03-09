@@ -16,6 +16,7 @@
 
 package fr.davit.akka.http.metrics.prometheus
 
+import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{MethodDimension, PathDimension, StatusGroupDimension}
 import fr.davit.akka.http.metrics.core._
 import fr.davit.akka.http.metrics.prometheus.Quantiles.Quantile
 import io.prometheus.client.CollectorRegistry
@@ -51,10 +52,10 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
   import PrometheusRegistry._
 
   private val labels: Seq[String] = {
-    val statusLabel = if (settings.includeStatusDimension) Some("status") else None
-    val pathLabel   = if (settings.includePathDimension) Some("path") else None
-
-    statusLabel.toSeq ++ pathLabel
+    val methodLabel = if (settings.includeMethodDimension) Some(MethodDimension.Key) else None
+    val pathLabel   = if (settings.includePathDimension) Some(PathDimension.Key) else None
+    val statusLabel = if (settings.includeStatusDimension) Some(StatusGroupDimension.Key) else None
+    (methodLabel ++ pathLabel ++ statusLabel).toSeq
   }
 
   override lazy val active: Gauge = io.prometheus.client.Gauge
