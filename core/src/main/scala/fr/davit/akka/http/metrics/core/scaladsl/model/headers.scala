@@ -20,40 +20,35 @@ import akka.http.scaladsl.model.headers.{ModeledCustomHeader, ModeledCustomHeade
 
 import scala.util.Try
 
-private[core] final case class PathLabelHeader(label: String) extends ModeledCustomHeader[PathLabelHeader] {
+private[core] sealed abstract class PathLabelHeader extends ModeledCustomHeader[PathLabelHeader] {
   override def renderInRequests = false
 
   override def renderInResponses = false
 
   override val companion = PathLabelHeader
+}
 
+private[core] final case class FullPathLabelHeader(label: String) extends PathLabelHeader {
   override def value: String = label
 }
 
+private[core] final case class SubPathLabelHeader(path: String, label: String) extends PathLabelHeader {
+  override def value: String = s"$path#$label"
+}
+
 private[core] object PathLabelHeader extends ModeledCustomHeaderCompanion[PathLabelHeader] {
+
+  val Unhandled = FullPathLabelHeader("unhandled")
+
   override val name = "x-path-label"
 
-  override def parse(value: String) = Try(new PathLabelHeader(value))
-}
-
-private[core] final case class SegmentLabelHeader(from: Int, to: Int, label: String)
-    extends ModeledCustomHeader[SegmentLabelHeader] {
-  override def renderInRequests = false
-
-  override def renderInResponses = false
-
-  override val companion = SegmentLabelHeader
-
-  override def value: String = s"$from:$to:$label"
-}
-
-private[core] object SegmentLabelHeader extends ModeledCustomHeaderCompanion[SegmentLabelHeader] {
-  override val name = "x-segment-label"
-
   override def parse(value: String) = Try {
-    value.split(":") match {
-      case Array(from, to, label) => new SegmentLabelHeader(from.toInt, to.toInt, label)
-      case _                      => throw new IllegalArgumentException(s"Invalid SegmentLabelHeader $value")
+    val index = value.indexOf('#')
+    if (index >= 0) {
+      val (path, label) = value.splitAt(index)
+      SubPathLabelHeader(path, label)
+    } else {
+      FullPathLabelHeader(value)
     }
   }
 }

@@ -19,7 +19,7 @@ package fr.davit.akka.http.metrics.core
 import akka.Done
 import akka.http.scaladsl.model._
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{MethodDimension, PathDimension, StatusGroupDimension}
-import fr.davit.akka.http.metrics.core.scaladsl.model.{PathLabelHeader, SegmentLabelHeader}
+import fr.davit.akka.http.metrics.core.scaladsl.model.{FullPathLabelHeader, PathLabelHeader, SubPathLabelHeader}
 
 import scala.concurrent.duration.Deadline
 import scala.concurrent.{ExecutionContext, Future}
@@ -91,24 +91,11 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
 
   private def buildPathLabel(
       path: Uri.Path,
-      pathLabel: Option[PathLabelHeader],
-      segmentLabels: Seq[SegmentLabelHeader]
-  ): PathDimension = {
-    import fr.davit.akka.http.metrics.core.scaladsl.model.Extensions._
-    pathLabel match {
-      case Some(label) =>
-        PathDimension(label.value)
-      case None =>
-        val builder = new StringBuilder()
-        val (rest, _) = segmentLabels.foldLeft((path, 0)) {
-          case ((r, idx), l) =>
-            builder.append(r.take(l.from - idx))
-            builder.append(l.label)
-            (r.drop(l.to - idx), l.to)
-        }
-        builder.append(rest)
-        PathDimension(builder.result())
-    }
+      pathLabel: Option[PathLabelHeader]
+  ): PathDimension = pathLabel match {
+    case Some(SubPathLabelHeader(p, l)) => PathDimension(path.toString.replaceAllLiterally(p, l))
+    case Some(FullPathLabelHeader(l))   => PathDimension(l)
+    case None                           => PathDimension(path.toString)
   }
 
   override def onRequest(request: HttpRequest, response: Future[HttpResponse])(
@@ -121,13 +108,12 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
 
     response.foreach { r =>
       // extract custom segment headers
-      val pathLabel     = r.header[PathLabelHeader]
-      val segmentLabels = r.headers[SegmentLabelHeader]
+      val pathLabel = r.header[PathLabelHeader]
 
       // compute dimensions
       // format: off
       val methodDim = if (settings.includeMethodDimension) Some(MethodDimension(request.method)) else None
-      val pathDim = if (settings.includePathDimension) Some(buildPathLabel(request.uri.path, pathLabel, segmentLabels)) else None
+      val pathDim = if (settings.includePathDimension) Some(buildPathLabel(request.uri.path, pathLabel)) else None
       val statusGroupDim = if (settings.includeStatusDimension) Some(StatusGroupDimension(r.status)) else None
       val dimensions = (methodDim ++ pathDim ++ statusGroupDim).toSeq
       // format: on
