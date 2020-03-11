@@ -112,17 +112,18 @@ By default metrics labels are disabled. You can enable them in the settings.
 
 ```scala
 val settings = HttpMetricsSettings.default
-  .withIncludeStatusDimension(true)
+  .withIncludeMethodDimension(true)
   .withIncludePathDimension(true)
+  .withIncludeStatusDimension(true)
 ```
 
-##### Status group
+##### Method
 
-The status group labels creates the following dimensions on the metrics: `1xx|2xx|3xx|4xx|5xx|other`
+The method of the request is used as dimension on the metrics. eg. `GET`
 
 ##### Path
 
-The path labels uses the path of the request as dimension on the metrics.
+The path of the request is used as dimension on the metrics.
 
 When enabling this dimension, you must be careful about cardinality: see [here](https://prometheus.io/docs/practices/naming/#labels).
 If your path is contains unbounded dynamic segments, you must use the labeled path directives defined in `HttpMetricsDirectives`:
@@ -139,6 +140,9 @@ This will replace the dynamic segment with the provided label.
 
 Moreover, all unhandled requests will have path dimension set to `unhandled`.
 
+##### Status group
+
+The status group creates the following dimensions on the metrics: `1xx|2xx|3xx|4xx|5xx|other`
 
 ### Expose metrics
 

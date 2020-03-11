@@ -18,49 +18,44 @@ package fr.davit.akka.http.metrics.core
 
 import akka.Done
 import akka.http.scaladsl.model._
-import enumeratum.EnumEntry.Lowercase
-import enumeratum.{Enum, EnumEntry}
-import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{PathDimension, StatusGroupDimension}
+import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{MethodDimension, PathDimension, StatusGroupDimension}
 import fr.davit.akka.http.metrics.core.scaladsl.model.{PathLabelHeader, SegmentLabelHeader}
 
-import scala.collection.immutable
 import scala.concurrent.duration.Deadline
 import scala.concurrent.{ExecutionContext, Future}
 
 object HttpMetricsRegistry {
 
+  object MethodDimension {
+    val Key: String = "method"
+  }
+
+  final case class MethodDimension(method: HttpMethod) extends Dimension {
+    override def key: String   = MethodDimension.Key
+    override def value: String = method.value
+  }
+
+  object PathDimension {
+    val Key: String = "path"
+  }
+
   final case class PathDimension(value: String) extends Dimension {
-    override def key = "path"
+    override def key = PathDimension.Key
   }
 
   object StatusGroupDimension {
-    sealed trait StatusGroup extends EnumEntry with Lowercase
-
-    object StatusGroup extends Enum[StatusGroup] {
-
-      def apply(status: StatusCode): StatusGroup = status match {
-        case _: StatusCodes.Success     => `2xx`
-        case _: StatusCodes.Redirection => `3xx`
-        case _: StatusCodes.ClientError => `4xx`
-        case _: StatusCodes.ServerError => `5xx`
-        case _                          => Other
-      }
-
-      case object `2xx` extends StatusGroup
-      case object `3xx` extends StatusGroup
-      case object `4xx` extends StatusGroup
-      case object `5xx` extends StatusGroup
-      case object Other extends StatusGroup
-
-      override val values: immutable.IndexedSeq[StatusGroup] = findValues
-    }
-
-    def apply(status: StatusCode): StatusGroupDimension = new StatusGroupDimension(StatusGroup(status))
+    val Key: String = "status"
   }
 
-  final case class StatusGroupDimension(group: StatusGroupDimension.StatusGroup) extends Dimension {
-    override def key: String   = "status"
-    override def value: String = group.toString.toLowerCase
+  final case class StatusGroupDimension(code: StatusCode) extends Dimension {
+    override def key: String = StatusGroupDimension.Key
+    override def value: String = code match {
+      case _: StatusCodes.Success     => "2xx"
+      case _: StatusCodes.Redirection => "3xx"
+      case _: StatusCodes.ClientError => "4xx"
+      case _: StatusCodes.ServerError => "5xx"
+      case _                          => "other"
+    }
   }
 
 }
@@ -130,10 +125,12 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
       val segmentLabels = r.headers[SegmentLabelHeader]
 
       // compute dimensions
+      // format: off
+      val methodDim = if (settings.includeMethodDimension) Some(MethodDimension(request.method)) else None
+      val pathDim = if (settings.includePathDimension) Some(buildPathLabel(request.uri.path, pathLabel, segmentLabels)) else None
       val statusGroupDim = if (settings.includeStatusDimension) Some(StatusGroupDimension(r.status)) else None
-      val pathDim =
-        if (settings.includePathDimension) Some(buildPathLabel(request.uri.path, pathLabel, segmentLabels)) else None
-      val dimensions = statusGroupDim.toSeq ++ pathDim
+      val dimensions = (methodDim ++ pathDim ++ statusGroupDim).toSeq
+      // format: on
 
       active.dec()
       responses.inc(dimensions)

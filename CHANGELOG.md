@@ -6,6 +6,7 @@
 - Decorrelate routes from registry
 - Add namespace setting
 - Add histogram config for prometheus registry
+- Add method dimension
 
 ## 0.6.0 (2019-08-25)
 
