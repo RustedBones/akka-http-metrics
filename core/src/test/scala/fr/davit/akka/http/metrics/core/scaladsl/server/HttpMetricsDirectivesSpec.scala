@@ -69,7 +69,9 @@ class HttpMetricsDirectivesSpec extends AnyFlatSpec with Matchers with Scalatest
       }
 
     Get("/api/user/1234/address/1") ~> route ~> check {
-      header[PathLabelHeader] shouldBe Some(SubPathLabelHeader("/user/1234/address/1", "/user/:userId/address/:addressId"))
+      header[PathLabelHeader] shouldBe Some(
+        SubPathLabelHeader("/user/1234/address/1", "/user/:userId/address/:addressId")
+      )
     }
   }
 
