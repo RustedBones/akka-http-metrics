@@ -41,7 +41,6 @@ trait HttpMetricsDirectives {
   def rawPathPrefixLabeled[L](pm: PathMatcher[L], label: String): Directive[L] = {
     implicit val LIsTuple: Tuple[L] = pm.ev
     extractRequestContext.flatMap { ctx =>
-      extractMatchedPath
       pm(ctx.unmatchedPath) match {
         case Matched(rest, values) =>
           tprovide(values) & mapRequestContext(_ withUnmatchedPath rest) & mapResponse { response =>

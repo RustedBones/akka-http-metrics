@@ -18,7 +18,7 @@ package fr.davit.akka.http.metrics.core.scaladsl.server
 
 import akka.NotUsed
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
-import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, RoutingLog}
+import akka.http.scaladsl.server.{Directives, ExceptionHandler, RejectionHandler, Route, RoutingLog}
 import akka.http.scaladsl.settings.{ParserSettings, RoutingSettings}
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
@@ -28,6 +28,8 @@ import fr.davit.akka.http.metrics.core.scaladsl.model.PathLabelHeader
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 object HttpMetricsRoute {
+
+  private val UnhandledPathLabel = new PathLabelHeader("unhandled")
 
   implicit def apply(route: Route): HttpMetricsRoute = new HttpMetricsRoute(route)
 
@@ -39,6 +41,14 @@ object HttpMetricsRoute {
   */
 class HttpMetricsRoute private (route: Route) extends HttpMetricsDirectives {
 
+  private def markUnhandled(inner: Route): Route = {
+    Directives.mapResponse(markUnhandled).tapply(_ => inner)
+  }
+
+  private def markUnhandled(response: HttpResponse): HttpResponse = {
+    response.addHeader(HttpMetricsRoute.UnhandledPathLabel)
+  }
+
   def recordMetrics(metricsHandler: HttpMetricsHandler)(
       implicit
       routingSettings: RoutingSettings,
@@ -49,13 +59,16 @@ class HttpMetricsRoute private (route: Route) extends HttpMetricsDirectives {
       rejectionHandler: RejectionHandler = RejectionHandler.default,
       exceptionHandler: ExceptionHandler = null
   ): Flow[HttpRequest, HttpResponse, NotUsed] = {
-    // override the execution context passed as parameter and the rejection handler
-    val effectiveEC               = if (executionContext ne null) executionContext else materializer.executionContext
-    val effectiveRejectionHandler = rejectionHandler.mapRejectionResponse(_.addHeader(new PathLabelHeader("unhandled")))
+    // override the execution context passed as parameter, rejection and error handler
+    val effectiveEC =
+      if (executionContext ne null) executionContext else materializer.executionContext
+    val effectiveRejectionHandler = rejectionHandler.mapRejectionResponse(markUnhandled)
+    val effectiveExceptionHandler = ExceptionHandler.seal(exceptionHandler).andThen(markUnhandled(_))
 
     {
       implicit val executionContext: ExecutionContextExecutor = effectiveEC
       implicit val rejectionHandler: RejectionHandler         = effectiveRejectionHandler
+      implicit val exceptionHandler: ExceptionHandler         = effectiveExceptionHandler
       Flow[HttpRequest]
         .mapAsync(1)(recordMetricsAsync(metricsHandler))
         .watchTermination() {
