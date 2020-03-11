@@ -123,8 +123,11 @@ class HttpMetricsRouteSpec
   }
 
   it should "call the metrics handler on error requests" in new Fixture {
-    val request  = HttpRequest()
-    val response = Marshal(StatusCodes.InternalServerError).to[HttpResponse]
+    val request = HttpRequest()
+
+    val response = Marshal(StatusCodes.InternalServerError)
+      .to[HttpResponse]
+      .map(_.withHeaders(PathLabelHeader("unhandled")))
 
     server
       .expects(*)
