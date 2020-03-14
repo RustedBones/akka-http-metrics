@@ -18,7 +18,7 @@ package fr.davit.akka.http.metrics.core.scaladsl.server
 
 import akka.NotUsed
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
-import akka.http.scaladsl.server.{Directives, ExceptionHandler, RejectionHandler, Route, RoutingLog}
+import akka.http.scaladsl.server._
 import akka.http.scaladsl.settings.{ParserSettings, RoutingSettings}
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
@@ -29,8 +29,6 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 
 object HttpMetricsRoute {
 
-  private val UnhandledPathLabel = new PathLabelHeader("unhandled")
-
   implicit def apply(route: Route): HttpMetricsRoute = new HttpMetricsRoute(route)
 
 }
@@ -39,14 +37,14 @@ object HttpMetricsRoute {
   * Typeclass to add the metrics capabilities to a route
   *
   */
-class HttpMetricsRoute private (route: Route) extends HttpMetricsDirectives {
+final class HttpMetricsRoute private (route: Route) extends HttpMetricsDirectives {
 
   private def markUnhandled(inner: Route): Route = {
     Directives.mapResponse(markUnhandled).tapply(_ => inner)
   }
 
   private def markUnhandled(response: HttpResponse): HttpResponse = {
-    response.addHeader(HttpMetricsRoute.UnhandledPathLabel)
+    response.addHeader(PathLabelHeader.Unhandled)
   }
 
   def recordMetrics(metricsHandler: HttpMetricsHandler)(

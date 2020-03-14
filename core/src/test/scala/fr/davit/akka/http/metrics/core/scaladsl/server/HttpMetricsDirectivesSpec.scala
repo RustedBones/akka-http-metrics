@@ -22,7 +22,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.PathMatchers.IntNumber
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import fr.davit.akka.http.metrics.core.TestRegistry
-import fr.davit.akka.http.metrics.core.scaladsl.model.SegmentLabelHeader
+import fr.davit.akka.http.metrics.core.scaladsl.model.{PathLabelHeader, SubPathLabelHeader}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -45,26 +45,32 @@ class HttpMetricsDirectivesSpec extends AnyFlatSpec with Matchers with Scalatest
   }
 
   it should "label segment in headers" in {
-    val route = pathLabeled("user" / LongNumber, "user/:userId") { _ =>
-      complete(StatusCodes.OK)
-    }
-
-    Get("/user/1234") ~> route ~> check {
-      headers should contain(SegmentLabelHeader(0, 4, "/user/:userId"))
-    }
-  }
-
-  it should "accumulate segments" in {
-    val route = pathPrefixLabeled("user" / LongNumber, "user/:userId") { _ =>
-      pathLabeled("address" / IntNumber, "address/:addressId") { _ =>
-        complete(StatusCodes.OK)
+    val route = pathPrefix("api") {
+      pathPrefixLabeled("user" / LongNumber, "user/:userId") { _ =>
+        path("address") {
+          complete(StatusCodes.OK)
+        }
       }
     }
 
-    Get("/user/1234/address/1") ~> route ~> check {
-      headers should contain allOf (
-        SegmentLabelHeader(0, 4, "/user/:userId"),
-        SegmentLabelHeader(4, 8, "/address/:addressId")
+    Get("/api/user/1234/address") ~> route ~> check {
+      header[PathLabelHeader] shouldBe Some(SubPathLabelHeader("/user/1234/address", "/user/:userId/address"))
+    }
+  }
+
+  it should "compile labelled segments" in {
+    val route =
+      pathPrefix("api") {
+        pathPrefixLabeled("user" / LongNumber, "user/:userId") { _ =>
+          pathLabeled("address" / IntNumber, "address/:addressId") { _ =>
+            complete(StatusCodes.OK)
+          }
+        }
+      }
+
+    Get("/api/user/1234/address/1") ~> route ~> check {
+      header[PathLabelHeader] shouldBe Some(
+        SubPathLabelHeader("/user/1234/address/1", "/user/:userId/address/:addressId")
       )
     }
   }

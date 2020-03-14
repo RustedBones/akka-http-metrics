@@ -21,7 +21,7 @@ import java.util.concurrent.Executor
 import akka.Done
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest, HttpResponse, StatusCodes}
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{MethodDimension, PathDimension, StatusGroupDimension}
-import fr.davit.akka.http.metrics.core.scaladsl.model.{PathLabelHeader, SegmentLabelHeader}
+import fr.davit.akka.http.metrics.core.scaladsl.model.{PathLabelHeader, SubPathLabelHeader}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -144,7 +144,7 @@ class HttpMetricsRegistrySpec extends AnyFlatSpec with Matchers with Eventually 
     val path = "/this/is/the/path"
     registry.onRequest(
       HttpRequest().withUri(path),
-      Future.successful(HttpResponse().withHeaders(SegmentLabelHeader(2, 6, "/label")))
+      Future.successful(HttpResponse().withHeaders(SubPathLabelHeader("/is/the/path", "/label/path")))
     )
     registry.responses.value(Seq(PathDimension("/this/label/path"))) shouldBe 1
     registry.responses.value(Seq(PathDimension("/other/path"))) shouldBe 0

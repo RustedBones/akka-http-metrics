@@ -17,6 +17,7 @@
 package fr.davit.akka.http.metrics.core.scaladsl.server
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
+import akka.http.scaladsl.model.HttpHeader
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.PathMatcher.{Matched, Unmatched}
 import akka.http.scaladsl.server.directives.BasicDirectives.{mapRequestContext, tprovide}
@@ -24,7 +25,9 @@ import akka.http.scaladsl.server.directives.RouteDirectives.reject
 import akka.http.scaladsl.server.util.Tuple
 import akka.http.scaladsl.server.{Directive, PathMatcher, StandardRoute}
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry
-import fr.davit.akka.http.metrics.core.scaladsl.model.SegmentLabelHeader
+import fr.davit.akka.http.metrics.core.scaladsl.model.SubPathLabelHeader
+
+import scala.collection.immutable
 
 trait HttpMetricsDirectives {
 
@@ -41,13 +44,21 @@ trait HttpMetricsDirectives {
   def rawPathPrefixLabeled[L](pm: PathMatcher[L], label: String): Directive[L] = {
     implicit val LIsTuple: Tuple[L] = pm.ev
     extractRequestContext.flatMap { ctx =>
+      val pathCandidate = ctx.unmatchedPath.toString
       pm(ctx.unmatchedPath) match {
         case Matched(rest, values) =>
-          tprovide(values) & mapRequestContext(_ withUnmatchedPath rest) & mapResponse { response =>
-            val path = ctx.request.uri.path
-            val from = path.length - ctx.unmatchedPath.length
-            val to   = path.length - rest.length
-            response.addHeader(new SegmentLabelHeader(from, to, "/" + label)) // path matchers always match the / prefix
+          tprovide(values) & mapRequestContext(_ withUnmatchedPath rest) & mapResponseHeaders { headers =>
+            val builder    = immutable.Seq.newBuilder[HttpHeader]
+            var pathHeader = SubPathLabelHeader(pathCandidate, "/" + label + rest.toString)
+            headers.foreach {
+              case ph: SubPathLabelHeader =>
+                val innerLabel = rest.toString.replaceAllLiterally(ph.path, ph.label)
+                pathHeader = SubPathLabelHeader(pathCandidate, "/" + label + innerLabel)
+              case h: HttpHeader =>
+                builder += h
+            }
+            builder += pathHeader
+            builder.result()
           }
         case Unmatched =>
           reject
