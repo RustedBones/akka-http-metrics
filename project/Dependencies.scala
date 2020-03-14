@@ -3,7 +3,7 @@ import sbt._
 object Dependencies {
 
   object Versions {
-    val akka       = "2.6.3"
+    val akka       = "2.6.4"
     val akkaHttp   = "10.1.11"
     val datadog    = "2.9.0"
     val dropwizard = "5.0.0"
