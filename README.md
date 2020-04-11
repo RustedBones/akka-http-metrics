@@ -119,20 +119,23 @@ The method of the request is used as dimension on the metrics. eg. `GET`
 
 ##### Path
 
-The path of the request is used as dimension on the metrics.
+Matched path of the request is used as dimension on the metrics.
 
-When enabling this dimension, you must be careful about cardinality: see [here](https://prometheus.io/docs/practices/naming/#labels).
-If your path is contains unbounded dynamic segments, you must use the labeled path directives defined in `HttpMetricsDirectives`:
+When enabled, all metrics will get `unlabelled` as path dimension by default,
+You must use the labelled path directives defined in `HttpMetricsDirectives` to set the dimension value.
+
+You must also be careful about cardinality: see [here](https://prometheus.io/docs/practices/naming/#labels).
+If your path contains unbounded dynamic segments, you must give an explicit label to override the dynamic part:
 
 ```scala
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives._
 
-val route = pathLabeled("user" / JavaUUID, "user/:user-id") { userId =>
-...
+val route = pathPrefixLabel("api") {
+  pathLabeled("user" / JavaUUID, "user/:user-id") { userId =>
+    ...
+  }
 }
 ```
-
-This will replace the dynamic segment with the provided label.
 
 Moreover, all unhandled requests will have path dimension set to `unhandled`.
 

@@ -19,7 +19,7 @@ package fr.davit.akka.http.metrics.core
 import akka.Done
 import akka.http.scaladsl.model._
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{MethodDimension, PathDimension, StatusGroupDimension}
-import fr.davit.akka.http.metrics.core.scaladsl.model.{FullPathLabelHeader, PathLabelHeader, SubPathLabelHeader}
+import fr.davit.akka.http.metrics.core.scaladsl.model.PathLabelHeader
 
 import scala.concurrent.duration.Deadline
 import scala.concurrent.{ExecutionContext, Future}
@@ -89,13 +89,8 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
 
   def connections: Counter
 
-  private def buildPathLabel(
-      path: Uri.Path,
-      pathLabel: Option[PathLabelHeader]
-  ): PathDimension = pathLabel match {
-    case Some(SubPathLabelHeader(p, l)) => PathDimension(path.toString.replaceAllLiterally(p, l))
-    case Some(FullPathLabelHeader(l))   => PathDimension(l)
-    case None                           => PathDimension(path.toString)
+  private def pathLabel(response: HttpResponse): String = {
+    response.header[PathLabelHeader].getOrElse(PathLabelHeader.UnLabelled).value
   }
 
   override def onRequest(request: HttpRequest, response: Future[HttpResponse])(
@@ -107,13 +102,10 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
     val start = Deadline.now
 
     response.foreach { r =>
-      // extract custom segment headers
-      val pathLabel = r.header[PathLabelHeader]
-
       // compute dimensions
       // format: off
       val methodDim = if (settings.includeMethodDimension) Some(MethodDimension(request.method)) else None
-      val pathDim = if (settings.includePathDimension) Some(buildPathLabel(request.uri.path, pathLabel)) else None
+      val pathDim = if (settings.includePathDimension) Some(PathDimension(pathLabel(r))) else None
       val statusGroupDim = if (settings.includeStatusDimension) Some(StatusGroupDimension(r.status)) else None
       val dimensions = (methodDim ++ pathDim ++ statusGroupDim).toSeq
       // format: on

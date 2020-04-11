@@ -19,10 +19,9 @@ package fr.davit.akka.http.metrics.core.scaladsl.server
 import akka.http.scaladsl.marshalling.PredefinedToEntityMarshallers._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.PathMatchers.IntNumber
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import fr.davit.akka.http.metrics.core.TestRegistry
-import fr.davit.akka.http.metrics.core.scaladsl.model.{PathLabelHeader, SubPathLabelHeader}
+import fr.davit.akka.http.metrics.core.scaladsl.model.PathLabelHeader
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -44,9 +43,9 @@ class HttpMetricsDirectivesSpec extends AnyFlatSpec with Matchers with Scalatest
     }
   }
 
-  it should "label segment in headers" in {
-    val route = pathPrefix("api") {
-      pathPrefixLabeled("user" / LongNumber, "user/:userId") { _ =>
+  it should "put label on path" in {
+    val route = pathPrefixLabeled("api") {
+      pathPrefix("user" / LongNumber) { _ =>
         path("address") {
           complete(StatusCodes.OK)
         }
@@ -54,25 +53,35 @@ class HttpMetricsDirectivesSpec extends AnyFlatSpec with Matchers with Scalatest
     }
 
     Get("/api/user/1234/address") ~> route ~> check {
-      header[PathLabelHeader] shouldBe Some(SubPathLabelHeader("/user/1234/address", "/user/:userId/address"))
+      header[PathLabelHeader] shouldBe Some(PathLabelHeader("/api"))
     }
   }
 
-  it should "compile labelled segments" in {
-    val route =
-      pathPrefix("api") {
-        pathPrefixLabeled("user" / LongNumber, "user/:userId") { _ =>
-          pathLabeled("address" / IntNumber, "address/:addressId") { _ =>
-            complete(StatusCodes.OK)
-          }
+  it should "combine labelled segments" in {
+    val route = pathPrefixLabeled("api") {
+      pathPrefixLabeled("user" / LongNumber, "user/:userId") { _ =>
+        pathLabeled("address") {
+          complete(StatusCodes.OK)
         }
       }
+    }
 
-    Get("/api/user/1234/address/1") ~> route ~> check {
-      header[PathLabelHeader] shouldBe Some(
-        SubPathLabelHeader("/user/1234/address/1", "/user/:userId/address/:addressId")
-      )
+    Get("/api/user/1234/address") ~> route ~> check {
+      header[PathLabelHeader] shouldBe Some(PathLabelHeader("/api/user/:userId/address"))
     }
   }
 
+  it should "not add extra header when label directives are not used" in {
+    val route = pathPrefix("api") {
+      pathPrefix("user" / LongNumber) { _ =>
+        path("address") {
+          complete(StatusCodes.OK)
+        }
+      }
+    }
+
+    Get("/api/user/1234/address") ~> route ~> check {
+      header[PathLabelHeader] shouldBe empty
+    }
+  }
 }
