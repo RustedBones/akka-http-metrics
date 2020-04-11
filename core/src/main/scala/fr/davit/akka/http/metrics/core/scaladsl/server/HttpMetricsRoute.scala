@@ -56,27 +56,15 @@ final class HttpMetricsRoute private (route: Route) extends HttpMetricsDirective
       executionContext: ExecutionContextExecutor = null,
       rejectionHandler: RejectionHandler = RejectionHandler.default,
       exceptionHandler: ExceptionHandler = null
-  ): Flow[HttpRequest, HttpResponse, NotUsed] = {
-    // override the execution context passed as parameter, rejection and error handler
-    val effectiveEC =
-      if (executionContext ne null) executionContext else materializer.executionContext
-    val effectiveRejectionHandler = rejectionHandler.mapRejectionResponse(markUnhandled)
-    val effectiveExceptionHandler = ExceptionHandler.seal(exceptionHandler).andThen(markUnhandled(_))
-
-    {
-      implicit val executionContext: ExecutionContextExecutor = effectiveEC
-      implicit val rejectionHandler: RejectionHandler         = effectiveRejectionHandler
-      implicit val exceptionHandler: ExceptionHandler         = effectiveExceptionHandler
-      Flow[HttpRequest]
-        .mapAsync(1)(recordMetricsAsync(metricsHandler))
-        .watchTermination() {
-          case (mat, completion) =>
-            // every connection materializes a stream
-            metricsHandler.onConnection(completion)
-            mat
-        }
-    }
-  }
+  ): Flow[HttpRequest, HttpResponse, NotUsed] =
+    Flow[HttpRequest]
+      .mapAsync(1)(recordMetricsAsync(metricsHandler))
+      .watchTermination() {
+        case (mat, completion) =>
+          // every connection materializes a stream
+          metricsHandler.onConnection(completion)
+          mat
+      }
 
   def recordMetricsAsync(metricsHandler: HttpMetricsHandler)(
       implicit
@@ -87,9 +75,21 @@ final class HttpMetricsRoute private (route: Route) extends HttpMetricsDirective
       executionContext: ExecutionContextExecutor = null,
       rejectionHandler: RejectionHandler = RejectionHandler.default,
       exceptionHandler: ExceptionHandler = null
-  ): HttpRequest => Future[HttpResponse] = { request =>
-    val response = Route.asyncHandler(route).apply(request)
-    metricsHandler.onRequest(request, response)
-    response
+  ): HttpRequest => Future[HttpResponse] = {
+    val effectiveEC               = if (executionContext ne null) executionContext else materializer.executionContext
+    val effectiveRejectionHandler = rejectionHandler.mapRejectionResponse(markUnhandled)
+    val effectiveExceptionHandler = ExceptionHandler.seal(exceptionHandler).andThen(markUnhandled(_))
+
+    {
+      // override the execution context passed as parameter, rejection and error handler
+      implicit val executionContext: ExecutionContextExecutor = effectiveEC
+      implicit val rejectionHandler: RejectionHandler         = effectiveRejectionHandler
+      implicit val exceptionHandler: ExceptionHandler         = effectiveExceptionHandler
+
+      request =>
+        val response = Route.asyncHandler(route).apply(request)
+        metricsHandler.onRequest(request, response)
+        response
+    }
   }
 }
