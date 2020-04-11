@@ -62,11 +62,11 @@ trait HttpMetricsDirectives {
               case Some(l) => PathLabelHeader("/" + l) // pm matches additional slash prefix
               case None    => PathLabelHeader(pathCandidate.substring(0, pathCandidate.length - rest.charCount))
             }
-            val builder    = immutable.Seq.newBuilder[HttpHeader]
+            val builder = immutable.Seq.newBuilder[HttpHeader]
             headers.foreach {
               case PathLabelHeader(suffix) =>
                 pathHeader = PathLabelHeader(pathHeader.value + suffix)
-              case h: HttpHeader           =>
+              case h: HttpHeader =>
                 builder += h
             }
             builder += pathHeader
