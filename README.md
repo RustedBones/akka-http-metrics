@@ -16,6 +16,7 @@ The following implementations are supported:
 
 | Version | Release date | Akka Http version | Scala versions     |
 | ------- | ------------ | ----------------- | ------------------ |
+| `1.1.0` | 2020-04-18   | `10.1.11`         | `2.13.0`, `2.12.8` |
 | `1.0.0` | 2020-03-14   | `10.1.11`         | `2.13.0`, `2.12.8` |
 
 
