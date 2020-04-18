@@ -18,9 +18,9 @@ package fr.davit.akka.http.metrics.core.scaladsl.model
 
 import akka.http.scaladsl.model.headers.{ModeledCustomHeader, ModeledCustomHeaderCompanion}
 
-import scala.util.Try
+import scala.util.{Success, Try}
 
-private[core] sealed abstract class PathLabelHeader extends ModeledCustomHeader[PathLabelHeader] {
+private[core] final case class PathLabelHeader(value: String) extends ModeledCustomHeader[PathLabelHeader] {
   override def renderInRequests = false
 
   override def renderInResponses = false
@@ -28,27 +28,12 @@ private[core] sealed abstract class PathLabelHeader extends ModeledCustomHeader[
   override val companion = PathLabelHeader
 }
 
-private[core] final case class FullPathLabelHeader(label: String) extends PathLabelHeader {
-  override def value: String = label
-}
-
-private[core] final case class SubPathLabelHeader(path: String, label: String) extends PathLabelHeader {
-  override def value: String = s"$path#$label"
-}
-
 private[core] object PathLabelHeader extends ModeledCustomHeaderCompanion[PathLabelHeader] {
 
-  val Unhandled = FullPathLabelHeader("unhandled")
+  val Unhandled: PathLabelHeader  = PathLabelHeader("unhandled")
+  val UnLabelled: PathLabelHeader = PathLabelHeader("unlabelled")
 
   override val name = "x-path-label"
 
-  override def parse(value: String) = Try {
-    val index = value.indexOf('#')
-    if (index >= 0) {
-      val (path, label) = value.splitAt(index)
-      SubPathLabelHeader(path, label)
-    } else {
-      FullPathLabelHeader(value)
-    }
-  }
+  override def parse(value: String): Try[PathLabelHeader] = Success(new PathLabelHeader(value))
 }

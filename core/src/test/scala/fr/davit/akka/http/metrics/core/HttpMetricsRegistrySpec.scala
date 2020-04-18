@@ -21,7 +21,7 @@ import java.util.concurrent.Executor
 import akka.Done
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest, HttpResponse, StatusCodes}
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{MethodDimension, PathDimension, StatusGroupDimension}
-import fr.davit.akka.http.metrics.core.scaladsl.model.{PathLabelHeader, SubPathLabelHeader}
+import fr.davit.akka.http.metrics.core.scaladsl.model.PathLabelHeader
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -31,11 +31,7 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 
 class HttpMetricsRegistrySpec extends AnyFlatSpec with Matchers with Eventually {
 
-  implicit val currentThreadExecutionContext = ExecutionContext.fromExecutor(
-    new Executor {
-      override def execute(runnable: Runnable) { runnable.run() }
-    }
-  )
+  implicit val currentThreadExecutionContext: ExecutionContext = ExecutionContext.fromExecutor(_.run())
 
   abstract class Fixture(settings: HttpMetricsSettings = HttpMetricsSettings.default) {
     val registry = new TestRegistry(settings)
@@ -129,38 +125,23 @@ class HttpMetricsRegistrySpec extends AnyFlatSpec with Matchers with Eventually 
     registry.responses.value(Seq(MethodDimension(HttpMethods.PUT))) shouldBe 0
   }
 
-  it should "add path dimension when enabled" in new Fixture(
+  it should "default label dimension to 'unlabelled' when enabled but not annotated by directives" in new Fixture(
     HttpMetricsSettings.default.withIncludePathDimension(true)
   ) {
-    val path = "/this/is/the/path"
-    registry.onRequest(HttpRequest().withUri(path), Future.successful(HttpResponse()))
-    registry.responses.value(Seq(PathDimension(path))) shouldBe 1
-    registry.responses.value(Seq(PathDimension("/other/path"))) shouldBe 0
+    registry.onRequest(HttpRequest().withUri("/unlabelled/path"), Future.successful(HttpResponse()))
+    registry.responses.value(Seq(PathDimension("unlabelled"))) shouldBe 1
+    registry.responses.value(Seq(PathDimension("unhandled"))) shouldBe 0
   }
 
-  it should "correctly replace segment labels in path" in new Fixture(
+  it should "increment proper label dimension" in new Fixture(
     HttpMetricsSettings.default.withIncludePathDimension(true)
   ) {
-    val path = "/this/is/the/path"
+    val label = "/api"
     registry.onRequest(
-      HttpRequest().withUri(path),
-      Future.successful(HttpResponse().withHeaders(SubPathLabelHeader("/is/the/path", "/label/path")))
+      HttpRequest().withUri("/api/path"),
+      Future.successful(HttpResponse().withHeaders(PathLabelHeader(label)))
     )
-    registry.responses.value(Seq(PathDimension("/this/label/path"))) shouldBe 1
-    registry.responses.value(Seq(PathDimension("/other/path"))) shouldBe 0
+    registry.responses.value(Seq(PathDimension(label))) shouldBe 1
+    registry.responses.value(Seq(PathDimension("unlabelled"))) shouldBe 0
   }
-
-  it should "overwrite path dimension when provided" in new Fixture(
-    HttpMetricsSettings.default.withIncludePathDimension(true)
-  ) {
-    val path          = "/this/is/the/path"
-    val overwritePath = "overwrite/path"
-    registry.onRequest(
-      HttpRequest().withUri(path),
-      Future.successful(HttpResponse().withHeaders(PathLabelHeader(overwritePath)))
-    )
-    registry.responses.value(Seq(PathDimension(overwritePath))) shouldBe 1
-    registry.responses.value(Seq(PathDimension("/other/path"))) shouldBe 0
-  }
-
 }
