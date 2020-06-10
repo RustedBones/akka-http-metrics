@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.1.1 (2020-06-10)
+
 - Update libraries
 - Fix implicit execution context regression
 
