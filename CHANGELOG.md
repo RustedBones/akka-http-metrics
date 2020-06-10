@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Fix implicit execution context regression
+
 ## 1.1.0 (2020-04-18)
 
 - Fix implicits for HTTP/2 API
