@@ -56,15 +56,22 @@ final class HttpMetricsRoute private (route: Route) extends HttpMetricsDirective
       executionContext: ExecutionContextExecutor = null,
       rejectionHandler: RejectionHandler = RejectionHandler.default,
       exceptionHandler: ExceptionHandler = null
-  ): Flow[HttpRequest, HttpResponse, NotUsed] =
-    Flow[HttpRequest]
-      .mapAsync(1)(recordMetricsAsync(metricsHandler))
-      .watchTermination() {
-        case (mat, completion) =>
-          // every connection materializes a stream
-          metricsHandler.onConnection(completion)
-          mat
-      }
+  ): Flow[HttpRequest, HttpResponse, NotUsed] = {
+    val effectiveEC = if (executionContext ne null) executionContext else materializer.executionContext
+
+    {
+      // override the execution context passed as parameter
+      implicit val executionContext: ExecutionContextExecutor = effectiveEC
+      Flow[HttpRequest]
+        .mapAsync(1)(recordMetricsAsync(metricsHandler))
+        .watchTermination() {
+          case (mat, completion) =>
+            // every connection materializes a stream.
+            metricsHandler.onConnection(completion)
+            mat
+        }
+    }
+  }
 
   def recordMetricsAsync(metricsHandler: HttpMetricsHandler)(
       implicit
