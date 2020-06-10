@@ -14,10 +14,11 @@ The following implementations are supported:
 
 ## Versions
 
-| Version | Release date | Akka Http version | Scala versions     |
-| ------- | ------------ | ----------------- | ------------------ |
-| `1.1.0` | 2020-04-18   | `10.1.11`         | `2.13.0`, `2.12.8` |
-| `1.0.0` | 2020-03-14   | `10.1.11`         | `2.13.0`, `2.12.8` |
+| Version | Release date | Akka Http version | Scala versions      |
+| ------- | ------------ | ----------------- | ------------------- |
+| `1.1.1` | 2020-06-10   | `10.1.12`         | `2.13.2`, `2.12.11` |
+| `1.1.0` | 2020-04-18   | `10.1.11`         | `2.13.1`, `2.12.10` |
+| `1.0.0` | 2020-03-14   | `10.1.11`         | `2.13.1`, `2.12.10` |
 
 
 The complete list can be found in the [CHANGELOG](CHANGELOG.md) file.
