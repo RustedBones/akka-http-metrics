@@ -43,6 +43,7 @@ object Settings {
     )  ++ (CrossVersion.partialVersion(scalaVersion) match {
       case Some((2, 13)) =>
         Seq(
+          // format: off
           "-Xlint:nonlocal-return",            // A return statement used an exception for flow control.
           "-Xlint:implicit-not-found",         // Check @implicitNotFound and @implicitAmbiguous messages.
           "-Xlint:implicit-recursion",         // An implicit resolves to an enclosing definition.
@@ -66,9 +67,11 @@ object Settings {
           "-Wunused:params",                   // Enable -Wunused:explicits,implicits.
           "-Wunused:linted",
           // "-Wvalue-discard",                // Warn when non-Unit expression results are unused.
+          // format: on
         )
       case Some((2, 12)) =>
         Seq(
+          // format: off
           "-Ywarn-dead-code",                  // Warn when dead code is identified.
           "-Ywarn-extra-implicit",             // Warn when more than one implicit parameter section is defined.
           "-Ywarn-inaccessible",               // Warn about inaccessible types in method signatures.
@@ -83,6 +86,7 @@ object Settings {
           "-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
           "-Ywarn-unused:privates",            // Warn if a private member is unused.
           // "-Ywarn-value-discard"            // Warn when non-Unit expression results are unused.
+          // format: on
         )
       case _ =>
         throw new IllegalArgumentException(s"Unsupported scala version $scalaVersion")
