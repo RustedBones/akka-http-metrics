@@ -82,7 +82,17 @@ val settings: HttpMetricsSettings = HttpMetricsSettings
 val registry: HttpMetricsRegistry = ... // concrete registry implementation
 
 val route: Route = ... // your route
+```
 
+You can bind this route to a HTTP server as follows
+
+```scala
+//If you are using akka-http >= 10.2.0
+Http().newServerAt("localhost", 8080).bindFlow(route.recordMetrics(registry))
+```
+
+```scala
+//If you are using akka-http < 10.2.0
 Http().bindAndHandle(route.recordMetrics(registry), "localhost", 8080)
 ```
 
@@ -101,6 +111,12 @@ For HTTP2 you must convert the `Route` to the handler function with `recordMetri
 metrics won't be available.
 
 ```scala
+//If you are using akka-http >= 10.2.0
+Http().newServerAt("localhost", 8080).bind(route.recordMetrics(registry))
+```
+
+```scala
+//If you are using akka-http < 10.2.0
 Http2().bindAndHandleAsync(route.recordMetricsAsync(registry), "localhost", 8080)
 ```
 
