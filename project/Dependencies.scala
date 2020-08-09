@@ -3,8 +3,8 @@ import sbt._
 object Dependencies {
 
   object Versions {
-    val akka       = "2.6.6"
-    val akkaHttp   = "10.1.12"
+    val akka       = "2.6.8"
+    val akkaHttp   = "10.2.0"
     val datadog    = "2.10.1"
     val dropwizard = "5.0.0"
     val enumeratum = "1.6.1"
