@@ -68,12 +68,10 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
-import akka.stream.ActorMaterializer
 import fr.davit.akka.http.metrics.core.{HttpMetricsRegistry, HttpMetricsSettings}
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsRoute._
 
 implicit val system = ActorSystem()
-implicit val materializer = ActorMaterializer()
 
 val settings: HttpMetricsSettings = HttpMetricsSettings
                                       .default
@@ -83,7 +81,7 @@ val registry: HttpMetricsRegistry = ... // concrete registry implementation
 
 val route: Route = ... // your route
 
-Http().bindAndHandle(route.recordMetrics(registry), "localhost", 8080)
+Http().newServerAt("localhost", 8080).bindFlow(route.recordMetrics(registry))
 ```
 
 By default, the errored request counter will be incremented when the served response is an `Server error (5xx)`.
@@ -101,7 +99,7 @@ For HTTP2 you must convert the `Route` to the handler function with `recordMetri
 metrics won't be available.
 
 ```scala
-Http2().bindAndHandleAsync(route.recordMetricsAsync(registry), "localhost", 8080)
+Http().newServerAt("localhost", 8080).bind(route.recordMetrics(registry))
 ```
 
 #### Labels

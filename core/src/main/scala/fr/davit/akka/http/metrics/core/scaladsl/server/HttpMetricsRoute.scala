@@ -19,13 +19,15 @@ package fr.davit.akka.http.metrics.core.scaladsl.server
 import akka.NotUsed
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.http.scaladsl.server._
-import akka.http.scaladsl.settings.{ParserSettings, RoutingSettings}
+import akka.http.scaladsl.settings.RoutingSettings
+import akka.http.scaladsl.server.directives.ExecutionDirectives._
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 import fr.davit.akka.http.metrics.core.HttpMetricsHandler
 import fr.davit.akka.http.metrics.core.scaladsl.model.PathLabelHeader
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
+import akka.actor.ActorSystem
 
 object HttpMetricsRoute {
 
@@ -50,9 +52,7 @@ final class HttpMetricsRoute private (route: Route) extends HttpMetricsDirective
   def recordMetrics(metricsHandler: HttpMetricsHandler)(
       implicit
       routingSettings: RoutingSettings,
-      parserSettings: ParserSettings,
       materializer: Materializer,
-      routingLog: RoutingLog,
       executionContext: ExecutionContextExecutor = null,
       rejectionHandler: RejectionHandler = RejectionHandler.default,
       exceptionHandler: ExceptionHandler = null
@@ -76,25 +76,31 @@ final class HttpMetricsRoute private (route: Route) extends HttpMetricsDirective
   def recordMetricsAsync(metricsHandler: HttpMetricsHandler)(
       implicit
       routingSettings: RoutingSettings,
-      parserSettings: ParserSettings,
       materializer: Materializer,
-      routingLog: RoutingLog,
       executionContext: ExecutionContextExecutor = null,
       rejectionHandler: RejectionHandler = RejectionHandler.default,
       exceptionHandler: ExceptionHandler = null
   ): HttpRequest => Future[HttpResponse] = {
+    // override the execution context passed as parameter, rejection and error handler
     val effectiveEC               = if (executionContext ne null) executionContext else materializer.executionContext
     val effectiveRejectionHandler = rejectionHandler.mapRejectionResponse(markUnhandled)
     val effectiveExceptionHandler = ExceptionHandler.seal(exceptionHandler).andThen(markUnhandled(_))
 
     {
-      // override the execution context passed as parameter, rejection and error handler
       implicit val executionContext: ExecutionContextExecutor = effectiveEC
-      implicit val rejectionHandler: RejectionHandler         = effectiveRejectionHandler
-      implicit val exceptionHandler: ExceptionHandler         = effectiveExceptionHandler
+      implicit val system: ActorSystem                        = materializer.system
+
+      val handler =
+        Route.toFunction(
+          handleRejections(effectiveRejectionHandler) {
+            handleExceptions(effectiveExceptionHandler) {
+              route
+            }
+          }
+        )
 
       request =>
-        val response = Route.asyncHandler(route).apply(request)
+        val response = handler(request)
         metricsHandler.onRequest(request, response)
         response
     }
