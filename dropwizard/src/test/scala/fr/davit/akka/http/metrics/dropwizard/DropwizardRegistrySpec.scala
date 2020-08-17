@@ -25,7 +25,7 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class DropwizardRegistrySpec extends AnyFlatSpec with Matchers {
 
