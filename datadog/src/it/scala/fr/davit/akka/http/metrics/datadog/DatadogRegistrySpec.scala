@@ -22,7 +22,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes
 import akka.io.{IO, Udp}
 import akka.testkit.{TestKit, TestProbe}
-import com.timgroup.statsd.NonBlockingStatsDClient
+import com.timgroup.statsd.NonBlockingStatsDClientBuilder
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{PathDimension, StatusGroupDimension}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpecLike
@@ -39,7 +39,10 @@ class DatadogRegistrySpec extends TestKit(ActorSystem("DatadogRegistrySpec")) wi
     statsd.send(IO(Udp), Udp.Bind(statsd.ref, new InetSocketAddress(0)))
     val port = statsd.expectMsgType[Udp.Bound].localAddress.getPort
     val socket = statsd.sender()
-    val client = new NonBlockingStatsDClient("", "localhost", port)
+    val client = new NonBlockingStatsDClientBuilder()
+      .hostname("localhost")
+      .port(port)
+      .build()
     val registry = DatadogRegistry(client)
     try {
       test(statsd, registry)
