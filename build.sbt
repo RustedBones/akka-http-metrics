@@ -2,6 +2,16 @@
 val username = "RustedBones"
 val repo = "akka-http-metrics"
 
+lazy val filterScalacOptions = { options: Seq[String] =>
+  options.filterNot { o =>
+    // get rid of value discard
+    o == "-Ywarn-value-discard" || o == "-Wvalue-discard"
+  }
+}
+
+// TODO enable ci-release
+ThisBuild / githubWorkflowPublishTargetBranches := Seq.empty
+
 lazy val commonSettings = Defaults.itSettings ++
   headerSettings(Configurations.IntegrationTest) ++
   Seq(
@@ -10,7 +20,7 @@ lazy val commonSettings = Defaults.itSettings ++
   version := "1.2.0-SNAPSHOT",
   crossScalaVersions := Seq("2.13.3", "2.12.12"),
   scalaVersion := crossScalaVersions.value.head,
-  Compile / compile / scalacOptions ++= Settings.scalacOptions(scalaVersion.value),
+  scalacOptions ~= filterScalacOptions,
   homepage := Some(url(s"https://github.com/$username/$repo")),
   licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.txt")),
   startYear := Some(2019),
@@ -87,6 +97,7 @@ lazy val `akka-http-metrics-dropwizard` = (project in file("dropwizard"))
       Dependencies.Test.akkaSlf4j,
       Dependencies.Test.akkaTestkit,
       Dependencies.Test.logback,
+      Dependencies.Test.scalaCollectionCompat,
       Dependencies.Test.scalaTest
     )
   )

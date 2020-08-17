@@ -51,7 +51,7 @@ class HttpMetricsRouteSpec
     (metricsHandler
       .onConnection(_: Future[Done])(_: ExecutionContext))
       .expects(*, *)
-      .returns()
+      .returns((): Unit)
 
     val (source, sink) = TestSource
       .probe[HttpRequest]
@@ -72,7 +72,7 @@ class HttpMetricsRouteSpec
     (metricsHandler
       .onConnection(_: Future[Done])(_: ExecutionContext))
       .expects(*, *)
-      .returns()
+      .returns((): Unit)
 
     val (source, sink) = TestSource
       .probe[HttpRequest]
@@ -95,7 +95,7 @@ class HttpMetricsRouteSpec
     (metricsHandler
       .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
       .expects(request, response, *)
-      .returns()
+      .returns((): Unit)
 
     sink.request(1)
     source.sendNext(request)
@@ -115,7 +115,7 @@ class HttpMetricsRouteSpec
     (metricsHandler
       .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
       .expects(request, response, *)
-      .returns()
+      .returns((): Unit)
 
     sink.request(1)
     source.sendNext(request)
@@ -135,7 +135,7 @@ class HttpMetricsRouteSpec
     (metricsHandler
       .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
       .expects(request, response, *)
-      .returns()
+      .returns((): Unit)
 
     sink.request(1)
     source.sendNext(request)

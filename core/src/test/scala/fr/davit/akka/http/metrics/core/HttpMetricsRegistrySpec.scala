@@ -16,8 +16,6 @@
 
 package fr.davit.akka.http.metrics.core
 
-import java.util.concurrent.Executor
-
 import akka.Done
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest, HttpResponse, StatusCodes}
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{MethodDimension, PathDimension, StatusGroupDimension}
