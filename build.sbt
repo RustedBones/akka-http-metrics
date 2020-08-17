@@ -10,6 +10,7 @@ lazy val filterScalacOptions = { options: Seq[String] =>
 }
 
 // TODO enable ci-release
+ThisBuild / crossScalaVersions := Seq("2.13.3", "2.12.12")
 ThisBuild / githubWorkflowPublishTargetBranches := Seq.empty
 
 lazy val commonSettings = Defaults.itSettings ++
@@ -18,8 +19,7 @@ lazy val commonSettings = Defaults.itSettings ++
   organization := "fr.davit",
   organizationName := "Michel Davit",
   version := "1.2.0-SNAPSHOT",
-  crossScalaVersions := Seq("2.13.3", "2.12.12"),
-  scalaVersion := crossScalaVersions.value.head,
+  scalaVersion := (ThisBuild / crossScalaVersions).value.head,
   scalacOptions ~= filterScalacOptions,
   homepage := Some(url(s"https://github.com/$username/$repo")),
   licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.txt")),
