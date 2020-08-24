@@ -19,21 +19,11 @@ package fr.davit.akka.http.metrics.core.scaladsl.server
 import akka.NotUsed
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.http.scaladsl.server._
-import akka.http.scaladsl.settings.RoutingSettings
-import akka.http.scaladsl.server.directives.ExecutionDirectives._
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
-import fr.davit.akka.http.metrics.core.HttpMetricsHandler
-import fr.davit.akka.http.metrics.core.scaladsl.model.PathLabelHeader
+import fr.davit.akka.http.metrics.core.{HttpMetrics, HttpMetricsHandler}
 
-import scala.concurrent.{ExecutionContextExecutor, Future}
-import akka.actor.ActorSystem
-
-object HttpMetricsRoute {
-
-  implicit def apply(route: Route): HttpMetricsRoute = new HttpMetricsRoute(route)
-
-}
+import scala.concurrent.Future
 
 /**
   * Typeclass to add the metrics capabilities to a route
@@ -41,68 +31,29 @@ object HttpMetricsRoute {
   */
 final class HttpMetricsRoute private (route: Route) extends HttpMetricsDirectives {
 
-  private def markUnhandled(inner: Route): Route = {
-    Directives.mapResponse(markUnhandled).tapply(_ => inner)
+  @deprecated("Use Http.newMeteredServerAt(...)...bind() to create metered server bindings.", "1.2.0")
+  def recordMetrics(
+      metricsHandler: HttpMetricsHandler
+  )(implicit materializer: Materializer): Flow[HttpRequest, HttpResponse, NotUsed] = recordMetricsImpl(metricsHandler)
+
+  private[metrics] def recordMetricsImpl(
+      metricsHandler: HttpMetricsHandler
+  )(implicit materializer: Materializer): Flow[HttpRequest, HttpResponse, NotUsed] =
+    HttpMetrics
+      .meterFlow(metricsHandler)
+      .join(HttpMetrics.metricsRouteToFlow(route)(materializer.system))
+
+  @deprecated("Use Http.newMeteredServerAt(...)...bind() to create metered server bindings.", "1.2.0")
+  def recordMetricsAsync(
+      metricsHandler: HttpMetricsHandler
+  )(implicit materializer: Materializer): HttpRequest => Future[HttpResponse] = {
+    val handler = HttpMetrics.metricsRouteToFunction(route)(materializer.system)
+    HttpMetrics.meterFunction(handler, metricsHandler)(materializer.executionContext)
   }
+}
 
-  private def markUnhandled(response: HttpResponse): HttpResponse = {
-    response.addHeader(PathLabelHeader.Unhandled)
-  }
+object HttpMetricsRoute {
 
-  def recordMetrics(metricsHandler: HttpMetricsHandler)(
-      implicit
-      routingSettings: RoutingSettings,
-      materializer: Materializer,
-      executionContext: ExecutionContextExecutor = null,
-      rejectionHandler: RejectionHandler = RejectionHandler.default,
-      exceptionHandler: ExceptionHandler = null
-  ): Flow[HttpRequest, HttpResponse, NotUsed] = {
-    val effectiveEC = if (executionContext ne null) executionContext else materializer.executionContext
+  implicit def apply(route: Route): HttpMetricsRoute = new HttpMetricsRoute(route)
 
-    {
-      // override the execution context passed as parameter
-      implicit val executionContext: ExecutionContextExecutor = effectiveEC
-      Flow[HttpRequest]
-        .mapAsync(1)(recordMetricsAsync(metricsHandler))
-        .watchTermination() {
-          case (mat, completion) =>
-            // every connection materializes a stream.
-            metricsHandler.onConnection(completion)
-            mat
-        }
-    }
-  }
-
-  def recordMetricsAsync(metricsHandler: HttpMetricsHandler)(
-      implicit
-      routingSettings: RoutingSettings,
-      materializer: Materializer,
-      executionContext: ExecutionContextExecutor = null,
-      rejectionHandler: RejectionHandler = RejectionHandler.default,
-      exceptionHandler: ExceptionHandler = null
-  ): HttpRequest => Future[HttpResponse] = {
-    // override the execution context passed as parameter, rejection and error handler
-    val effectiveEC               = if (executionContext ne null) executionContext else materializer.executionContext
-    val effectiveRejectionHandler = rejectionHandler.mapRejectionResponse(markUnhandled)
-    val effectiveExceptionHandler = ExceptionHandler.seal(exceptionHandler).andThen(markUnhandled(_))
-
-    {
-      implicit val executionContext: ExecutionContextExecutor = effectiveEC
-      implicit val system: ActorSystem                        = materializer.system
-
-      val handler =
-        Route.toFunction(
-          handleRejections(effectiveRejectionHandler) {
-            handleExceptions(effectiveExceptionHandler) {
-              route
-            }
-          }
-        )
-
-      request =>
-        val response = handler(request)
-        metricsHandler.onRequest(request, response)
-        response
-    }
-  }
 }

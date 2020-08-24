@@ -69,7 +69,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import fr.davit.akka.http.metrics.core.{HttpMetricsRegistry, HttpMetricsSettings}
-import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsRoute._
+import fr.davit.akka.http.metrics.core.HttpMetrics._
 
 implicit val system = ActorSystem()
 
@@ -81,7 +81,7 @@ val registry: HttpMetricsRegistry = ... // concrete registry implementation
 
 val route: Route = ... // your route
 
-Http().newServerAt("localhost", 8080).bindFlow(route.recordMetrics(registry))
+Http().newMeteredServerAt("localhost", 8080, registry).bindFlow(route)
 ```
 
 By default, the errored request counter will be incremented when the served response is an `Server error (5xx)`.
@@ -95,11 +95,11 @@ val settings = HttpMetricsSettings
 
 In this example, all responses with status >= 400 are considered as errors.
 
-For HTTP2 you must convert the `Route` to the handler function with `recordMetricsAsync`. In this case the connection
-metrics won't be available.
+For HTTP2 you must use the `bind` or `bindSync` on the `ServerBuilder`. The `Route` will be converted to
+a `HttpRequest => HttpResponse` handler function. In this case the connection metrics won't be available.
 
 ```scala
-Http().newServerAt("localhost", 8080).bind(route.recordMetrics(registry))
+Http().newMeteredServerAt("localhost", 8080).bind(route)
 ```
 
 #### Labels

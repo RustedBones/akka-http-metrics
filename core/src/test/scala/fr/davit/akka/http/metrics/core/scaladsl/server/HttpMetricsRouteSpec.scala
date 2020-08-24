@@ -27,8 +27,10 @@ import akka.testkit.TestKit
 import fr.davit.akka.http.metrics.core.HttpMetricsHandler
 import fr.davit.akka.http.metrics.core.scaladsl.model.PathLabelHeader
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsRoute._
+import org.scalamock.matchers.ArgCapture.CaptureOne
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.BeforeAndAfterAll
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 
@@ -39,6 +41,7 @@ class HttpMetricsRouteSpec
     extends TestKit(ActorSystem("HttpMetricsRouteSpec"))
     with AnyFlatSpecLike
     with Matchers
+    with ScalaFutures
     with MockFactory
     with BeforeAndAfterAll {
 
@@ -55,7 +58,7 @@ class HttpMetricsRouteSpec
 
     val (source, sink) = TestSource
       .probe[HttpRequest]
-      .via(server.recordMetrics(metricsHandler))
+      .via(server.recordMetricsImpl(metricsHandler))
       .toMat(TestSink.probe[HttpResponse])(Keep.both)
       .run()
   }
@@ -76,7 +79,7 @@ class HttpMetricsRouteSpec
 
     val (source, sink) = TestSource
       .probe[HttpRequest]
-      .via(server.recordMetrics(metricsHandler))
+      .via(server.recordMetricsImpl(metricsHandler))
       .toMat(TestSink.probe[HttpResponse])(Keep.both)
       .run()
 
@@ -87,19 +90,22 @@ class HttpMetricsRouteSpec
 
   it should "call the metrics handler on handled requests" in new Fixture {
     val request  = HttpRequest()
-    val response = Marshal(StatusCodes.OK).to[HttpResponse]
+    val response = Marshal(StatusCodes.OK).to[HttpResponse].futureValue
+    val actual   = CaptureOne[Future[HttpResponse]]()
 
     server
       .expects(*)
       .onCall(complete(StatusCodes.OK))
     (metricsHandler
       .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
-      .expects(request, response, *)
+      .expects(request, capture(actual), *)
       .returns((): Unit)
 
     sink.request(1)
     source.sendNext(request)
     sink.expectNext()
+
+    actual.value.futureValue shouldBe response
   }
 
   it should "call the metrics handler on rejected requests" in new Fixture {
@@ -108,18 +114,22 @@ class HttpMetricsRouteSpec
     val response = Marshal(StatusCodes.NotFound -> "The requested resource could not be found.")
       .to[HttpResponse]
       .map(_.withHeaders(PathLabelHeader("unhandled")))
+      .futureValue
+    val actual = CaptureOne[Future[HttpResponse]]()
 
     server
       .expects(*)
       .onCall(reject)
     (metricsHandler
       .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
-      .expects(request, response, *)
+      .expects(request, capture(actual), *)
       .returns((): Unit)
 
     sink.request(1)
     source.sendNext(request)
     sink.expectNext()
+
+    actual.value.futureValue shouldBe response
   }
 
   it should "call the metrics handler on error requests" in new Fixture {
@@ -128,17 +138,21 @@ class HttpMetricsRouteSpec
     val response = Marshal(StatusCodes.InternalServerError)
       .to[HttpResponse]
       .map(_.withHeaders(PathLabelHeader("unhandled")))
+      .futureValue
+    val actual = CaptureOne[Future[HttpResponse]]()
 
     server
       .expects(*)
       .onCall(failWith(new Exception("BOOM!")))
     (metricsHandler
       .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
-      .expects(request, response, *)
+      .expects(request, capture(actual), *)
       .returns((): Unit)
 
     sink.request(1)
     source.sendNext(request)
     sink.expectNext()
+
+    actual.value.futureValue shouldBe response
   }
 }
