@@ -36,7 +36,7 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
   val shape = new BidiShape(requestIn, requestOut, responseIn, responseOut)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
-    val completion: Promise[Done]                     = Promise()
+    val completion: Promise[Done] = Promise()
     // Use a FIFO structure to store response promises
     // All routes are converted to flow with a mapAsync(1) so order is respected
     val pending: mutable.Queue[Promise[HttpResponse]] = mutable.Queue.empty
@@ -65,7 +65,7 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
       responseIn,
       new InHandler {
         override def onPush(): Unit = {
-          val promise = pending.dequeue()
+          val promise  = pending.dequeue()
           val response = grab(responseIn)
           promise.success(response)
           push(responseOut, response)
