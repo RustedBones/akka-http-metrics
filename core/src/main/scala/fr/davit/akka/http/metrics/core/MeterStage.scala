@@ -21,6 +21,7 @@ import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.stream.{Attributes, BidiShape, Inlet, Outlet}
 import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
 
+import scala.collection.mutable
 import scala.concurrent.Promise
 
 private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
@@ -35,8 +36,10 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
   val shape = new BidiShape(requestIn, requestOut, responseIn, responseOut)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
-    val completion: Promise[Done]              = Promise()
-    var pending: Option[Promise[HttpResponse]] = None
+    val completion: Promise[Done]                     = Promise()
+    // Use a FIFO structure to store response promises
+    // All routes are converted to flow with a mapAsync(1) so order is respected
+    val pending: mutable.Queue[Promise[HttpResponse]] = mutable.Queue.empty
 
     override def preStart(): Unit = {
       super.preStart()
@@ -50,7 +53,7 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
           val request = grab(requestIn)
           val promise = Promise[HttpResponse]()
           metricsHandler.onRequest(request, promise.future)(materializer.executionContext)
-          pending = Some(promise)
+          pending.enqueue(promise)
           push(requestOut, request)
         }
       }
@@ -62,15 +65,10 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
       responseIn,
       new InHandler {
         override def onPush(): Unit = {
-          pending match {
-            case Some(promise) =>
-              val response = grab(responseIn)
-              promise.success(response)
-              pending = None
-              push(responseOut, response)
-            case None =>
-              throw new IllegalStateException("Got response for unknown request")
-          }
+          val promise = pending.dequeue()
+          val response = grab(responseIn)
+          promise.success(response)
+          push(responseOut, response)
         }
 
         override def onUpstreamFinish(): Unit = {
