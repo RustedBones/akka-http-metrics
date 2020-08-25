@@ -17,7 +17,7 @@
 package fr.davit.akka.http.metrics.prometheus
 
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
-import fr.davit.akka.http.metrics.core.HttpMetricsSettings
+import fr.davit.akka.http.metrics.core.{HttpMetricsNames, HttpMetricsSettings}
 import fr.davit.akka.http.metrics.prometheus.Quantiles.Quantile
 
 import scala.concurrent.duration._
@@ -50,6 +50,21 @@ object Buckets {
   def apply(b: Double*): Buckets = Buckets(b.toList)
 }
 
+object PrometheusMetricsNames {
+
+  val default: HttpMetricsNames = HttpMetricsNames(
+    requests = "requests_total",
+    activeRequests = "requests_active",
+    requestSizes = "requests_size_bytes",
+    responses = "responses_total",
+    errors = "responses_errors_total",
+    durations = "responses_duration_seconds",
+    responseSizes = "responses_size_bytes",
+    connections = "connections_total",
+    activeConnections = "connections_active"
+  )
+}
+
 final case class PrometheusSettings(
     namespace: String,
     defineError: HttpResponse => Boolean,
@@ -58,7 +73,8 @@ final case class PrometheusSettings(
     includeStatusDimension: Boolean,
     receivedBytesConfig: HistogramConfig,
     durationConfig: TimerConfig,
-    sentBytesConfig: HistogramConfig
+    sentBytesConfig: HistogramConfig,
+    metricsNames: HttpMetricsNames
 ) extends HttpMetricsSettings {
 
   override def withNamespace(namespace: String): PrometheusSettings =
@@ -84,6 +100,9 @@ final case class PrometheusSettings(
 
   def withSentBytesConfig(config: HistogramConfig): PrometheusSettings =
     copy(sentBytesConfig = config)
+
+  def withMetricsNames(metricsNames: HttpMetricsNames): PrometheusSettings =
+    copy(metricsNames = metricsNames)
 }
 
 object PrometheusSettings {
@@ -110,7 +129,7 @@ object PrometheusSettings {
     includeStatusDimension = false,
     receivedBytesConfig = BytesBuckets,
     durationConfig = DurationBuckets,
-    sentBytesConfig = BytesBuckets
+    sentBytesConfig = BytesBuckets,
+    metricsNames = PrometheusMetricsNames.default
   )
-
 }

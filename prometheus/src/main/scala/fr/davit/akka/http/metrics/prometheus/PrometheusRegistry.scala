@@ -61,26 +61,25 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
   override lazy val active: Gauge = io.prometheus.client.Gauge
     .build()
     .namespace(settings.namespace)
-    .name("requests_active")
+    .name(settings.metricsNames.activeRequests)
     .help("Active HTTP requests")
     .register(underlying)
 
   override lazy val requests: Counter = io.prometheus.client.Counter
     .build()
     .namespace(settings.namespace)
-    .name("requests_total")
+    .name(settings.metricsNames.requests)
     .help("Total HTTP requests")
     .register(underlying)
 
   override lazy val receivedBytes: Histogram = {
-    val name = "requests_size_bytes"
     val help = "HTTP request size"
     settings.receivedBytesConfig match {
       case Quantiles(qs, maxAge, ageBuckets) =>
         io.prometheus.client.Summary
           .build()
           .namespace(settings.namespace)
-          .name(name)
+          .name(settings.metricsNames.requestSizes)
           .help(help)
           .quantiles(qs: _*)
           .maxAgeSeconds(maxAge.toSeconds)
@@ -91,7 +90,7 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
         io.prometheus.client.Histogram
           .build()
           .namespace(settings.namespace)
-          .name(name)
+          .name(settings.metricsNames.requestSizes)
           .help(help)
           .buckets(bs: _*)
           .register(underlying)
@@ -101,7 +100,7 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
   override lazy val responses: Counter = io.prometheus.client.Counter
     .build()
     .namespace(settings.namespace)
-    .name("responses_total")
+    .name(settings.metricsNames.responses)
     .help("HTTP responses")
     .labelNames(labels: _*)
     .register(underlying)
@@ -109,13 +108,12 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
   override lazy val errors: Counter = io.prometheus.client.Counter
     .build()
     .namespace(settings.namespace)
-    .name("responses_errors_total")
+    .name(settings.metricsNames.errors)
     .help("Total HTTP errors")
     .labelNames(labels: _*)
     .register(underlying)
 
   override lazy val duration: Timer = {
-    val name = "responses_duration_seconds"
     val help = "HTTP response duration"
 
     settings.durationConfig match {
@@ -123,7 +121,7 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
         io.prometheus.client.Summary
           .build()
           .namespace(settings.namespace)
-          .name(name)
+          .name(settings.metricsNames.durations)
           .help(help)
           .labelNames(labels: _*)
           .quantiles(qs: _*)
@@ -134,7 +132,7 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
         io.prometheus.client.Histogram
           .build()
           .namespace(settings.namespace)
-          .name(name)
+          .name(settings.metricsNames.durations)
           .help(help)
           .labelNames(labels: _*)
           .buckets(bs: _*)
@@ -143,7 +141,6 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
   }
 
   override lazy val sentBytes: Histogram = {
-    val name = "responses_size_bytes"
     val help = "HTTP response size"
 
     settings.sentBytesConfig match {
@@ -151,7 +148,7 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
         io.prometheus.client.Summary
           .build()
           .namespace(settings.namespace)
-          .name(name)
+          .name(settings.metricsNames.responseSizes)
           .help(help)
           .labelNames(labels: _*)
           .quantiles(qs: _*)
@@ -163,7 +160,7 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
         io.prometheus.client.Histogram
           .build()
           .namespace(settings.namespace)
-          .name(name)
+          .name(settings.metricsNames.responseSizes)
           .help(help)
           .labelNames(labels: _*)
           .buckets(bs: _*)
@@ -174,14 +171,14 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
   override val connected: Gauge = io.prometheus.client.Gauge
     .build()
     .namespace(settings.namespace)
-    .name("connections_active")
+    .name(settings.metricsNames.activeConnections)
     .help("Active TCP connections")
     .register(underlying)
 
   override val connections: Counter = io.prometheus.client.Counter
     .build()
     .namespace(settings.namespace)
-    .name("connections_total")
+    .name(settings.metricsNames.connections)
     .help("Total TCP connections")
     .register(underlying)
 }
