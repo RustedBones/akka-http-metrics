@@ -31,8 +31,8 @@ object DatadogMetricsNames {
     responsesErrors = "responses_errors_count",
     responsesDuration = "responses_duration",
     responsesSize = "responses_bytes",
-    connections = "connections_active",
-    connectionsActive = "connections_count"
+    connections = "connections_count",
+    connectionsActive = "connections_active"
   )
 
 }

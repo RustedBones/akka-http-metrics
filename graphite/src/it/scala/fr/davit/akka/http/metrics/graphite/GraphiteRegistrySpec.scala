@@ -37,7 +37,7 @@ class GraphiteRegistrySpec
     with BeforeAndAfterAll {
 
   val dimensions = Seq(PathDimension("/api"), StatusGroupDimension(StatusCodes.OK))
-  val timestamp = Instant.ofEpochSecond(1234)
+  val timestamp  = Instant.ofEpochSecond(1234)
 
   def withFixture(test: (TestProbe, GraphiteRegistry) => Any) = {
     val carbon  = TestProbe()
@@ -45,15 +45,16 @@ class GraphiteRegistrySpec
     carbon.send(IO(Tcp), Tcp.Bind(carbon.ref, new InetSocketAddress(0)))
     val port   = carbon.expectMsgType[Tcp.Bound].localAddress.getPort
     val socket = carbon.sender()
-    carbon.setAutoPilot(new TestActor.AutoPilot {
-      override def run(sender: ActorRef, msg: Any): TestActor.AutoPilot = msg match {
-        case _: Tcp.Connected =>
-          sender ! Tcp.Register(handler.ref)
-          TestActor.KeepRunning
-      }
-    })
+    carbon.setAutoPilot(
+      (sender: ActorRef, msg: Any) =>
+        msg match {
+          case _: Tcp.Connected =>
+            sender ! Tcp.Register(handler.ref)
+            TestActor.KeepRunning
+        }
+    )
 
-    val client   = new CarbonClient("localhost", port) {
+    val client = new CarbonClient("localhost", port) {
       override val clock: Clock = Clock.fixed(timestamp, ZoneId.systemDefault())
     }
     val registry = GraphiteRegistry(client)
@@ -70,8 +71,8 @@ class GraphiteRegistrySpec
     super.afterAll()
   }
 
-  "GraphiteRegistry" should "send active datagrams to the carbon server" in withFixture { (carbon, registry) =>
-    registry.active.inc()
+  "GraphiteRegistry" should "send requestsActive datagrams to the carbon server" in withFixture { (carbon, registry) =>
+    registry.requestsActive.inc()
     carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "akka.http.requests.active 1 1234\n"
   }
 
@@ -80,11 +81,11 @@ class GraphiteRegistrySpec
     carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "akka.http.requests 1 1234\n"
   }
 
-  it should "send receivedBytes datagrams to the carbon server" in withFixture { (carbon, registry) =>
-    registry.receivedBytes.update(3)
+  it should "send requestsSize datagrams to the carbon server" in withFixture { (carbon, registry) =>
+    registry.requestsSize.update(3)
     carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "akka.http.requests.bytes 3 1234\n"
 
-    registry.receivedBytes.update(3, dimensions)
+    registry.requestsSize.update(3, dimensions)
     carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "akka.http.requests.bytes;path=/api;status=2xx 3 1234\n"
   }
 
@@ -96,38 +97,41 @@ class GraphiteRegistrySpec
     carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "akka.http.responses;path=/api;status=2xx 1 1234\n"
   }
 
-  it should "send errors datagrams to the carbon server" in withFixture { (carbon, registry) =>
-    registry.errors.inc()
+  it should "send responsesErrors datagrams to the carbon server" in withFixture { (carbon, registry) =>
+    registry.responsesErrors.inc()
     carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "akka.http.responses.errors 1 1234\n"
 
-    registry.errors.inc(dimensions)
+    registry.responsesErrors.inc(dimensions)
     carbon
       .expectMsgType[Tcp.Received]
       .data
       .utf8String shouldBe "akka.http.responses.errors;path=/api;status=2xx 1 1234\n"
   }
 
-  it should "send duration datagrams to the carbon server" in withFixture { (carbon, registry) =>
-    registry.duration.observe(3.seconds)
+  it should "send responsesDuration datagrams to the carbon server" in withFixture { (carbon, registry) =>
+    registry.responsesDuration.observe(3.seconds)
     carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "akka.http.responses.duration 3000 1234\n"
 
-    registry.duration.observe(3.seconds, dimensions)
+    registry.responsesDuration.observe(3.seconds, dimensions)
     carbon
       .expectMsgType[Tcp.Received]
       .data
       .utf8String shouldBe "akka.http.responses.duration;path=/api;status=2xx 3000 1234\n"
   }
 
-  it should "send sentBytes datagrams to the carbon server" in withFixture { (carbon, registry) =>
-    registry.sentBytes.update(3)
+  it should "send responsesSize datagrams to the carbon server" in withFixture { (carbon, registry) =>
+    registry.responsesSize.update(3)
     carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "akka.http.responses.bytes 3 1234\n"
 
-    registry.sentBytes.update(3, dimensions)
-    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "akka.http.responses.bytes;path=/api;status=2xx 3 1234\n"
+    registry.responsesSize.update(3, dimensions)
+    carbon
+      .expectMsgType[Tcp.Received]
+      .data
+      .utf8String shouldBe "akka.http.responses.bytes;path=/api;status=2xx 3 1234\n"
   }
 
-  it should "send connected datagrams to the carbon server" in withFixture { (carbon, registry) =>
-    registry.connected.inc()
+  it should "send connectionsActive datagrams to the carbon server" in withFixture { (carbon, registry) =>
+    registry.connectionsActive.inc()
     carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "akka.http.connections.active 1 1234\n"
   }
   it should "send connections datagrams to the carbon server" in withFixture { (carbon, registry) =>
