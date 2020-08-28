@@ -41,7 +41,7 @@ class HttpMetricsSpec
     """
       |import akka.http.scaladsl.Http
       |import fr.davit.akka.http.metrics.core.HttpMetrics._
-      |val registry = new TestRegistry(HttpMetricsSettings.default)
+      |val registry = new TestRegistry(TestRegistry.settings)
       |implicit val system: ActorSystem = ActorSystem()
       |Http().newMeteredServerAt("localhost", 8080, registry)
     """.stripMargin should compile

@@ -16,7 +16,7 @@
 
 package fr.davit.akka.http.metrics.core
 
-import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
+import akka.http.scaladsl.model.HttpResponse
 
 trait HttpMetricsSettings {
 
@@ -24,6 +24,11 @@ trait HttpMetricsSettings {
     * Metrics namespace
     */
   def namespace: String
+
+  /**
+    * Name of the individual metrics
+    */
+  def metricsNames: HttpMetricsNames
 
   /**
     * Function that defines if the http response should be
@@ -47,6 +52,7 @@ trait HttpMetricsSettings {
   def includeStatusDimension: Boolean
 
   def withNamespace(namespace: String): HttpMetricsSettings
+  def withMetricsNames(metricsNames: HttpMetricsNames): HttpMetricsSettings
   def withDefineError(fn: HttpResponse => Boolean): HttpMetricsSettings
   def withIncludeMethodDimension(include: Boolean): HttpMetricsSettings
   def withIncludePathDimension(include: Boolean): HttpMetricsSettings
@@ -55,46 +61,37 @@ trait HttpMetricsSettings {
 
 object HttpMetricsSettings {
 
-  val default: HttpMetricsSettings = apply(
-    "akka.http",
-    _.status.isInstanceOf[StatusCodes.ServerError],
-    includeMethodDimension = false,
-    includePathDimension = false,
-    includeStatusDimension = false
-  )
-
   def apply(
       namespace: String,
+      metricsNames: HttpMetricsNames,
       defineError: HttpResponse => Boolean,
       includeMethodDimension: Boolean,
       includePathDimension: Boolean,
       includeStatusDimension: Boolean
   ): HttpMetricsSettings = HttpMetricsSettingsImpl(
     namespace,
+    metricsNames,
     defineError,
     includeMethodDimension,
     includePathDimension,
     includeStatusDimension
   )
 
-  private case class HttpMetricsSettingsImpl(
+  private[metrics] case class HttpMetricsSettingsImpl(
       namespace: String,
+      metricsNames: HttpMetricsNames,
       defineError: HttpResponse => Boolean,
       includeMethodDimension: Boolean,
       includePathDimension: Boolean,
       includeStatusDimension: Boolean
   ) extends HttpMetricsSettings {
 
-    override def withNamespace(namespace: String): HttpMetricsSettings =
-      copy(namespace = namespace)
-    override def withDefineError(fn: HttpResponse => Boolean): HttpMetricsSettings =
-      copy(defineError = fn)
-    override def withIncludeMethodDimension(include: Boolean): HttpMetricsSettings =
-      copy(includeMethodDimension = include)
-    override def withIncludePathDimension(include: Boolean): HttpMetricsSettings =
-      copy(includePathDimension = include)
-    override def withIncludeStatusDimension(include: Boolean): HttpMetricsSettings =
-      copy(includeStatusDimension = include)
+    def withNamespace(namespace: String): HttpMetricsSettings                 = copy(namespace = namespace)
+    def withMetricsNames(metricsNames: HttpMetricsNames): HttpMetricsSettings = copy(metricsNames = metricsNames)
+    def withDefineError(fn: HttpResponse => Boolean): HttpMetricsSettings     = copy(defineError = fn)
+    def withIncludeMethodDimension(include: Boolean): HttpMetricsSettings     = copy(includeMethodDimension = include)
+    def withIncludePathDimension(include: Boolean): HttpMetricsSettings       = copy(includePathDimension = include)
+    def withIncludeStatusDimension(include: Boolean): HttpMetricsSettings     = copy(includeStatusDimension = include)
 
   }
 }

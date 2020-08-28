@@ -23,7 +23,7 @@ object DropwizardRegistry {
 
   def apply(
       registry: MetricRegistry = new MetricRegistry(),
-      settings: HttpMetricsSettings = HttpMetricsSettings.default
+      settings: HttpMetricsSettings = DropwizardSettings.default
   ): DropwizardRegistry = {
     new DropwizardRegistry(settings)(registry)
   }
@@ -32,21 +32,13 @@ object DropwizardRegistry {
 class DropwizardRegistry(settings: HttpMetricsSettings)(implicit val underlying: MetricRegistry)
     extends HttpMetricsRegistry(settings) {
 
-  override lazy val active: Gauge = new DropwizardGauge(settings.namespace, "requests.active")
-
-  override lazy val requests: Counter = new DropwizardCounter(settings.namespace, "requests")
-
-  override lazy val receivedBytes: Histogram = new DropwizardHistogram(settings.namespace, "requests.bytes")
-
-  override lazy val responses: Counter = new DropwizardCounter(settings.namespace, "responses")
-
-  override lazy val errors: Counter = new DropwizardCounter(settings.namespace, "responses.errors")
-
-  override lazy val duration: Timer = new DropwizardTimer(settings.namespace, "responses.duration")
-
-  override lazy val sentBytes: Histogram = new DropwizardHistogram(settings.namespace, "responses.bytes")
-
-  override lazy val connected: Gauge = new DropwizardGauge(settings.namespace, "connections.active")
-
-  override lazy val connections: Counter = new DropwizardCounter(settings.namespace, "connections")
+  lazy val active: Gauge            = new DropwizardGauge(settings.namespace, settings.metricsNames.activeRequests)
+  lazy val requests: Counter        = new DropwizardCounter(settings.namespace, settings.metricsNames.requests)
+  lazy val receivedBytes: Histogram = new DropwizardHistogram(settings.namespace, settings.metricsNames.requestSizes)
+  lazy val responses: Counter       = new DropwizardCounter(settings.namespace, settings.metricsNames.responses)
+  lazy val errors: Counter          = new DropwizardCounter(settings.namespace, settings.metricsNames.errors)
+  lazy val duration: Timer          = new DropwizardTimer(settings.namespace, settings.metricsNames.durations)
+  lazy val sentBytes: Histogram     = new DropwizardHistogram(settings.namespace, settings.metricsNames.responseSizes)
+  lazy val connected: Gauge         = new DropwizardGauge(settings.namespace, settings.metricsNames.activeConnections)
+  lazy val connections: Counter     = new DropwizardCounter(settings.namespace, settings.metricsNames.connections)
 }

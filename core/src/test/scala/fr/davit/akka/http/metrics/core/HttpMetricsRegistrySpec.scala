@@ -31,7 +31,7 @@ class HttpMetricsRegistrySpec extends AnyFlatSpec with Matchers with Eventually 
 
   implicit val currentThreadExecutionContext: ExecutionContext = ExecutionContext.fromExecutor(_.run())
 
-  abstract class Fixture(settings: HttpMetricsSettings = HttpMetricsSettings.default) {
+  abstract class Fixture(settings: HttpMetricsSettings = TestRegistry.settings) {
     val registry = new TestRegistry(settings)
   }
 
@@ -106,7 +106,7 @@ class HttpMetricsRegistrySpec extends AnyFlatSpec with Matchers with Eventually 
   }
 
   it should "add status code dimension when enabled" in new Fixture(
-    HttpMetricsSettings.default.withIncludeStatusDimension(true)
+    TestRegistry.settings.withIncludeStatusDimension(true)
   ) {
     registry.onRequest(HttpRequest(), Future.successful(HttpResponse()))
     registry.responses.value(Seq(StatusGroupDimension(StatusCodes.OK))) shouldBe 1
@@ -116,7 +116,7 @@ class HttpMetricsRegistrySpec extends AnyFlatSpec with Matchers with Eventually 
   }
 
   it should "add method dimension when enabled" in new Fixture(
-    HttpMetricsSettings.default.withIncludeMethodDimension(true)
+    TestRegistry.settings.withIncludeMethodDimension(true)
   ) {
     registry.onRequest(HttpRequest(), Future.successful(HttpResponse()))
     registry.responses.value(Seq(MethodDimension(HttpMethods.GET))) shouldBe 1
@@ -124,7 +124,7 @@ class HttpMetricsRegistrySpec extends AnyFlatSpec with Matchers with Eventually 
   }
 
   it should "default label dimension to 'unlabelled' when enabled but not annotated by directives" in new Fixture(
-    HttpMetricsSettings.default.withIncludePathDimension(true)
+    TestRegistry.settings.withIncludePathDimension(true)
   ) {
     registry.onRequest(HttpRequest().withUri("/unlabelled/path"), Future.successful(HttpResponse()))
     registry.responses.value(Seq(PathDimension("unlabelled"))) shouldBe 1
@@ -132,7 +132,7 @@ class HttpMetricsRegistrySpec extends AnyFlatSpec with Matchers with Eventually 
   }
 
   it should "increment proper label dimension" in new Fixture(
-    HttpMetricsSettings.default.withIncludePathDimension(true)
+    TestRegistry.settings.withIncludePathDimension(true)
   ) {
     val label = "/api"
     registry.onRequest(

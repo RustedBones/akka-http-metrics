@@ -58,6 +58,8 @@ class PrometheusMarshallersSpec extends AnyFlatSpec with Matchers with Scalatest
     registry.errors.inc(dimensions)
     registry.duration.observe(1.second, dimensions)
     registry.sentBytes.update(10, dimensions)
+    registry.connected.inc()
+    registry.connections.inc()
 
     Get() ~> metrics(registry) ~> check {
       response.entity.contentType shouldBe PrometheusMarshallers.PrometheusContentType
