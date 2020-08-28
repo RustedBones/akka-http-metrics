@@ -17,6 +17,7 @@
 package fr.davit.akka.http.metrics.prometheus
 
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
+import fr.davit.akka.http.metrics.core.HttpMetricsNames.HttpMetricsNamesImpl
 import fr.davit.akka.http.metrics.core.{HttpMetricsNames, HttpMetricsSettings}
 import fr.davit.akka.http.metrics.prometheus.Quantiles.Quantile
 
@@ -52,7 +53,7 @@ object Buckets {
 
 object PrometheusMetricsNames {
 
-  val default: HttpMetricsNames = HttpMetricsNames(
+  val default: HttpMetricsNames = HttpMetricsNamesImpl(
     requests = "requests_total",
     activeRequests = "requests_active",
     requestSizes = "requests_size_bytes",
