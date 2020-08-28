@@ -28,13 +28,13 @@ object GraphiteRegistry {
 class GraphiteRegistry(settings: HttpMetricsSettings)(implicit client: CarbonClient)
     extends HttpMetricsRegistry(settings) {
 
-  lazy val active: Gauge            = new CarbonGauge(settings.namespace, settings.metricsNames.activeRequests)
   lazy val requests: Counter        = new CarbonCounter(settings.namespace, settings.metricsNames.requests)
-  lazy val receivedBytes: Histogram = new CarbonHistogram(settings.namespace, settings.metricsNames.requestSizes)
+  lazy val requestsActive: Gauge    = new CarbonGauge(settings.namespace, settings.metricsNames.requestsActive)
+  lazy val requestsSize: Histogram  = new CarbonHistogram(settings.namespace, settings.metricsNames.requestsSize)
   lazy val responses: Counter       = new CarbonCounter(settings.namespace, settings.metricsNames.responses)
-  lazy val errors: Counter          = new CarbonCounter(settings.namespace, settings.metricsNames.errors)
-  lazy val duration: Timer          = new CarbonTimer(settings.namespace, settings.metricsNames.durations)
-  lazy val sentBytes: Histogram     = new CarbonHistogram(settings.namespace, settings.metricsNames.responseSizes)
-  lazy val connected: Gauge         = new CarbonGauge(settings.namespace, settings.metricsNames.activeConnections)
+  lazy val responsesErrors: Counter = new CarbonCounter(settings.namespace, settings.metricsNames.responsesErrors)
+  lazy val responsesDuration: Timer = new CarbonTimer(settings.namespace, settings.metricsNames.responsesDuration)
+  lazy val responsesSize: Histogram = new CarbonHistogram(settings.namespace, settings.metricsNames.responsesSize)
   lazy val connections: Counter     = new CarbonCounter(settings.namespace, settings.metricsNames.connections)
+  lazy val connectionsActive: Gauge = new CarbonGauge(settings.namespace, settings.metricsNames.connectionsActive)
 }

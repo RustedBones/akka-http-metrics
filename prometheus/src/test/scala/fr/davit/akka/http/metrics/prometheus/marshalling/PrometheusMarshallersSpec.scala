@@ -52,14 +52,14 @@ class PrometheusMarshallersSpec extends AnyFlatSpec with Matchers with Scalatest
     // use metrics so they appear in the report
     val dimensions = Seq(StatusGroupDimension(StatusCodes.OK))
     registry.requests.inc()
-    registry.receivedBytes.update(10)
-    registry.active.inc()
+    registry.requestsActive.inc()
+    registry.requestsSize.update(10)
     registry.responses.inc(dimensions)
-    registry.errors.inc(dimensions)
-    registry.duration.observe(1.second, dimensions)
-    registry.sentBytes.update(10, dimensions)
-    registry.connected.inc()
+    registry.responsesErrors.inc(dimensions)
+    registry.responsesDuration.observe(1.second, dimensions)
+    registry.responsesSize.update(10, dimensions)
     registry.connections.inc()
+    registry.connectionsActive.inc()
 
     Get() ~> metrics(registry) ~> check {
       response.entity.contentType shouldBe PrometheusMarshallers.PrometheusContentType
@@ -71,8 +71,8 @@ class PrometheusMarshallersSpec extends AnyFlatSpec with Matchers with Scalatest
         .map(_.takeWhile(c => c != ' ' && c != '{'))
         .distinct
       metrics should contain theSameElementsAs Seq(
-        "akka_http_requests_active",
         "akka_http_requests_total",
+        "akka_http_requests_active",
         "akka_http_requests_size_bytes_bucket",
         "akka_http_requests_size_bytes_count",
         "akka_http_requests_size_bytes_sum",
@@ -84,8 +84,8 @@ class PrometheusMarshallersSpec extends AnyFlatSpec with Matchers with Scalatest
         "akka_http_responses_size_bytes_bucket",
         "akka_http_responses_size_bytes_count",
         "akka_http_responses_size_bytes_sum",
-        "akka_http_connections_active",
         "akka_http_connections_total",
+        "akka_http_connections_active",
         "other_metric"
       )
     }

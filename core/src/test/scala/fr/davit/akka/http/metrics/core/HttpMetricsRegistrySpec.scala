@@ -44,47 +44,47 @@ class HttpMetricsRegistrySpec extends AnyFlatSpec with Matchers with Eventually 
   }
 
   it should "compute the number of errors" in new Fixture() {
-    registry.errors.value() shouldBe 0
+    registry.responsesErrors.value() shouldBe 0
     registry.onRequest(HttpRequest(), Future.successful(HttpResponse(StatusCodes.OK)))
     registry.onRequest(HttpRequest(), Future.successful(HttpResponse(StatusCodes.TemporaryRedirect)))
     registry.onRequest(HttpRequest(), Future.successful(HttpResponse(StatusCodes.BadRequest)))
-    registry.errors.value() shouldBe 0
+    registry.responsesErrors.value() shouldBe 0
     registry.onRequest(HttpRequest(), Future.successful(HttpResponse(StatusCodes.InternalServerError)))
-    registry.errors.value() shouldBe 1
+    registry.responsesErrors.value() shouldBe 1
   }
 
   it should "compute the number of active requests" in new Fixture() {
-    registry.active.value() shouldBe 0
+    registry.requestsActive.value() shouldBe 0
     val promise = Promise[HttpResponse]()
     registry.onRequest(HttpRequest(), promise.future)
     registry.onRequest(HttpRequest(), promise.future)
-    registry.active.value() shouldBe 2
+    registry.requestsActive.value() shouldBe 2
     promise.success(HttpResponse())
-    registry.active.value() shouldBe 0
+    registry.requestsActive.value() shouldBe 0
   }
 
   it should "compute the requests time" in new Fixture() {
     val promise  = Promise[HttpResponse]()
     val duration = 500.millis
-    registry.duration.values() shouldBe empty
+    registry.responsesDuration.values() shouldBe empty
     registry.onRequest(HttpRequest(), promise.future)
     Thread.sleep(duration.toMillis)
     promise.success(HttpResponse())
-    registry.duration.values().head should be > duration
+    registry.responsesDuration.values().head should be > duration
   }
 
   it should "compute the requests size" in new Fixture() {
     val data = "This is the request content"
-    registry.receivedBytes.values() shouldBe empty
+    registry.requestsSize.values() shouldBe empty
     registry.onRequest(HttpRequest(entity = data), Future.successful(HttpResponse()))
-    registry.receivedBytes.values().head shouldBe data.getBytes.length
+    registry.requestsSize.values().head shouldBe data.getBytes.length
   }
 
   it should "compute the response size" in new Fixture() {
     val data = "This is the response content"
-    registry.sentBytes.values() shouldBe empty
+    registry.responsesSize.values() shouldBe empty
     registry.onRequest(HttpRequest(), Future.successful(HttpResponse(entity = data)))
-    registry.sentBytes.values().head shouldBe data.getBytes.length
+    registry.responsesSize.values().head shouldBe data.getBytes.length
   }
 
   it should "compute the number of connections" in new Fixture() {
@@ -96,13 +96,13 @@ class HttpMetricsRegistrySpec extends AnyFlatSpec with Matchers with Eventually 
   }
 
   it should "compute the number of active connections" in new Fixture() {
-    registry.connected.value() shouldBe 0
+    registry.connectionsActive.value() shouldBe 0
     val promise = Promise[Done]()
     registry.onConnection(promise.future)
     registry.onConnection(promise.future)
-    registry.connected.value() shouldBe 2
+    registry.connectionsActive.value() shouldBe 2
     promise.success(Done)
-    registry.connected.value() shouldBe 0
+    registry.connectionsActive.value() shouldBe 0
   }
 
   it should "add status code dimension when enabled" in new Fixture(

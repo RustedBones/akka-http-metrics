@@ -49,24 +49,28 @@ class DropwizardMarshallersSpec extends AnyFlatSpec with Matchers with Scalatest
     // use metrics so they appear in the report
     val dimensions = Seq(StatusGroupDimension(StatusCodes.OK))
     registry.requests.inc()
-    registry.receivedBytes.update(10)
-    registry.active.inc()
+    registry.requestsActive.inc()
+    registry.requestsSize.update(10)
     registry.responses.inc(dimensions)
-    registry.errors.inc()
-    registry.duration.observe(1.second, dimensions)
-    registry.sentBytes.update(10)
+    registry.responsesErrors.inc()
+    registry.responsesDuration.observe(1.second, dimensions)
+    registry.responsesSize.update(10)
+    registry.connections.inc()
+    registry.connectionsActive.inc()
 
     Get() ~> metrics(registry) ~> check {
       val json = responseAs[JsonResponse]
       // println(json)
       json.metrics.keys should contain theSameElementsAs Seq(
-        "akka.http.requests.active",
         "akka.http.requests",
+        "akka.http.requests.active",
         "akka.http.requests.bytes",
         "akka.http.responses{status=2xx}",
         "akka.http.responses.errors",
         "akka.http.responses.duration{status=2xx}",
         "akka.http.responses.bytes",
+        "akka.http.connections",
+        "akka.http.connections.active",
         "other.metric"
       ).toSet
     }

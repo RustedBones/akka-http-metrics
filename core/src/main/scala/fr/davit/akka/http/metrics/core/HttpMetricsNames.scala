@@ -18,24 +18,24 @@ package fr.davit.akka.http.metrics.core
 
 trait HttpMetricsNames {
   def requests: String
-  def activeRequests: String
-  def requestSizes: String
+  def requestsActive: String
+  def requestsSize: String
   def responses: String
-  def errors: String
-  def durations: String
-  def responseSizes: String
+  def responsesErrors: String
+  def responsesDuration: String
+  def responsesSize: String
   def connections: String
-  def activeConnections: String
+  def connectionsActive: String
 
   def withRequests(name: String): HttpMetricsNames
-  def withActiveRequests(name: String): HttpMetricsNames
-  def withRequestSizes(name: String): HttpMetricsNames
+  def withRequestsActive(name: String): HttpMetricsNames
+  def withRequestSize(name: String): HttpMetricsNames
   def withResponses(name: String): HttpMetricsNames
-  def withErrors(name: String): HttpMetricsNames
-  def withDurations(name: String): HttpMetricsNames
-  def withResponseSizes(name: String): HttpMetricsNames
+  def withResponsesErrors(name: String): HttpMetricsNames
+  def withResponsesDuration(name: String): HttpMetricsNames
+  def withResponseSize(name: String): HttpMetricsNames
   def withConnections(name: String): HttpMetricsNames
-  def withActiveConnections(name: String): HttpMetricsNames
+  def withConnectionsActive(name: String): HttpMetricsNames
 
 }
 
@@ -43,24 +43,24 @@ object HttpMetricsNames {
 
   private[metrics] case class HttpMetricsNamesImpl(
       requests: String,
-      activeRequests: String,
-      requestSizes: String,
+      requestsActive: String,
+      requestsSize: String,
       responses: String,
-      errors: String,
-      durations: String,
-      responseSizes: String,
+      responsesErrors: String,
+      responsesDuration: String,
+      responsesSize: String,
       connections: String,
-      activeConnections: String
+      connectionsActive: String
   ) extends HttpMetricsNames {
     def withRequests(name: String): HttpMetricsNamesImpl          = copy(requests = name)
-    def withActiveRequests(name: String): HttpMetricsNamesImpl    = copy(activeRequests = name)
-    def withRequestSizes(name: String): HttpMetricsNamesImpl      = copy(requestSizes = name)
+    def withRequestsActive(name: String): HttpMetricsNamesImpl    = copy(requestsActive = name)
+    def withRequestSize(name: String): HttpMetricsNamesImpl       = copy(requestsSize = name)
     def withResponses(name: String): HttpMetricsNamesImpl         = copy(responses = name)
-    def withErrors(name: String): HttpMetricsNamesImpl            = copy(errors = name)
-    def withDurations(name: String): HttpMetricsNamesImpl         = copy(durations = name)
-    def withResponseSizes(name: String): HttpMetricsNamesImpl     = copy(responseSizes = name)
+    def withResponsesErrors(name: String): HttpMetricsNamesImpl   = copy(responsesErrors = name)
+    def withResponsesDuration(name: String): HttpMetricsNamesImpl = copy(responsesDuration = name)
+    def withResponseSize(name: String): HttpMetricsNamesImpl      = copy(responsesSize = name)
     def withConnections(name: String): HttpMetricsNamesImpl       = copy(connections = name)
-    def withActiveConnections(name: String): HttpMetricsNamesImpl = copy(activeConnections = name)
+    def withConnectionsActive(name: String): HttpMetricsNamesImpl = copy(connectionsActive = name)
   }
 
 }

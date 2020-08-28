@@ -51,8 +51,8 @@ class DropwizardRegistrySpec extends AnyFlatSpec with Matchers {
     }
   }
 
-  "DropwizardRegistry" should "set active metrics in the underlying registry" in new Fixture {
-    registry.active.inc()
+  "DropwizardRegistry" should "set requestsActive metrics in the underlying registry" in new Fixture {
+    registry.requestsActive.inc()
     underlyingCounter("akka.http.requests.active") shouldBe 1L
   }
 
@@ -61,8 +61,8 @@ class DropwizardRegistrySpec extends AnyFlatSpec with Matchers {
     underlyingCounter("akka.http.requests") shouldBe 1L
   }
 
-  it should "set receivedBytes metrics in the underlying registry" in new Fixture {
-    registry.receivedBytes.update(3)
+  it should "set requestsSize metrics in the underlying registry" in new Fixture {
+    registry.requestsSize.update(3)
     underlyingHistogram("akka.http.requests.bytes") shouldBe 3L
   }
 
@@ -74,32 +74,32 @@ class DropwizardRegistrySpec extends AnyFlatSpec with Matchers {
     underlyingCounter("akka.http.responses", dimensions) shouldBe 1L
   }
 
-  it should "set errors metrics in the underlying registry" in new Fixture {
-    registry.errors.inc()
+  it should "set responsesErrors metrics in the underlying registry" in new Fixture {
+    registry.responsesErrors.inc()
     underlyingCounter("akka.http.responses.errors") shouldBe 1L
 
-    registry.errors.inc(dimensions)
+    registry.responsesErrors.inc(dimensions)
     underlyingCounter("akka.http.responses.errors", dimensions) shouldBe 1L
   }
 
-  it should "set duration metrics in the underlying registry" in new Fixture {
-    registry.duration.observe(3.seconds)
+  it should "set responsesDuration metrics in the underlying registry" in new Fixture {
+    registry.responsesDuration.observe(3.seconds)
     underlyingTimer("akka.http.responses.duration") shouldBe 3000000000L
 
-    registry.duration.observe(3.seconds, dimensions)
+    registry.responsesDuration.observe(3.seconds, dimensions)
     underlyingTimer("akka.http.responses.duration", dimensions) shouldBe 3000000000L
   }
 
-  it should "set sentBytes metrics in the underlying registry" in new Fixture {
-    registry.sentBytes.update(3)
+  it should "set responsesSize metrics in the underlying registry" in new Fixture {
+    registry.responsesSize.update(3)
     underlyingHistogram("akka.http.responses.bytes") shouldBe 3L
 
-    registry.sentBytes.update(3, dimensions)
+    registry.responsesSize.update(3, dimensions)
     underlyingHistogram("akka.http.responses.bytes", dimensions) shouldBe 3L
   }
 
-  it should "set connected metrics in the underlying registry" in new Fixture {
-    registry.connected.inc()
+  it should "set connectionsActive metrics in the underlying registry" in new Fixture {
+    registry.connectionsActive.inc()
     underlyingCounter("akka.http.connections.active") shouldBe 1L
   }
 

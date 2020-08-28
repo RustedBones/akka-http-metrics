@@ -9,14 +9,14 @@ object DropwizardMetricsNames {
 
   val default: HttpMetricsNames = HttpMetricsNamesImpl(
     requests = "requests",
-    activeRequests = "requests.active",
-    requestSizes = "requests.bytes",
+    requestsActive = "requests.active",
+    requestsSize = "requests.bytes",
     responses = "responses",
-    errors = "responses.errors",
-    durations = "responses.duration",
-    responseSizes = "responses.bytes",
+    responsesErrors = "responses.errors",
+    responsesDuration = "responses.duration",
+    responsesSize = "responses.bytes",
     connections = "connections",
-    activeConnections = "connections.active"
+    connectionsActive = "connections.active"
   )
 
 }

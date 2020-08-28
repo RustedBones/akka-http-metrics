@@ -33,14 +33,14 @@ object DatadogRegistry {
 class DatadogRegistry(settings: HttpMetricsSettings)(implicit client: StatsDClient)
     extends HttpMetricsRegistry(settings) {
 
-  lazy val active: Gauge            = new StatsDGauge(settings.namespace, settings.metricsNames.activeRequests)
   lazy val requests: Counter        = new StatsDCounter(settings.namespace, settings.metricsNames.requests)
-  lazy val receivedBytes: Histogram = new StatsDHistogram(settings.namespace, settings.metricsNames.requestSizes)
+  lazy val requestsActive: Gauge    = new StatsDGauge(settings.namespace, settings.metricsNames.requestsActive)
+  lazy val requestsSize: Histogram  = new StatsDHistogram(settings.namespace, settings.metricsNames.requestsSize)
   lazy val responses: Counter       = new StatsDCounter(settings.namespace, settings.metricsNames.responses)
-  lazy val errors: Counter          = new StatsDCounter(settings.namespace, settings.metricsNames.errors)
-  lazy val duration: Timer          = new StatsDTimer(settings.namespace, settings.metricsNames.durations)
-  lazy val sentBytes: Histogram     = new StatsDHistogram(settings.namespace, settings.metricsNames.responseSizes)
-  lazy val connected: Gauge         = new StatsDGauge(settings.namespace, settings.metricsNames.activeConnections)
+  lazy val responsesErrors: Counter = new StatsDCounter(settings.namespace, settings.metricsNames.responsesErrors)
+  lazy val responsesDuration: Timer = new StatsDTimer(settings.namespace, settings.metricsNames.responsesDuration)
+  lazy val responsesSize: Histogram = new StatsDHistogram(settings.namespace, settings.metricsNames.responsesSize)
   lazy val connections: Counter     = new StatsDCounter(settings.namespace, settings.metricsNames.connections)
+  lazy val connectionsActive: Gauge = new StatsDGauge(settings.namespace, settings.metricsNames.connectionsActive)
 
 }

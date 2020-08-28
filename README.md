@@ -51,14 +51,14 @@ The library enables you to easily record the following metrics from an akka-http
 following labeled metrics are recorded:
 
 - requests (`counter`)
-- active requests (`gauge`)
-- request sizes (`histogram`)
+- requests active (`gauge`)
+- requests size (`histogram`)
 - responses (`counter`) [status group | path]
-- errors [status group | path]
-- durations (`histogram`) [status group | path]
-- response sizes (`histogram`) [status group | path]
+- responses errors [status group | path]
+- responses duration (`histogram`) [status group | path]
+- response size (`histogram`) [status group | path]
 - connections (`counter`)
-- active connections (`gauge`)
+- connections active (`gauge`)
 
 Record metrics from your akka server by importing the implicits from `HttpMetricsRoute`. Convert your route to the
 flow that will handle requests with `recordMetrics` and bind your server to the desired port.
@@ -165,14 +165,14 @@ Of course, you will also need to have the implicit marshaller for your registry 
 | metric             | name                   |
 |--------------------|------------------------|
 | requests           | requests_count         |
-| active requests    | requests_active        |
-| request sizes      | requests_bytes         |
+| requests active    | requests_active        |
+| requests size      | requests_bytes         |
 | responses          | responses_count        |
-| errors             | responses_errors_count |
-| durations          | responses_duration     |
-| response sizes     | response_bytes         |
+| responses errors   | responses_errors_count |
+| responses duration | responses_duration     |
+| responses size     | responses_bytes         |
 | connections        | connections_count      |
-| active connections | connections_active     |
+| connections active | connections_active     |
 
 The `DatadogRegistry` is just a facade to publish to your StatsD server. The registry itself not located in the JVM, 
 for this reason it is not possible to expose the metrics in your API.
@@ -202,14 +202,14 @@ See datadog's [documentation](https://github.com/dataDog/java-dogstatsd-client) 
 | metric             | name               |
 |--------------------|--------------------|
 | requests           | requests           |
-| active requests    | requests.active    |
-| request sizes      | requests.bytes     |
+| requests active    | requests.active    |
+| requests size      | requests.bytes     |
 | responses          | responses          |
-| errors             | responses.errors   |
-| durations          | responses.duration |
-| response sizes     | responses.bytes    |
+| responses errors   | responses.errors   |
+| responses duration | responses.duration |
+| responses size     | responses.bytes    |
 | connections        | connections        |
-| active connections | connections.active |
+| connections active | connections.active |
 
 **Important**: The `DropwizardRegistry` works with tags. This feature is only supported since dropwizard `v5`. 
 
@@ -243,14 +243,14 @@ val route = (get & path("metrics"))(metrics(registry))
 | metric             | name               |
 |--------------------|--------------------|
 | requests           | requests           |
-| active requests    | requests.active    |
-| request sizes      | requests.bytes     |
+| requests active    | requests.active    |
+| requests size      | requests.bytes     |
 | responses          | responses          |
-| errors             | responses.errors   |
-| durations          | responses.duration |
-| response sizes     | responses.bytes    |
+| responses errors   | responses.errors   |
+| responses duration | responses.duration |
+| response size      | responses.bytes    |
 | connections        | connections        |
-| active connections | connections.active |
+| connections active | connections.active |
 
 Add to your `build.sbt`:
 
@@ -273,14 +273,14 @@ val registry = GraphiteRegistry(carbonClient)
 | metric             | name                       |
 |--------------------|----------------------------|
 | requests           | requests_total             |
-| active requests    | requests_active            |
-| request sizes      | requests_size_bytes        |
+| requests active    | requests_active            |
+| requests size      | requests_size_bytes        |
 | responses          | responses_total            |
-| errors             | responses_errors_total     |
-| durations          | responses_duration_seconds |
-| response sizes     | responses_size_bytes       |
+| responses errors   | responses_errors_total     |
+| responses duration | responses_duration_seconds |
+| responses size     | responses_size_bytes       |
 | connections        | connections_total          |
-| active connections | connections_active         |
+| connections active | connections_active         |
 
 Add to your `build.sbt`:
 
@@ -301,7 +301,7 @@ val registry = PrometheusRegistry(prometheus, settings) // or PrometheusRegistry
 ```
 
 You can fine-tune the `histogram/summary` configuration of `buckets/quantiles` for the `request
- sizes`, `durations` and `response sizes` metrics.
+ size`, `duration` and `response size` metrics.
  
 ```scala
 val settings: PrometheusSettings = PrometheusSettings

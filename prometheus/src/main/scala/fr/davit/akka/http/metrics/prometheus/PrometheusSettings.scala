@@ -55,14 +55,14 @@ object PrometheusMetricsNames {
 
   val default: HttpMetricsNames = HttpMetricsNamesImpl(
     requests = "requests_total",
-    activeRequests = "requests_active",
-    requestSizes = "requests_size_bytes",
+    requestsActive = "requests_active",
+    requestsSize = "requests_size_bytes",
     responses = "responses_total",
-    errors = "responses_errors_total",
-    durations = "responses_duration_seconds",
-    responseSizes = "responses_size_bytes",
+    responsesErrors = "responses_errors_total",
+    responsesDuration = "responses_duration_seconds",
+    responsesSize = "responses_size_bytes",
     connections = "connections_total",
-    activeConnections = "connections_active"
+    connectionsActive = "connections_active"
   )
 }
 
