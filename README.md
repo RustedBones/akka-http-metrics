@@ -73,9 +73,7 @@ import fr.davit.akka.http.metrics.core.HttpMetrics._
 
 implicit val system = ActorSystem()
 
-val settings: HttpMetricsSettings = HttpMetricsSettings
-                                      .default
-                                      .withNamespace("com.example.service")
+val settings: HttpMetricsSettings = ... // concrete settings implementation
 
 val registry: HttpMetricsRegistry = ... // concrete registry implementation
 
@@ -88,9 +86,7 @@ By default, the errored request counter will be incremented when the served resp
 You can override this behaviour in the settings.
 
 ```scala
-val settings = HttpMetricsSettings
-  .default
-  .withDefineError(_.status.isFailure)
+settings.withDefineError(_.status.isFailure)
 ```
 
 In this example, all responses with status >= 400 are considered as errors.
@@ -107,7 +103,7 @@ Http().newMeteredServerAt("localhost", 8080).bind(route)
 By default metrics labels are disabled. You can enable them in the settings.
 
 ```scala
-val settings = HttpMetricsSettings.default
+settings
   .withIncludeMethodDimension(true)
   .withIncludePathDimension(true)
   .withIncludeStatusDimension(true)
@@ -187,11 +183,12 @@ Create your registry
 
 ```scala
 import com.timgroup.statsd.StatsDClient
-import fr.davit.akka.http.metrics.datadog.DatadogRegistry
+import fr.davit.akka.http.metrics.core.HttpMetricsSettings
+import fr.davit.akka.http.metrics.datadog.{DatadogRegistry, DatadogSettings}
 
 val client: StatsDClient = ... // your statsd client
-
-val registry = DatadogRegistry(client)
+val settings: HttpMetricsSettings = DatadogSettings.default
+val registry = DatadogRegistry(client, settings) // or DatadogRegistry(client) to use default settings
 ```
 
 See datadog's [documentation](https://github.com/dataDog/java-dogstatsd-client) on how to create a StatsD client.
@@ -223,11 +220,12 @@ Create your registry
 
 ```scala
 import io.dropwizard.metrics5.MetricRegistry
-import fr.davit.akka.http.metrics.dropwizard.DropwizardRegistry
+import fr.davit.akka.http.metrics.core.HttpMetricsSettings
+import fr.davit.akka.http.metrics.dropwizard.{DropwizardRegistry, DropwizardSettings}
 
 val dropwizard: MetricRegistry = ... // your dropwizard registry
-
-val registry = DropwizardRegistry(dropwizard) // or DropwizardRegistry() to use a fresh registry
+val settings: HttpMetricsSettings = DropwizardSettings.default
+val registry = DropwizardRegistry(dropwizard, settings) // or DropwizardRegistry() to use a fresh registry & default settings
 ```
 
 Expose the metrics
@@ -261,11 +259,12 @@ libraryDependencies += "fr.davit" %% "akka-http-metrics-graphite" % <version>
 Create your carbon client and your registry
 
 ```scala
-import fr.davit.akka.http.metrics.graphite.{CarbonClient, GraphiteRegistry}
+import fr.davit.akka.http.metrics.core.HttpMetricsSettings
+import fr.davit.akka.http.metrics.graphite.{CarbonClient, GraphiteRegistry, GraphiteSettings}
 
 val carbonClient: CarbonClient = CarbonClient("hostname", 2003)
-
-val registry = GraphiteRegistry(carbonClient)
+val settings: HttpMetricsSettings = GraphiteSettings.default
+val registry = GraphiteRegistry(carbonClient, settings) // or PrometheusRegistry(carbonClient) to use default settings
 ```
 
 ### [Prometheus](http://prometheus.io/)
@@ -294,18 +293,16 @@ Create your registry
 import io.prometheus.client.CollectorRegistry
 import fr.davit.akka.http.metrics.prometheus.{PrometheusRegistry, PrometheusSettings}
 
-val settings: PrometheusSettings = ... // your http metrics settings
 val prometheus: CollectorRegistry = ... // your prometheus registry
-
-val registry = PrometheusRegistry(prometheus, settings) // or PrometheusRegistry(settings = settings) to use the default registry
+val settings: PrometheusSettings = PrometheusSettings.default
+val registry = PrometheusRegistry(prometheus, settings) // or PrometheusRegistry() to use the default registry & settings
 ```
 
 You can fine-tune the `histogram/summary` configuration of `buckets/quantiles` for the `request
  size`, `duration` and `response size` metrics.
  
 ```scala
-val settings: PrometheusSettings = PrometheusSettings
-  .default
+settings
   .withDurationConfig(Buckets(1, 2, 3, 5, 8, 13, 21, 34))
   .withReceivedBytesConfig(Quantiles(0.5, 0.75, 0.9, 0.95, 0.99))
   .withSentBytesConfig(PrometheusSettings.DefaultQuantiles)
