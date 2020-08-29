@@ -30,9 +30,9 @@ class HttpMetricsDirectivesSpec extends AnyFlatSpec with Matchers with Scalatest
   import HttpMetricsDirectives._
 
   "HttpMetricsDirectives" should "expose the registry" in {
-    implicit val marshaller = StringMarshaller.compose[TestRegistry](r => s"active: ${r.active.value()}")
+    implicit val marshaller = StringMarshaller.compose[TestRegistry](r => s"active: ${r.requestsActive.value()}")
     val registry            = new TestRegistry()
-    registry.active.inc()
+    registry.requestsActive.inc()
 
     val route = path("metrics") {
       metrics(registry)

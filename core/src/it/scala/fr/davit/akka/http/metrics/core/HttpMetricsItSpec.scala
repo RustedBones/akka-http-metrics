@@ -45,7 +45,7 @@ class HttpMetricsItSpec
   }
 
   trait Fixture {
-    val settings: HttpMetricsSettings = HttpMetricsSettings.default
+    val settings: HttpMetricsSettings = TestRegistry.settings
       .withNamespace("com.example.service")
 
     val registry = new TestRegistry(settings)

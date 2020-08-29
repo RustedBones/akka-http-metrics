@@ -20,7 +20,7 @@ import fr.davit.akka.http.metrics.core.{HttpMetricsSettings, _}
 
 object GraphiteRegistry {
 
-  def apply(client: CarbonClient, settings: HttpMetricsSettings = HttpMetricsSettings.default): GraphiteRegistry = {
+  def apply(client: CarbonClient, settings: HttpMetricsSettings = GraphiteSettings.default): GraphiteRegistry = {
     new GraphiteRegistry(settings)(client)
   }
 }
@@ -28,21 +28,13 @@ object GraphiteRegistry {
 class GraphiteRegistry(settings: HttpMetricsSettings)(implicit client: CarbonClient)
     extends HttpMetricsRegistry(settings) {
 
-  override lazy val active: Gauge = new CarbonGauge(settings.namespace, "requests.active")
-
-  override lazy val requests: Counter = new CarbonCounter(settings.namespace, "requests")
-
-  override lazy val receivedBytes: Histogram = new CarbonHistogram(settings.namespace, "requests.bytes")
-
-  override lazy val responses: Counter = new CarbonCounter(settings.namespace, "responses")
-
-  override lazy val errors: Counter = new CarbonCounter(settings.namespace, "responses.errors")
-
-  override lazy val duration: Timer = new CarbonTimer(settings.namespace, "responses.duration")
-
-  override lazy val sentBytes: Histogram = new CarbonHistogram(settings.namespace, "responses.bytes")
-
-  override lazy val connected: Gauge = new CarbonGauge(settings.namespace, "connections.active")
-
-  override lazy val connections: Counter = new CarbonCounter(settings.namespace, "connections")
+  lazy val requests: Counter        = new CarbonCounter(settings.namespace, settings.metricsNames.requests)
+  lazy val requestsActive: Gauge    = new CarbonGauge(settings.namespace, settings.metricsNames.requestsActive)
+  lazy val requestsSize: Histogram  = new CarbonHistogram(settings.namespace, settings.metricsNames.requestsSize)
+  lazy val responses: Counter       = new CarbonCounter(settings.namespace, settings.metricsNames.responses)
+  lazy val responsesErrors: Counter = new CarbonCounter(settings.namespace, settings.metricsNames.responsesErrors)
+  lazy val responsesDuration: Timer = new CarbonTimer(settings.namespace, settings.metricsNames.responsesDuration)
+  lazy val responsesSize: Histogram = new CarbonHistogram(settings.namespace, settings.metricsNames.responsesSize)
+  lazy val connections: Counter     = new CarbonCounter(settings.namespace, settings.metricsNames.connections)
+  lazy val connectionsActive: Gauge = new CarbonGauge(settings.namespace, settings.metricsNames.connectionsActive)
 }

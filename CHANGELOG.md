@@ -4,6 +4,8 @@
 
 - Update to akka-http 10.2
 - Update libraries
+- Add metrics names to settings
+- Streamline metrics, name and doc
 
 ## 1.1.1 (2020-06-10)
 

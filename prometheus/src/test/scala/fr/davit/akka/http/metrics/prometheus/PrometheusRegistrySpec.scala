@@ -55,9 +55,34 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
     )
   }
 
-  it should "set active metrics in the underlying registry" in new Fixture {
-    registry.active.inc()
+  trait MetricsNamesFixture extends Fixture {
+    override val registry = PrometheusRegistry(
+      new CollectorRegistry(),
+      PrometheusSettings.default
+        .withNamespace("test_server")
+        .withMetricsNames(
+          PrometheusMetricsNames.default
+            .withConnectionsActive("test_connections_active")
+            .withRequestsActive("test_requests_active")
+            .withConnections("test_connections_total")
+            .withResponsesDuration("test_responses_duration_seconds")
+            .withResponsesErrors("test_responses_errors_total")
+            .withRequests("test_requests_total")
+            .withRequestSize("test_requests_size_bytes")
+            .withResponses("test_responses_total")
+            .withResponseSize("test_responses_size_bytes")
+        )
+    )
+  }
+
+  it should "set requestsActive metrics in the underlying registry" in new Fixture {
+    registry.requestsActive.inc()
     underlyingCounterValue("akka_http_requests_active") shouldBe 1L
+  }
+
+  it should "set requestsActive metrics in the underlying registry using updated name" in new MetricsNamesFixture {
+    registry.requestsActive.inc()
+    underlyingCounterValue("test_server_test_requests_active") shouldBe 1L
   }
 
   it should "set requests metrics in the underlying registry" in new Fixture {
@@ -65,9 +90,19 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
     underlyingCounterValue("akka_http_requests_total") shouldBe 1L
   }
 
-  it should "set receivedBytes metrics in the underlying registry" in new Fixture {
-    registry.receivedBytes.update(3)
+  it should "set requests metrics in the underlying registry using updated name" in new MetricsNamesFixture {
+    registry.requests.inc()
+    underlyingCounterValue("test_server_test_requests_total") shouldBe 1L
+  }
+
+  it should "set requestsSize metrics in the underlying registry" in new Fixture {
+    registry.requestsSize.update(3)
     underlyingHistogramValue("akka_http_requests_size_bytes") shouldBe 3L
+  }
+
+  it should "set requestsSize metrics in the underlying registry using updated name" in new MetricsNamesFixture {
+    registry.requestsSize.update(3)
+    underlyingHistogramValue("test_server_test_requests_size_bytes") shouldBe 3L
   }
 
   it should "set responses metrics in the underlying registry" in new Fixture {
@@ -75,48 +110,78 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
     underlyingCounterValue("akka_http_responses_total") shouldBe 1L
   }
 
+  it should "set responses metrics in the underlying registry using updated name" in new MetricsNamesFixture {
+    registry.responses.inc()
+    underlyingCounterValue("test_server_test_responses_total") shouldBe 1L
+  }
+
   it should "set responses metrics in the underlying registry with dimensions" in new DimensionFixture {
     registry.responses.inc(dimensions)
     underlyingCounterValue("akka_http_responses_total", dimensions) shouldBe 1L
   }
 
-  it should "set errors metrics in the underlying registry" in new Fixture {
-    registry.errors.inc()
+  it should "set responsesErrors metrics in the underlying registry" in new Fixture {
+    registry.responsesErrors.inc()
     underlyingCounterValue("akka_http_responses_errors_total") shouldBe 1L
   }
 
-  it should "set errors metrics in the underlying registry with dimensions" in new DimensionFixture {
-    registry.errors.inc(dimensions)
+  it should "set responsesErrors metrics in the underlying registry using updated name" in new MetricsNamesFixture {
+    registry.responsesErrors.inc()
+    underlyingCounterValue("test_server_test_responses_errors_total") shouldBe 1L
+  }
+
+  it should "set responsesErrors metrics in the underlying registry with dimensions" in new DimensionFixture {
+    registry.responsesErrors.inc(dimensions)
     underlyingCounterValue("akka_http_responses_errors_total", dimensions) shouldBe 1L
   }
 
-  it should "set duration metrics in the underlying registry" in new Fixture {
-    registry.duration.observe(3.seconds)
+  it should "set responsesDuration metrics in the underlying registry" in new Fixture {
+    registry.responsesDuration.observe(3.seconds)
     underlyingHistogramValue("akka_http_responses_duration_seconds") shouldBe 3.0
   }
 
-  it should "set duration metrics in the underlying registry with dimension" in new DimensionFixture {
-    registry.duration.observe(3.seconds, dimensions)
+  it should "set responsesDuration metrics in the underlying registry using updated name" in new MetricsNamesFixture {
+    registry.responsesDuration.observe(3.seconds)
+    underlyingHistogramValue("test_server_test_responses_duration_seconds") shouldBe 3.0
+  }
+
+  it should "set responsesDuration metrics in the underlying registry with dimension" in new DimensionFixture {
+    registry.responsesDuration.observe(3.seconds, dimensions)
     underlyingHistogramValue("akka_http_responses_duration_seconds", dimensions) shouldBe 3.0
   }
 
-  it should "set sentBytes metrics in the underlying registry" in new Fixture {
-    registry.sentBytes.update(3)
+  it should "set responsesSize metrics in the underlying registry" in new Fixture {
+    registry.responsesSize.update(3)
     underlyingHistogramValue("akka_http_responses_size_bytes") shouldBe 3L
   }
 
-  it should "set sentBytes metrics in the underlying registry with dimensions" in new DimensionFixture {
-    registry.sentBytes.update(3, dimensions)
+  it should "set responsesSize metrics in the underlying registry using updated name" in new MetricsNamesFixture {
+    registry.responsesSize.update(3)
+    underlyingHistogramValue("test_server_test_responses_size_bytes") shouldBe 3L
+  }
+
+  it should "set responsesSize metrics in the underlying registry with dimensions" in new DimensionFixture {
+    registry.responsesSize.update(3, dimensions)
     underlyingHistogramValue("akka_http_responses_size_bytes", dimensions) shouldBe 3L
   }
 
-  it should "set connected metrics in the underlying registry" in new Fixture {
-    registry.connected.inc()
+  it should "set connectionsActive metrics in the underlying registry" in new Fixture {
+    registry.connectionsActive.inc()
     underlyingCounterValue("akka_http_connections_active") shouldBe 1L
+  }
+
+  it should "set connectionsActive metrics in the underlying registry using updated name" in new MetricsNamesFixture {
+    registry.connectionsActive.inc()
+    underlyingCounterValue("test_server_test_connections_active") shouldBe 1L
   }
 
   it should "set connections metrics in the underlying registry" in new Fixture {
     registry.connections.inc()
     underlyingCounterValue("akka_http_connections_total") shouldBe 1L
+  }
+
+  it should "set connections metrics in the underlying registry using updated name" in new MetricsNamesFixture {
+    registry.connections.inc()
+    underlyingCounterValue("test_server_test_connections_total") shouldBe 1L
   }
 }

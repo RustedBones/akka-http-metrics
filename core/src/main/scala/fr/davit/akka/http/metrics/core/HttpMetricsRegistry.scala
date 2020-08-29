@@ -65,29 +65,47 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
   //--------------------------------------------------------------------------------------------------------------------
   // requests
   //--------------------------------------------------------------------------------------------------------------------
-  def active: Gauge
-
   def requests: Counter
 
-  def receivedBytes: Histogram
+  def requestsActive: Gauge
+
+  def requestsSize: Histogram
+
+  @deprecated("Use requestsActive", "1.2.0")
+  def active: Gauge = requestsActive
+
+  @deprecated("Use requestsSize", "1.2.0")
+  def receivedBytes: Histogram = requestsSize
 
   //--------------------------------------------------------------------------------------------------------------------
   // responses
   //--------------------------------------------------------------------------------------------------------------------
   def responses: Counter
 
-  def errors: Counter
+  def responsesErrors: Counter
 
-  def duration: Timer
+  def responsesDuration: Timer
 
-  def sentBytes: Histogram
+  def responsesSize: Histogram
+
+  @deprecated("Use responsesErrors", "1.2.0")
+  def errors: Counter = responsesErrors
+
+  @deprecated("Use responsesDuration", "1.2.0")
+  def duration: Timer = responsesDuration
+
+  @deprecated("Use responsesSize", "1.2.0")
+  def sentBytes: Histogram = responsesSize
 
   //--------------------------------------------------------------------------------------------------------------------
   // Connections
   //--------------------------------------------------------------------------------------------------------------------
-  def connected: Gauge
-
   def connections: Counter
+
+  def connectionsActive: Gauge
+
+  @deprecated("Use connectionsActive", "1.2.0")
+  def connected: Gauge = connectionsActive
 
   private def pathLabel(response: HttpResponse): String = {
     response.header[PathLabelHeader].getOrElse(PathLabelHeader.UnLabelled).value
@@ -96,9 +114,9 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
   override def onRequest(request: HttpRequest, response: Future[HttpResponse])(
       implicit executionContext: ExecutionContext
   ): Unit = {
-    active.inc()
+    requestsActive.inc()
     requests.inc()
-    receivedBytes.update(request.entity.contentLengthOption.getOrElse(0L))
+    requestsSize.update(request.entity.contentLengthOption.getOrElse(0L))
     val start = Deadline.now
 
     response.foreach { r =>
@@ -110,19 +128,19 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
       val dimensions = (methodDim ++ pathDim ++ statusGroupDim).toSeq
       // format: on
 
-      active.dec()
+      requestsActive.dec()
       responses.inc(dimensions)
-      duration.observe(Deadline.now - start, dimensions)
+      responsesDuration.observe(Deadline.now - start, dimensions)
       if (settings.defineError(r)) {
-        errors.inc(dimensions)
+        responsesErrors.inc(dimensions)
       }
-      r.entity.contentLengthOption.foreach(sentBytes.update(_, dimensions))
+      r.entity.contentLengthOption.foreach(responsesSize.update(_, dimensions))
     }
   }
 
   override def onConnection(completion: Future[Done])(implicit executionContext: ExecutionContext): Unit = {
     connections.inc()
-    connected.inc()
-    completion.onComplete(_ => connected.dec())
+    connectionsActive.inc()
+    completion.onComplete(_ => connectionsActive.dec())
   }
 }

@@ -17,12 +17,24 @@
 package fr.davit.akka.http.metrics.core
 
 import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
-import akka.http.scaladsl.model.HttpEntity
+import akka.http.scaladsl.model.{HttpEntity, StatusCodes}
+import fr.davit.akka.http.metrics.core.HttpMetricsNames.HttpMetricsNamesImpl
+import fr.davit.akka.http.metrics.core.HttpMetricsSettings.HttpMetricsSettingsImpl
 
 import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
 
 object TestRegistry {
+
+  val settings: HttpMetricsSettings = HttpMetricsSettingsImpl(
+    "", // not used
+    HttpMetricsNamesImpl("", "", "", "", "", "", "", "", ""), // not used
+    _.status.isInstanceOf[StatusCodes.ServerError],
+    includeMethodDimension = false,
+    includePathDimension = false,
+    includeStatusDimension = false
+  )
+
   implicit val marshaller: ToEntityMarshaller[TestRegistry] = Marshaller.opaque(_ => HttpEntity.Empty)
 
   private def keyer(dimensions: Seq[Dimension]): String = dimensions.mkString(":")
@@ -81,26 +93,17 @@ object TestRegistry {
 
 }
 
-final class TestRegistry(settings: HttpMetricsSettings = HttpMetricsSettings.default)
-    extends HttpMetricsRegistry(settings) {
+final class TestRegistry(settings: HttpMetricsSettings = TestRegistry.settings) extends HttpMetricsRegistry(settings) {
 
   import TestRegistry._
 
-  override val active = new TestGauge
-
-  override val requests = new TestCounter
-
-  override val receivedBytes = new TestHistogram
-
-  override val responses = new TestCounter
-
-  override val errors = new TestCounter
-
-  override val duration = new TestTimer
-
-  override val sentBytes = new TestHistogram
-
-  override val connected = new TestGauge
-
-  override val connections = new TestCounter
+  override val requests          = new TestCounter
+  override val requestsActive    = new TestGauge
+  override val requestsSize      = new TestHistogram
+  override val responses         = new TestCounter
+  override val responsesErrors   = new TestCounter
+  override val responsesDuration = new TestTimer
+  override val responsesSize     = new TestHistogram
+  override val connections       = new TestCounter
+  override val connectionsActive = new TestGauge
 }

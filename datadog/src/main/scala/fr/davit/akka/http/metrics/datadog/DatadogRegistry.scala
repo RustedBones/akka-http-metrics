@@ -21,7 +21,7 @@ import fr.davit.akka.http.metrics.core.{HttpMetricsSettings, _}
 
 object DatadogRegistry {
 
-  def apply(client: StatsDClient, settings: HttpMetricsSettings = HttpMetricsSettings.default): DatadogRegistry = {
+  def apply(client: StatsDClient, settings: HttpMetricsSettings = DatadogSettings.default): DatadogRegistry = {
     new DatadogRegistry(settings)(client)
   }
 }
@@ -33,22 +33,14 @@ object DatadogRegistry {
 class DatadogRegistry(settings: HttpMetricsSettings)(implicit client: StatsDClient)
     extends HttpMetricsRegistry(settings) {
 
-  override lazy val active: Gauge = new StatsDGauge(settings.namespace, "requests_active")
-
-  override lazy val requests: Counter = new StatsDCounter(settings.namespace, "requests_count")
-
-  override lazy val receivedBytes: Histogram = new StatsDHistogram(settings.namespace, "requests_bytes")
-
-  override lazy val responses: Counter = new StatsDCounter(settings.namespace, "responses_count")
-
-  override lazy val errors: Counter = new StatsDCounter(settings.namespace, "responses_errors_count")
-
-  override lazy val duration: Timer = new StatsDTimer(settings.namespace, "responses_duration")
-
-  override lazy val sentBytes: Histogram = new StatsDHistogram(settings.namespace, "responses_bytes")
-
-  override lazy val connected: Gauge = new StatsDGauge(settings.namespace, "connections_active")
-
-  override lazy val connections: Counter = new StatsDCounter(settings.namespace, "connections_count")
+  lazy val requests: Counter        = new StatsDCounter(settings.namespace, settings.metricsNames.requests)
+  lazy val requestsActive: Gauge    = new StatsDGauge(settings.namespace, settings.metricsNames.requestsActive)
+  lazy val requestsSize: Histogram  = new StatsDHistogram(settings.namespace, settings.metricsNames.requestsSize)
+  lazy val responses: Counter       = new StatsDCounter(settings.namespace, settings.metricsNames.responses)
+  lazy val responsesErrors: Counter = new StatsDCounter(settings.namespace, settings.metricsNames.responsesErrors)
+  lazy val responsesDuration: Timer = new StatsDTimer(settings.namespace, settings.metricsNames.responsesDuration)
+  lazy val responsesSize: Histogram = new StatsDHistogram(settings.namespace, settings.metricsNames.responsesSize)
+  lazy val connections: Counter     = new StatsDCounter(settings.namespace, settings.metricsNames.connections)
+  lazy val connectionsActive: Gauge = new StatsDGauge(settings.namespace, settings.metricsNames.connectionsActive)
 
 }

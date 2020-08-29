@@ -51,14 +51,14 @@ The library enables you to easily record the following metrics from an akka-http
 following labeled metrics are recorded:
 
 - requests (`counter`)
-- active requests (`gauge`)
-- request sizes (`histogram`)
+- requests active (`gauge`)
+- requests size (`histogram`)
 - responses (`counter`) [status group | path]
-- errors [status group | path]
-- durations (`histogram`) [status group | path]
-- response sizes (`histogram`) [status group | path]
+- responses errors [status group | path]
+- responses duration (`histogram`) [status group | path]
+- response size (`histogram`) [status group | path]
 - connections (`counter`)
-- active connections (`gauge`)
+- connections active (`gauge`)
 
 Record metrics from your akka server by importing the implicits from `HttpMetricsRoute`. Convert your route to the
 flow that will handle requests with `recordMetrics` and bind your server to the desired port.
@@ -73,9 +73,7 @@ import fr.davit.akka.http.metrics.core.HttpMetrics._
 
 implicit val system = ActorSystem()
 
-val settings: HttpMetricsSettings = HttpMetricsSettings
-                                      .default
-                                      .withNamespace("com.example.service")
+val settings: HttpMetricsSettings = ... // concrete settings implementation
 
 val registry: HttpMetricsRegistry = ... // concrete registry implementation
 
@@ -88,9 +86,7 @@ By default, the errored request counter will be incremented when the served resp
 You can override this behaviour in the settings.
 
 ```scala
-val settings = HttpMetricsSettings
-  .default
-  .withDefineError(_.status.isFailure)
+settings.withDefineError(_.status.isFailure)
 ```
 
 In this example, all responses with status >= 400 are considered as errors.
@@ -107,7 +103,7 @@ Http().newMeteredServerAt("localhost", 8080).bind(route)
 By default metrics labels are disabled. You can enable them in the settings.
 
 ```scala
-val settings = HttpMetricsSettings.default
+settings
   .withIncludeMethodDimension(true)
   .withIncludePathDimension(true)
   .withIncludeStatusDimension(true)
@@ -165,14 +161,14 @@ Of course, you will also need to have the implicit marshaller for your registry 
 | metric             | name                   |
 |--------------------|------------------------|
 | requests           | requests_count         |
-| active requests    | requests_active        |
-| request sizes      | requests_bytes         |
+| requests active    | requests_active        |
+| requests size      | requests_bytes         |
 | responses          | responses_count        |
-| errors             | responses_errors_count |
-| durations          | responses_duration     |
-| response sizes     | response_bytes         |
+| responses errors   | responses_errors_count |
+| responses duration | responses_duration     |
+| responses size     | responses_bytes         |
 | connections        | connections_count      |
-| active connections | connections_active     |
+| connections active | connections_active     |
 
 The `DatadogRegistry` is just a facade to publish to your StatsD server. The registry itself not located in the JVM, 
 for this reason it is not possible to expose the metrics in your API.
@@ -187,11 +183,12 @@ Create your registry
 
 ```scala
 import com.timgroup.statsd.StatsDClient
-import fr.davit.akka.http.metrics.datadog.DatadogRegistry
+import fr.davit.akka.http.metrics.core.HttpMetricsSettings
+import fr.davit.akka.http.metrics.datadog.{DatadogRegistry, DatadogSettings}
 
 val client: StatsDClient = ... // your statsd client
-
-val registry = DatadogRegistry(client)
+val settings: HttpMetricsSettings = DatadogSettings.default
+val registry = DatadogRegistry(client, settings) // or DatadogRegistry(client) to use default settings
 ```
 
 See datadog's [documentation](https://github.com/dataDog/java-dogstatsd-client) on how to create a StatsD client.
@@ -202,14 +199,14 @@ See datadog's [documentation](https://github.com/dataDog/java-dogstatsd-client) 
 | metric             | name               |
 |--------------------|--------------------|
 | requests           | requests           |
-| active requests    | requests.active    |
-| request sizes      | requests.bytes     |
+| requests active    | requests.active    |
+| requests size      | requests.bytes     |
 | responses          | responses          |
-| errors             | responses.errors   |
-| durations          | responses.duration |
-| response sizes     | responses.bytes    |
+| responses errors   | responses.errors   |
+| responses duration | responses.duration |
+| responses size     | responses.bytes    |
 | connections        | connections        |
-| active connections | connections.active |
+| connections active | connections.active |
 
 **Important**: The `DropwizardRegistry` works with tags. This feature is only supported since dropwizard `v5`. 
 
@@ -223,11 +220,12 @@ Create your registry
 
 ```scala
 import io.dropwizard.metrics5.MetricRegistry
-import fr.davit.akka.http.metrics.dropwizard.DropwizardRegistry
+import fr.davit.akka.http.metrics.core.HttpMetricsSettings
+import fr.davit.akka.http.metrics.dropwizard.{DropwizardRegistry, DropwizardSettings}
 
 val dropwizard: MetricRegistry = ... // your dropwizard registry
-
-val registry = DropwizardRegistry(dropwizard) // or DropwizardRegistry() to use a fresh registry
+val settings: HttpMetricsSettings = DropwizardSettings.default
+val registry = DropwizardRegistry(dropwizard, settings) // or DropwizardRegistry() to use a fresh registry & default settings
 ```
 
 Expose the metrics
@@ -243,14 +241,14 @@ val route = (get & path("metrics"))(metrics(registry))
 | metric             | name               |
 |--------------------|--------------------|
 | requests           | requests           |
-| active requests    | requests.active    |
-| request sizes      | requests.bytes     |
+| requests active    | requests.active    |
+| requests size      | requests.bytes     |
 | responses          | responses          |
-| errors             | responses.errors   |
-| durations          | responses.duration |
-| response sizes     | responses.bytes    |
+| responses errors   | responses.errors   |
+| responses duration | responses.duration |
+| response size      | responses.bytes    |
 | connections        | connections        |
-| active connections | connections.active |
+| connections active | connections.active |
 
 Add to your `build.sbt`:
 
@@ -261,11 +259,12 @@ libraryDependencies += "fr.davit" %% "akka-http-metrics-graphite" % <version>
 Create your carbon client and your registry
 
 ```scala
-import fr.davit.akka.http.metrics.graphite.{CarbonClient, GraphiteRegistry}
+import fr.davit.akka.http.metrics.core.HttpMetricsSettings
+import fr.davit.akka.http.metrics.graphite.{CarbonClient, GraphiteRegistry, GraphiteSettings}
 
 val carbonClient: CarbonClient = CarbonClient("hostname", 2003)
-
-val registry = GraphiteRegistry(carbonClient)
+val settings: HttpMetricsSettings = GraphiteSettings.default
+val registry = GraphiteRegistry(carbonClient, settings) // or PrometheusRegistry(carbonClient) to use default settings
 ```
 
 ### [Prometheus](http://prometheus.io/)
@@ -273,14 +272,14 @@ val registry = GraphiteRegistry(carbonClient)
 | metric             | name                       |
 |--------------------|----------------------------|
 | requests           | requests_total             |
-| active requests    | requests_active            |
-| request sizes      | requests_size_bytes        |
+| requests active    | requests_active            |
+| requests size      | requests_size_bytes        |
 | responses          | responses_total            |
-| errors             | responses_errors_total     |
-| durations          | responses_duration_seconds |
-| response sizes     | responses_size_bytes       |
+| responses errors   | responses_errors_total     |
+| responses duration | responses_duration_seconds |
+| responses size     | responses_size_bytes       |
 | connections        | connections_total          |
-| active connections | connections_active         |
+| connections active | connections_active         |
 
 Add to your `build.sbt`:
 
@@ -294,18 +293,16 @@ Create your registry
 import io.prometheus.client.CollectorRegistry
 import fr.davit.akka.http.metrics.prometheus.{PrometheusRegistry, PrometheusSettings}
 
-val settings: PrometheusSettings = ... // your http metrics settings
 val prometheus: CollectorRegistry = ... // your prometheus registry
-
-val registry = PrometheusRegistry(prometheus, settings) // or PrometheusRegistry(settings = settings) to use the default registry
+val settings: PrometheusSettings = PrometheusSettings.default
+val registry = PrometheusRegistry(prometheus, settings) // or PrometheusRegistry() to use the default registry & settings
 ```
 
 You can fine-tune the `histogram/summary` configuration of `buckets/quantiles` for the `request
- sizes`, `durations` and `response sizes` metrics.
+ size`, `duration` and `response size` metrics.
  
 ```scala
-val settings: PrometheusSettings = PrometheusSettings
-  .default
+settings
   .withDurationConfig(Buckets(1, 2, 3, 5, 8, 13, 21, 34))
   .withReceivedBytesConfig(Quantiles(0.5, 0.75, 0.9, 0.95, 0.99))
   .withSentBytesConfig(PrometheusSettings.DefaultQuantiles)

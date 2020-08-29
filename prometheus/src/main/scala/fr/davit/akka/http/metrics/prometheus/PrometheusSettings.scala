@@ -17,7 +17,8 @@
 package fr.davit.akka.http.metrics.prometheus
 
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
-import fr.davit.akka.http.metrics.core.HttpMetricsSettings
+import fr.davit.akka.http.metrics.core.HttpMetricsNames.HttpMetricsNamesImpl
+import fr.davit.akka.http.metrics.core.{HttpMetricsNames, HttpMetricsSettings}
 import fr.davit.akka.http.metrics.prometheus.Quantiles.Quantile
 
 import scala.concurrent.duration._
@@ -50,8 +51,24 @@ object Buckets {
   def apply(b: Double*): Buckets = Buckets(b.toList)
 }
 
+object PrometheusMetricsNames {
+
+  val default: HttpMetricsNames = HttpMetricsNamesImpl(
+    requests = "requests_total",
+    requestsActive = "requests_active",
+    requestsSize = "requests_size_bytes",
+    responses = "responses_total",
+    responsesErrors = "responses_errors_total",
+    responsesDuration = "responses_duration_seconds",
+    responsesSize = "responses_size_bytes",
+    connections = "connections_total",
+    connectionsActive = "connections_active"
+  )
+}
+
 final case class PrometheusSettings(
     namespace: String,
+    metricsNames: HttpMetricsNames,
     defineError: HttpResponse => Boolean,
     includeMethodDimension: Boolean,
     includePathDimension: Boolean,
@@ -61,29 +78,16 @@ final case class PrometheusSettings(
     sentBytesConfig: HistogramConfig
 ) extends HttpMetricsSettings {
 
-  override def withNamespace(namespace: String): PrometheusSettings =
-    copy(namespace = namespace)
+  def withNamespace(namespace: String): PrometheusSettings                 = copy(namespace = namespace)
+  def withMetricsNames(metricsNames: HttpMetricsNames): PrometheusSettings = copy(metricsNames = metricsNames)
+  def withDefineError(fn: HttpResponse => Boolean): PrometheusSettings     = copy(defineError = defineError)
+  def withIncludeMethodDimension(include: Boolean): PrometheusSettings     = copy(includeMethodDimension = include)
+  def withIncludePathDimension(include: Boolean): PrometheusSettings       = copy(includePathDimension = include)
+  def withIncludeStatusDimension(include: Boolean): PrometheusSettings     = copy(includeStatusDimension = include)
+  def withReceivedBytesConfig(config: HistogramConfig): PrometheusSettings = copy(receivedBytesConfig = config)
+  def withDurationConfig(config: TimerConfig): PrometheusSettings          = copy(durationConfig = config)
+  def withSentBytesConfig(config: HistogramConfig): PrometheusSettings     = copy(sentBytesConfig = config)
 
-  override def withDefineError(fn: HttpResponse => Boolean): PrometheusSettings =
-    copy(defineError = defineError)
-
-  override def withIncludeMethodDimension(include: Boolean): PrometheusSettings =
-    copy(includeMethodDimension = include)
-
-  override def withIncludePathDimension(include: Boolean): PrometheusSettings =
-    copy(includePathDimension = include)
-
-  override def withIncludeStatusDimension(include: Boolean): PrometheusSettings =
-    copy(includeStatusDimension = include)
-
-  def withReceivedBytesConfig(config: HistogramConfig): PrometheusSettings =
-    copy(receivedBytesConfig = config)
-
-  def withDurationConfig(config: TimerConfig): PrometheusSettings =
-    copy(durationConfig = config)
-
-  def withSentBytesConfig(config: HistogramConfig): PrometheusSettings =
-    copy(sentBytesConfig = config)
 }
 
 object PrometheusSettings {
@@ -110,7 +114,7 @@ object PrometheusSettings {
     includeStatusDimension = false,
     receivedBytesConfig = BytesBuckets,
     durationConfig = DurationBuckets,
-    sentBytesConfig = BytesBuckets
+    sentBytesConfig = BytesBuckets,
+    metricsNames = PrometheusMetricsNames.default
   )
-
 }

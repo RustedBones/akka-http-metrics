@@ -3,6 +3,7 @@
 .idea/
 .bloop/
 .metals/
+out/
 target/
 project/target/
 project/metals.sbt
