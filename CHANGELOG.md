@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.0 (2020-08-29)
+
 - Update to akka-http 10.2
 - Update libraries
 - Add metrics names to settings
