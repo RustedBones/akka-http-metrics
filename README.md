@@ -71,6 +71,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import fr.davit.akka.http.metrics.core.{HttpMetricsRegistry, HttpMetricsSettings}
 import fr.davit.akka.http.metrics.core.HttpMetrics._
+import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsRoute
 
 implicit val system = ActorSystem()
 
@@ -80,7 +81,8 @@ val registry: HttpMetricsRegistry = ... // concrete registry implementation
 
 val route: Route = ... // your route
 
-Http().newMeteredServerAt("localhost", 8080, registry).bindFlow(route)
+val routesWithMetrics = HttpMetricsRoute(routes).recordMetrics(registry)
+Http().bindAndHandle(routesWithMetrics, "localhost", 8080)
 ```
 
 By default, the errored request counter will be incremented when the served response is an `Server error (5xx)`.
