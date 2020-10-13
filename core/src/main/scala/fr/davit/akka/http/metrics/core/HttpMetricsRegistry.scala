@@ -58,6 +58,7 @@ object HttpMetricsRegistry {
     }
   }
 
+  final case class CustomDimension(key: String, value: String) extends Dimension {}
 }
 
 abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMetricsHandler {
@@ -125,7 +126,9 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
       val methodDim = if (settings.includeMethodDimension) Some(MethodDimension(request.method)) else None
       val pathDim = if (settings.includePathDimension) Some(PathDimension(pathLabel(r))) else None
       val statusGroupDim = if (settings.includeStatusDimension) Some(StatusGroupDimension(r.status)) else None
-      val dimensions = (methodDim ++ pathDim ++ statusGroupDim).toSeq
+      val customDims = settings.includeCustomLabels
+
+      val dimensions = (methodDim ++ pathDim ++ statusGroupDim).toSeq ++ customDims
       // format: on
 
       requestsActive.dec()
