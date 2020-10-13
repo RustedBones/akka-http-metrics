@@ -83,7 +83,7 @@ object HttpMetricsSettings {
     includeMethodDimension,
     includePathDimension,
     includeStatusDimension,
-    includeCustomLabels,
+    includeCustomLabels
   )
 
   private[metrics] case class HttpMetricsSettingsImpl(

@@ -52,9 +52,9 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
   import PrometheusRegistry._
 
   private val labels: Seq[String] = {
-    val methodLabel = if (settings.includeMethodDimension) Some(MethodDimension.Key) else None
-    val pathLabel   = if (settings.includePathDimension) Some(PathDimension.Key) else None
-    val statusLabel = if (settings.includeStatusDimension) Some(StatusGroupDimension.Key) else None
+    val methodLabel  = if (settings.includeMethodDimension) Some(MethodDimension.Key) else None
+    val pathLabel    = if (settings.includePathDimension) Some(PathDimension.Key) else None
+    val statusLabel  = if (settings.includeStatusDimension) Some(StatusGroupDimension.Key) else None
     val customLabels = settings.includeCustomLabels.map(_.key)
 
     (methodLabel ++ pathLabel ++ statusLabel ++ customLabels).toSeq
