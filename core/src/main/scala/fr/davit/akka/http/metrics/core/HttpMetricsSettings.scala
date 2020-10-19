@@ -17,7 +17,7 @@
 package fr.davit.akka.http.metrics.core
 
 import akka.http.scaladsl.model.HttpResponse
-import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.CustomDimension
+import scala.collection.immutable
 
 trait HttpMetricsSettings {
 
@@ -55,7 +55,7 @@ trait HttpMetricsSettings {
   /**
     * Include custom labels, using the Dimension object
     */
-  def includeCustomLabels: Seq[CustomDimension]
+  def serverDimensions: immutable.Seq[Dimension]
 
   def withNamespace(namespace: String): HttpMetricsSettings
   def withMetricsNames(metricsNames: HttpMetricsNames): HttpMetricsSettings
@@ -63,7 +63,7 @@ trait HttpMetricsSettings {
   def withIncludeMethodDimension(include: Boolean): HttpMetricsSettings
   def withIncludePathDimension(include: Boolean): HttpMetricsSettings
   def withIncludeStatusDimension(include: Boolean): HttpMetricsSettings
-  def withIncludeCustomLabels(labels: Seq[CustomDimension]): HttpMetricsSettings
+  def serverDimensions(labels: immutable.Seq[Dimension]): HttpMetricsSettings
 }
 
 object HttpMetricsSettings {
@@ -75,7 +75,7 @@ object HttpMetricsSettings {
       includeMethodDimension: Boolean,
       includePathDimension: Boolean,
       includeStatusDimension: Boolean,
-      includeCustomLabels: Seq[CustomDimension]
+      serverDimensions: immutable.Seq[Dimension]
   ): HttpMetricsSettings = HttpMetricsSettingsImpl(
     namespace,
     metricsNames,
@@ -83,7 +83,7 @@ object HttpMetricsSettings {
     includeMethodDimension,
     includePathDimension,
     includeStatusDimension,
-    includeCustomLabels
+    serverDimensions
   )
 
   private[metrics] case class HttpMetricsSettingsImpl(
@@ -93,15 +93,15 @@ object HttpMetricsSettings {
       includeMethodDimension: Boolean,
       includePathDimension: Boolean,
       includeStatusDimension: Boolean,
-      includeCustomLabels: Seq[CustomDimension] = Seq.empty
+      serverDimensions: immutable.Seq[Dimension] = Seq.empty
   ) extends HttpMetricsSettings {
 
-    def withNamespace(namespace: String): HttpMetricsSettings                      = copy(namespace = namespace)
-    def withMetricsNames(metricsNames: HttpMetricsNames): HttpMetricsSettings      = copy(metricsNames = metricsNames)
-    def withDefineError(fn: HttpResponse => Boolean): HttpMetricsSettings          = copy(defineError = fn)
-    def withIncludeMethodDimension(include: Boolean): HttpMetricsSettings          = copy(includeMethodDimension = include)
-    def withIncludePathDimension(include: Boolean): HttpMetricsSettings            = copy(includePathDimension = include)
-    def withIncludeStatusDimension(include: Boolean): HttpMetricsSettings          = copy(includeStatusDimension = include)
-    def withIncludeCustomLabels(labels: Seq[CustomDimension]): HttpMetricsSettings = copy(includeCustomLabels = labels)
+    def withNamespace(namespace: String): HttpMetricsSettings                   = copy(namespace = namespace)
+    def withMetricsNames(metricsNames: HttpMetricsNames): HttpMetricsSettings   = copy(metricsNames = metricsNames)
+    def withDefineError(fn: HttpResponse => Boolean): HttpMetricsSettings       = copy(defineError = fn)
+    def withIncludeMethodDimension(include: Boolean): HttpMetricsSettings       = copy(includeMethodDimension = include)
+    def withIncludePathDimension(include: Boolean): HttpMetricsSettings         = copy(includePathDimension = include)
+    def withIncludeStatusDimension(include: Boolean): HttpMetricsSettings       = copy(includeStatusDimension = include)
+    def serverDimensions(labels: immutable.Seq[Dimension]): HttpMetricsSettings = copy(serverDimensions = labels)
   }
 }

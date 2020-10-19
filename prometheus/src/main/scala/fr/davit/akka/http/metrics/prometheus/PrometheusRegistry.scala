@@ -55,9 +55,9 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
     val methodLabel  = if (settings.includeMethodDimension) Some(MethodDimension.Key) else None
     val pathLabel    = if (settings.includePathDimension) Some(PathDimension.Key) else None
     val statusLabel  = if (settings.includeStatusDimension) Some(StatusGroupDimension.Key) else None
-    val customLabels = settings.includeCustomLabels.map(_.key)
+    val serverLabels = settings.serverDimensions.map(_.key)
 
-    (methodLabel ++ pathLabel ++ statusLabel ++ customLabels).toSeq
+    (methodLabel ++ pathLabel ++ statusLabel ++ serverLabels).toSeq
   }
 
   lazy val requests: Counter = io.prometheus.client.Counter
