@@ -18,11 +18,7 @@ package fr.davit.akka.http.metrics.prometheus
 
 import akka.http.scaladsl.model.{HttpMethods, StatusCodes}
 import fr.davit.akka.http.metrics.core.Dimension
-import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{
-  MethodDimension,
-  PathDimension,
-  StatusGroupDimension
-}
+import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{MethodDimension, PathDimension, StatusGroupDimension}
 import io.prometheus.client.CollectorRegistry
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
