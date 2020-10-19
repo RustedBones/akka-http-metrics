@@ -93,7 +93,7 @@ object HttpMetricsSettings {
       includeMethodDimension: Boolean,
       includePathDimension: Boolean,
       includeStatusDimension: Boolean,
-      serverDimensions: immutable.Seq[Dimension] = Seq.empty
+      serverDimensions: immutable.Seq[Dimension] = immutable.Seq.empty[Dimension]
   ) extends HttpMetricsSettings {
 
     def withNamespace(namespace: String): HttpMetricsSettings                   = copy(namespace = namespace)

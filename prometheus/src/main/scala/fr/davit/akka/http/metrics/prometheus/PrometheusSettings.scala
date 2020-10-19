@@ -74,7 +74,7 @@ final case class PrometheusSettings(
     includeMethodDimension: Boolean,
     includePathDimension: Boolean,
     includeStatusDimension: Boolean,
-    serverDimensions: immutable.Seq[Dimension] = Seq.empty,
+    serverDimensions: immutable.Seq[Dimension] = immutable.Seq.empty[Dimension],
     receivedBytesConfig: HistogramConfig,
     durationConfig: TimerConfig,
     sentBytesConfig: HistogramConfig
@@ -114,7 +114,7 @@ object PrometheusSettings {
     includeMethodDimension = false,
     includePathDimension = false,
     includeStatusDimension = false,
-    serverDimensions = Seq.empty,
+    serverDimensions = immutable.Seq.empty[Dimension],
     receivedBytesConfig = BytesBuckets,
     durationConfig = DurationBuckets,
     sentBytesConfig = BytesBuckets,
