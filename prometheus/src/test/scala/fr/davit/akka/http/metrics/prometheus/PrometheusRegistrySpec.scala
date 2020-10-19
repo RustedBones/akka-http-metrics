@@ -23,13 +23,14 @@ import io.prometheus.client.CollectorRegistry
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import scala.collection.immutable
 import scala.concurrent.duration._
 
 case class CustomDimension(key: String, value: String) extends Dimension {}
 
 class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
 
-  val customDimensions = Seq(
+  val customDimensions = immutable.Seq(
     CustomDimension("test_key", "test_value")
   )
 
