@@ -110,6 +110,16 @@ settings
   .withIncludeStatusDimension(true)
 ```
 
+Currently, Prometheus supports additional arbitrary server-level dimensions.
+```scala
+settings
+  .serverDimensions(Seq[Dimension])
+```
+
+These key/value pairs will be added to all response size and response duration metrics.
+
+It is up to the implementor to implement a class extending the `Dimension` trait.
+
 ##### Method
 
 The method of the request is used as dimension on the metrics. eg. `GET`
