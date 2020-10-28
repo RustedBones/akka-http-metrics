@@ -51,11 +51,14 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
   import PrometheusConverters._
   import PrometheusRegistry._
 
+  private val serverLabels: Seq[String] = settings.serverDimensions.map(_.key)
+
   private val labels: Seq[String] = {
     val methodLabel = if (settings.includeMethodDimension) Some(MethodDimension.Key) else None
     val pathLabel   = if (settings.includePathDimension) Some(PathDimension.Key) else None
     val statusLabel = if (settings.includeStatusDimension) Some(StatusGroupDimension.Key) else None
-    (methodLabel ++ pathLabel ++ statusLabel).toSeq
+
+    (methodLabel ++ pathLabel ++ statusLabel ++ serverLabels).toSeq
   }
 
   lazy val requests: Counter = io.prometheus.client.Counter
@@ -63,6 +66,7 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
     .namespace(settings.namespace)
     .name(settings.metricsNames.requests)
     .help("Total HTTP requests")
+    .labelNames(serverLabels: _*)
     .register(underlying)
 
   lazy val requestsActive: Gauge = io.prometheus.client.Gauge
@@ -70,6 +74,7 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
     .namespace(settings.namespace)
     .name(settings.metricsNames.requestsActive)
     .help("Active HTTP requests")
+    .labelNames(serverLabels: _*)
     .register(underlying)
 
   lazy val requestsSize: Histogram = {
@@ -81,6 +86,7 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
           .namespace(settings.namespace)
           .name(settings.metricsNames.requestsSize)
           .help(help)
+          .labelNames(serverLabels: _*)
           .quantiles(qs: _*)
           .maxAgeSeconds(maxAge.toSeconds)
           .ageBuckets(ageBuckets)
@@ -92,6 +98,7 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
           .namespace(settings.namespace)
           .name(settings.metricsNames.requestsSize)
           .help(help)
+          .labelNames(serverLabels: _*)
           .buckets(bs: _*)
           .register(underlying)
     }
@@ -173,6 +180,7 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
     .namespace(settings.namespace)
     .name(settings.metricsNames.connections)
     .help("Total TCP connections")
+    .labelNames(serverLabels: _*)
     .register(underlying)
 
   lazy val connectionsActive: Gauge = io.prometheus.client.Gauge
@@ -180,5 +188,6 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
     .namespace(settings.namespace)
     .name(settings.metricsNames.connectionsActive)
     .help("Active TCP connections")
+    .labelNames(serverLabels: _*)
     .register(underlying)
 }

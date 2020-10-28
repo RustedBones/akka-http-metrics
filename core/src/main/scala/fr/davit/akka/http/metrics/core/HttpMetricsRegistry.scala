@@ -57,7 +57,6 @@ object HttpMetricsRegistry {
       case _                          => "other"
     }
   }
-
 }
 
 abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMetricsHandler {
@@ -114,9 +113,11 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
   override def onRequest(request: HttpRequest, response: Future[HttpResponse])(
       implicit executionContext: ExecutionContext
   ): Unit = {
-    requestsActive.inc()
-    requests.inc()
-    requestsSize.update(request.entity.contentLengthOption.getOrElse(0L))
+    val serverDimensions = settings.serverDimensions
+
+    requestsActive.inc(serverDimensions)
+    requests.inc(serverDimensions)
+    requestsSize.update(request.entity.contentLengthOption.getOrElse(0L), serverDimensions)
     val start = Deadline.now
 
     response.foreach { r =>
@@ -125,10 +126,11 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
       val methodDim = if (settings.includeMethodDimension) Some(MethodDimension(request.method)) else None
       val pathDim = if (settings.includePathDimension) Some(PathDimension(pathLabel(r))) else None
       val statusGroupDim = if (settings.includeStatusDimension) Some(StatusGroupDimension(r.status)) else None
-      val dimensions = (methodDim ++ pathDim ++ statusGroupDim).toSeq
+
+      val dimensions = (methodDim ++ pathDim ++ statusGroupDim).toSeq ++ serverDimensions
       // format: on
 
-      requestsActive.dec()
+      requestsActive.dec(serverDimensions)
       responses.inc(dimensions)
       responsesDuration.observe(Deadline.now - start, dimensions)
       if (settings.defineError(r)) {
@@ -139,8 +141,9 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
   }
 
   override def onConnection(completion: Future[Done])(implicit executionContext: ExecutionContext): Unit = {
-    connections.inc()
-    connectionsActive.inc()
-    completion.onComplete(_ => connectionsActive.dec())
+    val serverDimensions = settings.serverDimensions
+    connections.inc(serverDimensions)
+    connectionsActive.inc(serverDimensions)
+    completion.onComplete(_ => connectionsActive.dec(serverDimensions))
   }
 }

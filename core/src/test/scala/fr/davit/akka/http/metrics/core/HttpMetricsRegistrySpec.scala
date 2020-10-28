@@ -31,6 +31,11 @@ class HttpMetricsRegistrySpec extends AnyFlatSpec with Matchers with Eventually 
 
   implicit val currentThreadExecutionContext: ExecutionContext = ExecutionContext.fromExecutor(_.run())
 
+  final case object TestDimension extends Dimension {
+    override def key: String   = "env"
+    override def value: String = "test"
+  }
+
   abstract class Fixture(settings: HttpMetricsSettings = TestRegistry.settings) {
     val registry = new TestRegistry(settings)
   }
@@ -141,5 +146,16 @@ class HttpMetricsRegistrySpec extends AnyFlatSpec with Matchers with Eventually 
     )
     registry.responses.value(Seq(PathDimension(label))) shouldBe 1
     registry.responses.value(Seq(PathDimension("unlabelled"))) shouldBe 0
+  }
+
+  it should "increment proper custom dimension" in new Fixture(
+    TestRegistry.settings.withServerDimensions(List(TestDimension))
+  ) {
+    registry.onConnection(Future.successful(Done))
+    registry.connections.value(Seq(TestDimension)) shouldBe 1
+
+    registry.onRequest(HttpRequest(), Future.successful(HttpResponse()))
+    registry.requests.value(Seq(TestDimension)) shouldBe 1
+    registry.responses.value(Seq(TestDimension)) shouldBe 1
   }
 }
