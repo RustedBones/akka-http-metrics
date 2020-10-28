@@ -32,7 +32,7 @@ class HttpMetricsRegistrySpec extends AnyFlatSpec with Matchers with Eventually 
   implicit val currentThreadExecutionContext: ExecutionContext = ExecutionContext.fromExecutor(_.run())
 
   final case object TestDimension extends Dimension {
-    override def key: String = "env"
+    override def key: String   = "env"
     override def value: String = "test"
   }
 

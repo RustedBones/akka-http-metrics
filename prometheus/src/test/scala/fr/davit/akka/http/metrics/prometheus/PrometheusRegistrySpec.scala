@@ -23,25 +23,29 @@ import io.prometheus.client.CollectorRegistry
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.collection.immutable
 import scala.concurrent.duration._
-
-case class CustomDimension(key: String, value: String) extends Dimension {}
 
 class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
 
-  val customDimensions = immutable.Seq(
-    CustomDimension("test_key", "test_value")
-  )
+  final case object TestDimension extends Dimension {
+    override def key: String   = "env"
+    override def value: String = "test"
+  }
+
+  val serverDimensions = List(TestDimension)
 
   val dimensions = Seq(
     MethodDimension(HttpMethods.GET),
     PathDimension("/api"),
     StatusGroupDimension(StatusCodes.OK)
-  ) ++ customDimensions
+  ) ++ serverDimensions
 
   trait Fixture {
-    val registry = PrometheusRegistry(new CollectorRegistry())
+
+    val registry = PrometheusRegistry(
+      new CollectorRegistry(),
+      PrometheusSettings.default
+    )
 
     def underlyingCounterValue(name: String, dims: Seq[Dimension] = Seq.empty): Long = {
       registry.underlying.getSampleValue(name, dims.map(_.key).toArray, dims.map(_.value).toArray).toLong
@@ -59,6 +63,7 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
         .withIncludeMethodDimension(true)
         .withIncludePathDimension(true)
         .withIncludeStatusDimension(true)
+        .withServerDimensions(serverDimensions)
     )
   }
 
@@ -92,6 +97,11 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
     underlyingCounterValue("test_server_test_requests_active") shouldBe 1L
   }
 
+  it should "set requestsActive metrics in the underlying registry with dimensions" in new DimensionFixture {
+    registry.requestsActive.inc(serverDimensions)
+    underlyingCounterValue("akka_http_requests_active", serverDimensions) shouldBe 1L
+  }
+
   it should "set requests metrics in the underlying registry" in new Fixture {
     registry.requests.inc()
     underlyingCounterValue("akka_http_requests_total") shouldBe 1L
@@ -102,6 +112,11 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
     underlyingCounterValue("test_server_test_requests_total") shouldBe 1L
   }
 
+  it should "set requests metrics in the underlying registry with dimensions" in new DimensionFixture {
+    registry.requests.inc(serverDimensions)
+    underlyingCounterValue("akka_http_requests_total", serverDimensions) shouldBe 1L
+  }
+
   it should "set requestsSize metrics in the underlying registry" in new Fixture {
     registry.requestsSize.update(3)
     underlyingHistogramValue("akka_http_requests_size_bytes") shouldBe 3L
@@ -110,6 +125,11 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
   it should "set requestsSize metrics in the underlying registry using updated name" in new MetricsNamesFixture {
     registry.requestsSize.update(3)
     underlyingHistogramValue("test_server_test_requests_size_bytes") shouldBe 3L
+  }
+
+  it should "set requestsSize metrics in the underlying registry with dimensions" in new DimensionFixture {
+    registry.requestsSize.update(3, serverDimensions)
+    underlyingHistogramValue("akka_http_requests_size_bytes", serverDimensions) shouldBe 3L
   }
 
   it should "set responses metrics in the underlying registry" in new Fixture {
@@ -182,6 +202,11 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
     underlyingCounterValue("test_server_test_connections_active") shouldBe 1L
   }
 
+  it should "set connectionsActive metrics in the underlying registry with dimensions" in new DimensionFixture {
+    registry.connectionsActive.inc(serverDimensions)
+    underlyingCounterValue("akka_http_connections_active", serverDimensions) shouldBe 1L
+  }
+
   it should "set connections metrics in the underlying registry" in new Fixture {
     registry.connections.inc()
     underlyingCounterValue("akka_http_connections_total") shouldBe 1L
@@ -190,5 +215,10 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
   it should "set connections metrics in the underlying registry using updated name" in new MetricsNamesFixture {
     registry.connections.inc()
     underlyingCounterValue("test_server_test_connections_total") shouldBe 1L
+  }
+
+  it should "set connections metrics in the underlying registry with dimensions" in new DimensionFixture {
+    registry.connections.inc(serverDimensions)
+    underlyingCounterValue("akka_http_connections_total", serverDimensions) shouldBe 1L
   }
 }
