@@ -59,7 +59,6 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
         .withIncludeMethodDimension(true)
         .withIncludePathDimension(true)
         .withIncludeStatusDimension(true)
-        .serverDimensions(customDimensions)
     )
   }
 

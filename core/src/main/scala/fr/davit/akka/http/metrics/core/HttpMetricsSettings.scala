@@ -63,7 +63,7 @@ trait HttpMetricsSettings {
   def withIncludeMethodDimension(include: Boolean): HttpMetricsSettings
   def withIncludePathDimension(include: Boolean): HttpMetricsSettings
   def withIncludeStatusDimension(include: Boolean): HttpMetricsSettings
-  def serverDimensions(labels: immutable.Seq[Dimension]): HttpMetricsSettings
+  def withServerDimensions(labels: immutable.Seq[Dimension]): HttpMetricsSettings
 }
 
 object HttpMetricsSettings {
@@ -96,12 +96,12 @@ object HttpMetricsSettings {
       serverDimensions: immutable.Seq[Dimension] = immutable.Seq.empty[Dimension]
   ) extends HttpMetricsSettings {
 
-    def withNamespace(namespace: String): HttpMetricsSettings                   = copy(namespace = namespace)
-    def withMetricsNames(metricsNames: HttpMetricsNames): HttpMetricsSettings   = copy(metricsNames = metricsNames)
-    def withDefineError(fn: HttpResponse => Boolean): HttpMetricsSettings       = copy(defineError = fn)
-    def withIncludeMethodDimension(include: Boolean): HttpMetricsSettings       = copy(includeMethodDimension = include)
-    def withIncludePathDimension(include: Boolean): HttpMetricsSettings         = copy(includePathDimension = include)
-    def withIncludeStatusDimension(include: Boolean): HttpMetricsSettings       = copy(includeStatusDimension = include)
-    def serverDimensions(labels: immutable.Seq[Dimension]): HttpMetricsSettings = copy(serverDimensions = labels)
+    def withNamespace(namespace: String): HttpMetricsSettings                       = copy(namespace = namespace)
+    def withMetricsNames(metricsNames: HttpMetricsNames): HttpMetricsSettings       = copy(metricsNames = metricsNames)
+    def withDefineError(fn: HttpResponse => Boolean): HttpMetricsSettings           = copy(defineError = fn)
+    def withIncludeMethodDimension(include: Boolean): HttpMetricsSettings           = copy(includeMethodDimension = include)
+    def withIncludePathDimension(include: Boolean): HttpMetricsSettings             = copy(includePathDimension = include)
+    def withIncludeStatusDimension(include: Boolean): HttpMetricsSettings           = copy(includeStatusDimension = include)
+    def withServerDimensions(labels: immutable.Seq[Dimension]): HttpMetricsSettings = copy(serverDimensions = labels)
   }
 }

@@ -110,10 +110,17 @@ settings
   .withIncludeStatusDimension(true)
 ```
 
-Currently, Prometheus supports additional arbitrary server-level dimensions.
+You can also add additional static server-level dimensions to all metrics collected by the library. In the example
+below, the `env` label with `prod` dimension will be added. 
+
 ```scala
-settings
-  .serverDimensions(Seq[Dimension])
+import fr.davit.akka.http.metrics.core.Dimension
+
+final case class EnvDimension(value: String) extends Dimension {
+  override def key: String = "env"
+}
+
+settings.withServerDimensions(Seq(EnvDimension("prod")))
 ```
 
 These key/value pairs will be added to all response size and response duration metrics.

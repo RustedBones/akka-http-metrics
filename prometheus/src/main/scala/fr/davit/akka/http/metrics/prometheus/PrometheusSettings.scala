@@ -86,7 +86,7 @@ final case class PrometheusSettings(
   def withIncludeMethodDimension(include: Boolean): PrometheusSettings       = copy(includeMethodDimension = include)
   def withIncludePathDimension(include: Boolean): PrometheusSettings         = copy(includePathDimension = include)
   def withIncludeStatusDimension(include: Boolean): PrometheusSettings       = copy(includeStatusDimension = include)
-  def serverDimensions(labels: immutable.Seq[Dimension]): PrometheusSettings = copy(serverDimensions = labels)
+  def withServerDimensions(labels: immutable.Seq[Dimension]): PrometheusSettings = copy(serverDimensions = labels)
   def withReceivedBytesConfig(config: HistogramConfig): PrometheusSettings   = copy(receivedBytesConfig = config)
   def withDurationConfig(config: TimerConfig): PrometheusSettings            = copy(durationConfig = config)
   def withSentBytesConfig(config: HistogramConfig): PrometheusSettings       = copy(sentBytesConfig = config)
