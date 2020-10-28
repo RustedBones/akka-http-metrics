@@ -50,7 +50,7 @@ class CarbonClient(host: String, port: Int)(implicit system: ActorSystem) extend
     val settings = RestartSettings(
       minBackoff = 3.seconds,
       maxBackoff = 30.seconds,
-      randomFactor = 0.2, // adds 20% "noise" to vary the intervals slightly
+      randomFactor = 0.2 // adds 20% "noise" to vary the intervals slightly
     )
     RestartFlow.withBackoff(settings)(() => Tcp().outgoingConnection(host, port))
   }
