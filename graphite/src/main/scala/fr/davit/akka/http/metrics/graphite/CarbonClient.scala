@@ -22,7 +22,7 @@ import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.stream.scaladsl.{Flow, Keep, RestartFlow, Sink, Source, Tcp}
-import akka.stream.{OverflowStrategy, QueueOfferResult}
+import akka.stream.{OverflowStrategy, QueueOfferResult, RestartSettings}
 import akka.util.ByteString
 import fr.davit.akka.http.metrics.core.Dimension
 
@@ -45,14 +45,15 @@ class CarbonClient(host: String, port: Int)(implicit system: ActorSystem) extend
     ByteString(s"$taggedMetric $value ${ts.getEpochSecond}\n")
   }
 
-  // TODO read backoff from config
-  private def connection: Flow[ByteString, ByteString, NotUsed] =
-    RestartFlow.withBackoff(
+  private def connection: Flow[ByteString, ByteString, NotUsed] = {
+    // TODO read from config
+    val settings = RestartSettings(
       minBackoff = 3.seconds,
       maxBackoff = 30.seconds,
-      randomFactor = 0.2, // adds 20% "noise" to vary the intervals slightly
-      maxRestarts = -1 // keep retrying forever
-    )(() => Tcp().outgoingConnection(host, port))
+      randomFactor = 0.2 // adds 20% "noise" to vary the intervals slightly
+    )
+    RestartFlow.withBackoff(settings)(() => Tcp().outgoingConnection(host, port))
+  }
 
   private val queue = Source
     .queue[ByteString](19, OverflowStrategy.dropHead)

@@ -3,16 +3,16 @@ import sbt._
 object Dependencies {
 
   object Versions {
-    val akka                  = "2.6.8"
-    val akkaHttp              = "10.2.0"
+    val akka                  = "2.6.10"
+    val akkaHttp              = "10.2.1"
     val datadog               = "2.10.3"
     val dropwizard            = "5.0.0"
     val enumeratum            = "1.6.1"
     val logback               = "1.2.3"
     val prometheus            = "0.9.0"
-    val scalaCollectionCompat = "2.1.6"
-    val scalaMock             = "4.4.0"
-    val scalaTest             = "3.1.2"
+    val scalaCollectionCompat = "2.2.0"
+    val scalaMock             = "5.0.0"
+    val scalaTest             = "3.2.2"
   }
 
   val akkaHttp             = "com.typesafe.akka"      %% "akka-http"              % Versions.akkaHttp
