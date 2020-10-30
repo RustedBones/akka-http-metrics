@@ -56,6 +56,8 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
           pending.enqueue(promise)
           push(requestOut, request)
         }
+
+        override def onUpstreamFinish(): Unit = complete(requestOut)
       }
     )
     setHandler(requestOut, new OutHandler {
