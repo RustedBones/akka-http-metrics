@@ -59,8 +59,8 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
       }
       override def onPull(): Unit = pull(requestIn)
 
-      override def onUpstreamFinish(): Unit = complete(requestOut) // do not completeStage and flush stream
-      override def onUpstreamFailure(ex: Throwable): Unit = fail(requestOut, ex)
+      override def onUpstreamFinish(): Unit                   = complete(requestOut) // do not completeStage and flush stream
+      override def onUpstreamFailure(ex: Throwable): Unit     = fail(requestOut, ex)
       override def onDownstreamFinish(cause: Throwable): Unit = cancel(requestIn)
     }
 
