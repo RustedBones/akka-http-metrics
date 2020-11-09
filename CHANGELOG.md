@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.3.0 (2020-11-09)
+
+- Fix Metrics BidiFlow closing
+- Adding support for custom server-level dimensions
+
 ## 1.2.0 (2020-08-29)
 
 - Update to akka-http 10.2
