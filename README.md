@@ -1,4 +1,5 @@
 # akka-http-metrics
+
 [![Scala CI](https://github.com/RustedBones/akka-http-metrics/workflows/Scala%20CI/badge.svg)](https://github.com/RustedBones/akka-http-metrics/actions?query=branch%3Amaster+workflow%3A"Continuous+Integration")
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/fr.davit/akka-http-metrics-core_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/fr.davit/akka-http-metrics-core_2.12)
 [![Software License](https://img.shields.io/badge/license-Apache%202-brightgreen.svg?style=flat)](LICENSE)
@@ -16,6 +17,7 @@ The following implementations are supported:
 
 | Version | Release date | Akka Http version | Scala versions      |
 | ------- | ------------ | ----------------- | ------------------- |
+| `1.3.0` | 2020-11-09   | `10.2.1`          | `2.13.3`, `2.12.12` |
 | `1.2.0` | 2020-08-29   | `10.2.0`          | `2.13.3`, `2.12.12` |
 | `1.1.1` | 2020-06-10   | `10.1.12`         | `2.13.2`, `2.12.11` |
 | `1.1.0` | 2020-04-18   | `10.1.11`         | `2.13.1`, `2.12.10` |
