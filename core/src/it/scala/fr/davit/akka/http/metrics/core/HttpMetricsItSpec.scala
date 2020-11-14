@@ -41,6 +41,7 @@ class HttpMetricsItSpec
   implicit val defaultPatience = PatienceConfig(timeout = Span(10, Seconds), interval = Span(500, Millis))
 
   override def afterAll(): Unit = {
+    Http().shutdownAllConnectionPools()
     TestKit.shutdownActorSystem(system)
   }
 

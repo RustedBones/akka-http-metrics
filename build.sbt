@@ -91,8 +91,8 @@ lazy val `akka-http-metrics-datadog` = (project in file("datadog"))
       Dependencies.datadog,
       Dependencies.Provided.akkaStream,
       Dependencies.Test.akkaHttpTestkit,
-      Dependencies.Test.akkaStreamTestkit,
       Dependencies.Test.akkaSlf4j,
+      Dependencies.Test.akkaStreamTestkit,
       Dependencies.Test.logback,
       Dependencies.Test.scalaTest
     )
@@ -110,7 +110,9 @@ lazy val `akka-http-metrics-dropwizard` = (project in file("dropwizard"))
       Dependencies.Test.akkaHttpJson,
       Dependencies.Test.akkaHttpTestkit,
       Dependencies.Test.akkaSlf4j,
+      Dependencies.Test.akkaStreamTestkit,
       Dependencies.Test.akkaTestkit,
+      Dependencies.Test.dropwizardJvm,
       Dependencies.Test.logback,
       Dependencies.Test.scalaCollectionCompat,
       Dependencies.Test.scalaTest
@@ -125,8 +127,8 @@ lazy val `akka-http-metrics-graphite` = (project in file("graphite"))
     libraryDependencies ++= Seq(
       Dependencies.Provided.akkaStream,
       Dependencies.Test.akkaHttpTestkit,
-      Dependencies.Test.akkaStreamTestkit,
       Dependencies.Test.akkaSlf4j,
+      Dependencies.Test.akkaStreamTestkit,
       Dependencies.Test.logback,
       Dependencies.Test.scalaTest
     )
@@ -139,12 +141,13 @@ lazy val `akka-http-metrics-prometheus` = (project in file("prometheus"))
   .settings(
     libraryDependencies ++= Seq(
       Dependencies.prometheusCommon,
-      Dependencies.prometheusDropwizard,
       Dependencies.Provided.akkaStream,
       Dependencies.Test.akkaHttpTestkit,
       Dependencies.Test.akkaSlf4j,
+      Dependencies.Test.akkaStreamTestkit,
       Dependencies.Test.akkaTestkit,
       Dependencies.Test.logback,
+      Dependencies.Test.prometheusHotspot,
       Dependencies.Test.scalaTest
     )
   )
