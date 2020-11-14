@@ -87,64 +87,9 @@ class DropwizardMetricsItSpec
     response.status shouldBe StatusCodes.OK
     val body = Unmarshal(response).to[JsonResponse].futureValue
 
-    body.metrics.keys should contain allElementsOf Set(
-      "jvm.gc.G1-Old-Generation.count",
-      "jvm.gc.G1-Old-Generation.time",
-      "jvm.gc.G1-Young-Generation.count",
-      "jvm.gc.G1-Young-Generation.time",
-      "jvm.memory.heap.committed",
-      "jvm.memory.heap.init",
-      "jvm.memory.heap.max",
-      "jvm.memory.heap.usage",
-      "jvm.memory.heap.used",
-      "jvm.memory.non-heap.committed",
-      "jvm.memory.non-heap.init",
-      "jvm.memory.non-heap.max",
-      "jvm.memory.non-heap.usage",
-      "jvm.memory.non-heap.used",
-      "jvm.memory.pools.Compressed-Class-Space.committed",
-      "jvm.memory.pools.Compressed-Class-Space.init",
-      "jvm.memory.pools.Compressed-Class-Space.max",
-      "jvm.memory.pools.Compressed-Class-Space.usage",
-      "jvm.memory.pools.Compressed-Class-Space.used",
-      "jvm.memory.pools.G1-Eden-Space.committed",
-      "jvm.memory.pools.G1-Eden-Space.init",
-      "jvm.memory.pools.G1-Eden-Space.max",
-      "jvm.memory.pools.G1-Eden-Space.usage",
-      "jvm.memory.pools.G1-Eden-Space.used",
-      "jvm.memory.pools.G1-Eden-Space.used-after-gc",
-      "jvm.memory.pools.G1-Old-Gen.committed",
-      "jvm.memory.pools.G1-Old-Gen.init",
-      "jvm.memory.pools.G1-Old-Gen.max",
-      "jvm.memory.pools.G1-Old-Gen.usage",
-      "jvm.memory.pools.G1-Old-Gen.used",
-      "jvm.memory.pools.G1-Old-Gen.used-after-gc",
-      "jvm.memory.pools.G1-Survivor-Space.committed",
-      "jvm.memory.pools.G1-Survivor-Space.init",
-      "jvm.memory.pools.G1-Survivor-Space.max",
-      "jvm.memory.pools.G1-Survivor-Space.usage",
-      "jvm.memory.pools.G1-Survivor-Space.used",
-      "jvm.memory.pools.G1-Survivor-Space.used-after-gc",
-      "jvm.memory.pools.Metaspace.committed",
-      "jvm.memory.pools.Metaspace.init",
-      "jvm.memory.pools.Metaspace.max",
-      "jvm.memory.pools.Metaspace.usage",
-      "jvm.memory.pools.Metaspace.used",
-      "jvm.memory.total.committed",
-      "jvm.memory.total.init",
-      "jvm.memory.total.max",
-      "jvm.memory.total.used",
-      "jvm.threads.blocked.count",
-      "jvm.threads.count",
-      "jvm.threads.daemon.count",
-      "jvm.threads.deadlock.count",
-      "jvm.threads.deadlocks",
-      "jvm.threads.new.count",
-      "jvm.threads.runnable.count",
-      "jvm.threads.terminated.count",
-      "jvm.threads.timed_waiting.count",
-      "jvm.threads.waiting.count"
-    )
+    body.metrics.keys.filter(_.startsWith("jvm.gc")) should not be empty
+    body.metrics.keys.filter(_.startsWith("jvm.memory")) should not be empty
+    body.metrics.keys.filter(_.startsWith("jvm.threads")) should not be empty
 
     binding.terminate(30.seconds).futureValue
   }
