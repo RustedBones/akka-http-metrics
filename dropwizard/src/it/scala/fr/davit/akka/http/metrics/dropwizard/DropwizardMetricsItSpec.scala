@@ -14,56 +14,68 @@
  * limitations under the License.
  */
 
-package fr.davit.akka.http.metrics.core
+package fr.davit.akka.http.metrics.dropwizard
+
+import java.util.concurrent.TimeUnit
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.{HttpRequest, StatusCodes, Uri}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.testkit.TestKit
 import fr.davit.akka.http.metrics.core.HttpMetrics._
+import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives._
+import fr.davit.akka.http.metrics.dropwizard.marshalling.DropwizardMarshallers._
+import io.dropwizard.metrics5.MetricRegistry
+import io.dropwizard.metrics5.jvm.{CachedThreadStatesGaugeSet, GarbageCollectorMetricSet, MemoryUsageGaugeSet}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.time.{Millis, Seconds, Span}
+import spray.json.{DefaultJsonProtocol, JsValue}
 
 import scala.concurrent.duration._
 
-class HttpMetricsItSpec
-    extends TestKit(ActorSystem("HttpMetricsSpec"))
+class DropwizardMetricsItSpec
+    extends TestKit(ActorSystem("DropwizardMetricsItSpec"))
     with AnyFlatSpecLike
     with Matchers
     with ScalaFutures
-    with BeforeAndAfterAll {
+    with BeforeAndAfterAll
+    with SprayJsonSupport
+    with DefaultJsonProtocol {
 
   implicit val defaultPatience = PatienceConfig(timeout = Span(10, Seconds), interval = Span(500, Millis))
+
+  private case class JsonResponse(metrics: Map[String, JsValue])
+  implicit private val metricsFormat = jsonFormat1(JsonResponse)
 
   override def afterAll(): Unit = {
     Http().shutdownAllConnectionPools()
     TestKit.shutdownActorSystem(system)
   }
 
-  trait Fixture {
-    val settings: HttpMetricsSettings = TestRegistry.settings
-      .withNamespace("com.example.service")
+  "DropwizardMetrics" should "expose external metrics" in {
+    val settings                   = DropwizardSettings.default
+    val dropwizard: MetricRegistry = new MetricRegistry()
+    dropwizard.register("jvm.gc", new GarbageCollectorMetricSet())
+    dropwizard.register("jvm.threads", new CachedThreadStatesGaugeSet(10, TimeUnit.SECONDS))
+    dropwizard.register("jvm.memory", new MemoryUsageGaugeSet())
 
-    val registry = new TestRegistry(settings)
+    val registry = DropwizardRegistry(dropwizard, settings)
 
-    val route: Route =
-      get {
-        complete("Hello world")
-      }
-  }
+    val route: Route = (get & path("metrics"))(metrics(registry))
 
-  "HttpMetrics" should "record metrics on flow handler" in new Fixture {
     val binding = Http()
       .newMeteredServerAt("localhost", 0, registry)
       .bindFlow(route)
       .futureValue
 
-    val uri     = Uri()
+    val uri = Uri("/metrics")
       .withScheme("http")
       .withAuthority(binding.localAddress.getHostString, binding.localAddress.getPort)
     val request = HttpRequest().withUri(uri)
@@ -73,29 +85,11 @@ class HttpMetricsItSpec
       .futureValue
 
     response.status shouldBe StatusCodes.OK
-    registry.connections.value() shouldBe 1
-    registry.requests.value() shouldBe 1
+    val body = Unmarshal(response).to[JsonResponse].futureValue
 
-    binding.terminate(30.seconds).futureValue
-  }
-
-  it should "record metrics on function handler" in new Fixture {
-    val binding = Http()
-      .newMeteredServerAt("localhost", 0, registry)
-      .bind(route)
-      .futureValue
-
-    val uri     = Uri()
-      .withScheme("http")
-      .withAuthority(binding.localAddress.getHostString, binding.localAddress.getPort)
-    val request = HttpRequest().withUri(uri)
-    val response = Http()
-      .singleRequest(request)
-      .futureValue
-
-    response.status shouldBe StatusCodes.OK
-    registry.connections.value() shouldBe 0 // No connection metrics with function handler
-    registry.requests.value() shouldBe 1
+    body.metrics.keys.filter(_.startsWith("jvm.gc")) should not be empty
+    body.metrics.keys.filter(_.startsWith("jvm.memory")) should not be empty
+    body.metrics.keys.filter(_.startsWith("jvm.threads")) should not be empty
 
     binding.terminate(30.seconds).futureValue
   }

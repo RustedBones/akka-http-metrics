@@ -166,9 +166,7 @@ Expose the metrics from the registry on an http endpoint with the `metrics` dire
 ```scala
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives._
 
-val route = (get & path("metrics")) {
-  metrics(registry)
-}
+val route = (get & path("metrics"))(metrics(registry))
 ```
 
 Of course, you will also need to have the implicit marshaller for your registry in scope.
@@ -251,9 +249,29 @@ val registry = DropwizardRegistry(dropwizard, settings) // or DropwizardRegistry
 Expose the metrics
 
 ```scala
+import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives._
 import fr.davit.akka.http.metrics.dropwizard.marshalling.DropwizardMarshallers._
 
 val route = (get & path("metrics"))(metrics(registry))
+```
+
+All metrics from the dropwizard metrics registry will be exposed.
+You can find some external exporters [here](https://github.com/dropwizard/metrics/tree/5.0-development). For instance,
+to expose some JVM metrics, you have to add the dedicated dependency and register the metrics set into your collector registry:
+
+```sbt
+libraryDependencies += "io.dropwizard.metrics5" % "metrics-jvm" % <version>
+```
+
+```scala
+import io.dropwizard.metrics5.jvm._
+
+val dropwizard: MetricRegistry = ... // your dropwizard registry
+dropwizard.register("jvm.gc", new GarbageCollectorMetricSet())
+dropwizard.register("jvm.threads", new CachedThreadStatesGaugeSet(10, TimeUnit.SECONDS))
+dropwizard.register("jvm.memory", new MemoryUsageGaugeSet())
+
+val registry = DropwizardRegistry(dropwizard, settings)
 ```
 
 ### [Graphite](https://graphiteapp.org/)
@@ -328,11 +346,26 @@ settings
   .withSentBytesConfig(PrometheusSettings.DefaultQuantiles)
 ```
 
-
 Expose the metrics
 
 ```scala
+import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives._
 import fr.davit.akka.http.metrics.prometheus.marshalling.PrometheusMarshallers._
 
 val route = (get & path("metrics"))(metrics(registry))
+```
+
+All metrics from the prometheus collector registry will be exposed.
+You can find some external exporters [here](https://github.com/prometheus/client_java). For instance, to expose some JVM
+metrics, you have to add the dedicated client dependency and initialize/register it to your collector registry:
+
+```sbt
+libraryDependencies += "fr.davit" %% "akka-http-metrics-graphite" % <version>
+```
+
+```scala
+import io.prometheus.client.hotspot.DefaultExports
+
+val prometheus: CollectorRegistry = ... // your prometheus registry
+DefaultExports.register(prometheus)  // or DefaultExports.initialize() to use the default registry
 ```
