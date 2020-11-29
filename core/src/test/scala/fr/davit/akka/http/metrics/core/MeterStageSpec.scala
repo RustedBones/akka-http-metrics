@@ -84,19 +84,19 @@ class MeterStageSpec
 
   it should "call onRequest wen request is offered" in new Fixture {
     val request        = HttpRequest()
+    val response       = HttpResponse()
     val responseFuture = CaptureOne[Future[HttpResponse]]()
 
     (handler
       .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
       .expects(request, capture(responseFuture), *)
-      .returns((): Unit)
+      .returns(Future.successful(response))
 
     requestIn.sendNext(request)
     requestOut.expectNext() shouldBe request
 
     responseFuture.value.isCompleted shouldBe false
 
-    val response = HttpResponse()
     responseIn.sendNext(response)
     responseOut.expectNext() shouldBe response
 
@@ -105,12 +105,13 @@ class MeterStageSpec
 
   it should "flush the stream before stopping" in new Fixture {
     val request = HttpRequest()
+    val response = HttpResponse()
     val actual  = CaptureOne[Future[HttpResponse]]()
 
     (handler
       .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
       .expects(request, capture(actual), *)
-      .returns((): Unit)
+      .returns(Future.successful(response))
 
     requestIn.sendNext(request)
     requestOut.expectNext() shouldBe request
@@ -122,7 +123,6 @@ class MeterStageSpec
     requestOut.expectComplete()
 
     // response should still be accepted
-    val response = HttpResponse()
     responseIn.sendNext(response)
     responseOut.expectNext() shouldBe response
 
@@ -131,12 +131,13 @@ class MeterStageSpec
 
   it should "propagate error from request in" in new Fixture {
     val request = HttpRequest()
+    val response = HttpResponse()
     val actual  = CaptureOne[Future[HttpResponse]]()
 
     (handler
       .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
       .expects(request, capture(actual), *)
-      .returns((): Unit)
+      .returns(Future.successful(response))
 
     requestIn.sendNext(request)
     requestOut.expectNext() shouldBe request
@@ -148,12 +149,13 @@ class MeterStageSpec
 
   it should "propagate error from request out" in new Fixture {
     val request = HttpRequest()
+    val response = HttpResponse()
     val actual  = CaptureOne[Future[HttpResponse]]()
 
     (handler
       .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
       .expects(request, capture(actual), *)
-      .returns((): Unit)
+      .returns(Future.successful(response))
 
     requestIn.sendNext(request)
     requestOut.expectNext() shouldBe request
@@ -165,12 +167,13 @@ class MeterStageSpec
 
   it should "propagate error from response in and complete pending" in new Fixture {
     val request = HttpRequest()
+    val response = HttpResponse()
     val actual  = CaptureOne[Future[HttpResponse]]()
 
     (handler
       .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
       .expects(request, capture(actual), *)
-      .returns((): Unit)
+      .returns(Future.successful(response))
 
     requestIn.sendNext(request)
     requestOut.expectNext() shouldBe request
@@ -184,12 +187,13 @@ class MeterStageSpec
 
   it should "propagate error from response out and complete pending" in new Fixture {
     val request = HttpRequest()
+    val response = HttpResponse()
     val actual  = CaptureOne[Future[HttpResponse]]()
 
     (handler
       .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
       .expects(request, capture(actual), *)
-      .returns((): Unit)
+      .returns(Future.successful(response))
 
     requestIn.sendNext(request)
     requestOut.expectNext() shouldBe request

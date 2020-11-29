@@ -16,13 +16,18 @@
 
 package fr.davit.akka.http.metrics.core
 
+import java.util.concurrent.atomic.AtomicLong
+
 import akka.Done
 import akka.http.scaladsl.model._
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{MethodDimension, PathDimension, StatusGroupDimension}
 import fr.davit.akka.http.metrics.core.scaladsl.model.PathLabelHeader
-
 import scala.concurrent.duration.Deadline
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
+
+import akka.stream.scaladsl.Flow
+import akka.util.ByteString
 
 object HttpMetricsRegistry {
 
@@ -112,7 +117,7 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
 
   override def onRequest(request: HttpRequest, response: Future[HttpResponse])(
       implicit executionContext: ExecutionContext
-  ): Unit = {
+  ): Future[HttpResponse] = {
     val serverDimensions = settings.serverDimensions
 
     requestsActive.inc(serverDimensions)
@@ -120,7 +125,7 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
     requestsSize.update(request.entity.contentLengthOption.getOrElse(0L), serverDimensions)
     val start = Deadline.now
 
-    response.foreach { r =>
+    response.map { r =>
       // compute dimensions
       // format: off
       val methodDim = if (settings.includeMethodDimension) Some(MethodDimension(request.method)) else None
@@ -136,7 +141,29 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
       if (settings.defineError(r)) {
         responsesErrors.inc(dimensions)
       }
-      r.entity.contentLengthOption.foreach(responsesSize.update(_, dimensions))
+      r.entity.contentLengthOption match {
+        case Some(length) =>
+          responsesSize.update(length, dimensions)
+          r
+        case None  =>
+          val bytesSent = new AtomicLong()
+          val transformer: Flow[ByteString, ByteString, Any] =
+            Flow[ByteString].map{ s =>
+              bytesSent.addAndGet(s.length.toLong)
+              s
+            }.watchTermination() { (_, done) =>
+              done.onComplete {
+                case Success(_) => responsesSize.update(bytesSent.longValue(), dimensions)
+                case Failure(_) => // nothing to update for failed streamed responses
+              }
+            }
+          HttpResponse(
+            status = r.status,
+            headers = r.headers,
+            entity = r.entity.transformDataBytes(transformer),
+            protocol = r.protocol
+          )
+      }
     }
   }
 

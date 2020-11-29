@@ -23,7 +23,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 trait HttpMetricsHandler {
 
-  def onRequest(request: HttpRequest, response: Future[HttpResponse])(implicit executionContext: ExecutionContext): Unit
+  def onRequest(request: HttpRequest, response: Future[HttpResponse])(implicit executionContext: ExecutionContext): Future[HttpResponse]
 
   def onConnection(completion: Future[Done])(implicit executionContext: ExecutionContext): Unit
 }

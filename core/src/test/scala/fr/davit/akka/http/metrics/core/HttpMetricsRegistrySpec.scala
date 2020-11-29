@@ -17,15 +17,20 @@
 package fr.davit.akka.http.metrics.core
 
 import akka.Done
-import akka.http.scaladsl.model.{HttpMethods, HttpRequest, HttpResponse, StatusCodes}
+import akka.http.scaladsl.model.{ContentTypes, HttpMethods, HttpRequest, HttpResponse, StatusCodes}
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{MethodDimension, PathDimension, StatusGroupDimension}
 import fr.davit.akka.http.metrics.core.scaladsl.model.PathLabelHeader
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.concurrent.{Await, ExecutionContext, Future, Promise}
+
+import akka.actor.ActorSystem
+import akka.http.scaladsl.model.HttpEntity.CloseDelimited
+import akka.stream.scaladsl.{Keep, Source}
+import akka.stream.testkit.scaladsl.TestSink
+import akka.util.ByteString
 
 class HttpMetricsRegistrySpec extends AnyFlatSpec with Matchers with Eventually {
 
@@ -90,6 +95,21 @@ class HttpMetricsRegistrySpec extends AnyFlatSpec with Matchers with Eventually 
     registry.responsesSize.values() shouldBe empty
     registry.onRequest(HttpRequest(), Future.successful(HttpResponse(entity = data)))
     registry.responsesSize.values().head shouldBe data.getBytes.length
+  }
+
+  it should "compute the response size for streamed data" in new Fixture() {
+    implicit val actorSystem = ActorSystem()
+    val data = List("a","b","c")
+    val source = Source(data).map(x => ByteString(x))
+    val resp = CloseDelimited(ContentTypes.`application/json`, source)
+    registry.responsesSize.values() shouldBe empty
+    val fut = registry.onRequest(HttpRequest(), Future.successful(HttpResponse(entity = resp))).map { httpResponse =>
+      val (_, p) = httpResponse.entity.dataBytes.toMat(TestSink.probe[ByteString])(Keep.both).run()
+      p.request(data.length.toLong)
+      p.expectComplete()
+    }
+    Await.ready(fut, Duration.Inf)
+    registry.responsesSize.values().head shouldBe data.length
   }
 
   it should "compute the number of connections" in new Fixture() {

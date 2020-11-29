@@ -90,7 +90,8 @@ class HttpMetricsRouteSpec
 
   it should "call the metrics handler on handled requests" in new Fixture {
     val request  = HttpRequest()
-    val response = Marshal(StatusCodes.OK).to[HttpResponse].futureValue
+    val responseFuture = Marshal(StatusCodes.OK).to[HttpResponse]
+    val response = responseFuture.futureValue
     val actual   = CaptureOne[Future[HttpResponse]]()
 
     server
@@ -99,7 +100,7 @@ class HttpMetricsRouteSpec
     (metricsHandler
       .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
       .expects(request, capture(actual), *)
-      .returns((): Unit)
+      .returns(responseFuture)
 
     sink.request(1)
     source.sendNext(request)
@@ -111,8 +112,9 @@ class HttpMetricsRouteSpec
   it should "call the metrics handler on rejected requests" in new Fixture {
     val request = HttpRequest()
 
-    val response = Marshal(StatusCodes.NotFound -> "The requested resource could not be found.")
+    val responseFuture = Marshal(StatusCodes.NotFound -> "The requested resource could not be found.")
       .to[HttpResponse]
+    val response = responseFuture
       .map(_.withHeaders(PathLabelHeader("unhandled")))
       .futureValue
     val actual = CaptureOne[Future[HttpResponse]]()
@@ -123,7 +125,7 @@ class HttpMetricsRouteSpec
     (metricsHandler
       .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
       .expects(request, capture(actual), *)
-      .returns((): Unit)
+      .returns(responseFuture)
 
     sink.request(1)
     source.sendNext(request)
@@ -135,8 +137,9 @@ class HttpMetricsRouteSpec
   it should "call the metrics handler on error requests" in new Fixture {
     val request = HttpRequest()
 
-    val response = Marshal(StatusCodes.InternalServerError)
+    val responseFuture = Marshal(StatusCodes.InternalServerError)
       .to[HttpResponse]
+    val response = responseFuture
       .map(_.withHeaders(PathLabelHeader("unhandled")))
       .futureValue
     val actual = CaptureOne[Future[HttpResponse]]()
@@ -147,7 +150,7 @@ class HttpMetricsRouteSpec
     (metricsHandler
       .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
       .expects(request, capture(actual), *)
-      .returns((): Unit)
+      .returns(responseFuture)
 
     sink.request(1)
     source.sendNext(request)

@@ -75,7 +75,6 @@ object HttpMetrics {
   ): HttpRequest => Future[HttpResponse] = { request: HttpRequest =>
     val response = handler(request)
     metricsHandler.onRequest(request, response)
-    response
   }
 
   def meterFlow(
