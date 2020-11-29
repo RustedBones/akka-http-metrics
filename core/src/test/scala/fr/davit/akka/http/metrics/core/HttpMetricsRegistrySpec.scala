@@ -17,24 +17,28 @@
 package fr.davit.akka.http.metrics.core
 
 import akka.Done
-import akka.http.scaladsl.model.{ContentTypes, HttpMethods, HttpRequest, HttpResponse, StatusCodes}
+import akka.actor.ActorSystem
+import akka.http.scaladsl.model._
+import akka.stream.Materializer
+import akka.stream.scaladsl.Source
+import akka.testkit.TestKit
+import akka.util.ByteString
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{MethodDimension, PathDimension, StatusGroupDimension}
 import fr.davit.akka.http.metrics.core.scaladsl.model.PathLabelHeader
 import org.scalatest.concurrent.Eventually
-import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
+
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future, Promise}
+import scala.concurrent.{Future, Promise}
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.model.HttpEntity.CloseDelimited
-import akka.stream.scaladsl.{Keep, Source}
-import akka.stream.testkit.scaladsl.TestSink
-import akka.util.ByteString
+class HttpMetricsRegistrySpec
+    extends TestKit(ActorSystem("HttpMetricsRegistrySpec"))
+    with AnyFlatSpecLike
+    with Matchers
+    with Eventually {
 
-class HttpMetricsRegistrySpec extends AnyFlatSpec with Matchers with Eventually {
-
-  implicit val currentThreadExecutionContext: ExecutionContext = ExecutionContext.fromExecutor(_.run())
+  implicit val materializer: Materializer = Materializer(system)
 
   final case object TestDimension extends Dimension {
     override def key: String   = "env"
@@ -58,9 +62,9 @@ class HttpMetricsRegistrySpec extends AnyFlatSpec with Matchers with Eventually 
     registry.onRequest(HttpRequest(), Future.successful(HttpResponse(StatusCodes.OK)))
     registry.onRequest(HttpRequest(), Future.successful(HttpResponse(StatusCodes.TemporaryRedirect)))
     registry.onRequest(HttpRequest(), Future.successful(HttpResponse(StatusCodes.BadRequest)))
-    registry.responsesErrors.value() shouldBe 0
+    eventually(registry.responsesErrors.value() shouldBe 0)
     registry.onRequest(HttpRequest(), Future.successful(HttpResponse(StatusCodes.InternalServerError)))
-    registry.responsesErrors.value() shouldBe 1
+    eventually(registry.responsesErrors.value() shouldBe 1)
   }
 
   it should "compute the number of active requests" in new Fixture() {
@@ -70,7 +74,7 @@ class HttpMetricsRegistrySpec extends AnyFlatSpec with Matchers with Eventually 
     registry.onRequest(HttpRequest(), promise.future)
     registry.requestsActive.value() shouldBe 2
     promise.success(HttpResponse())
-    registry.requestsActive.value() shouldBe 0
+    eventually(registry.requestsActive.value() shouldBe 0)
   }
 
   it should "compute the requests time" in new Fixture() {
@@ -80,36 +84,37 @@ class HttpMetricsRegistrySpec extends AnyFlatSpec with Matchers with Eventually 
     registry.onRequest(HttpRequest(), promise.future)
     Thread.sleep(duration.toMillis)
     promise.success(HttpResponse())
-    registry.responsesDuration.values().head should be > duration
+    eventually(registry.responsesDuration.values().head should be > duration)
   }
 
   it should "compute the requests size" in new Fixture() {
     val data = "This is the request content"
     registry.requestsSize.values() shouldBe empty
     registry.onRequest(HttpRequest(entity = data), Future.successful(HttpResponse()))
-    registry.requestsSize.values().head shouldBe data.getBytes.length
+    eventually(registry.requestsSize.values().head shouldBe data.getBytes.length)
+  }
+
+  it should "compute the requests size for streamed data" in new Fixture() {
+    val data   = Source(List("a", "b", "c")).map(ByteString.apply)
+    val entity = HttpEntity(ContentTypes.`application/octet-stream`, data)
+    registry.requestsSize.values() shouldBe empty
+    registry.onRequest(HttpRequest(entity = entity), Future.successful(HttpResponse()))
+    eventually(registry.requestsSize.values().head shouldBe "abc".getBytes.length)
   }
 
   it should "compute the response size" in new Fixture() {
     val data = "This is the response content"
     registry.responsesSize.values() shouldBe empty
     registry.onRequest(HttpRequest(), Future.successful(HttpResponse(entity = data)))
-    registry.responsesSize.values().head shouldBe data.getBytes.length
+    eventually(registry.responsesSize.values().head shouldBe data.getBytes.length)
   }
 
   it should "compute the response size for streamed data" in new Fixture() {
-    implicit val actorSystem = ActorSystem()
-    val data = List("a","b","c")
-    val source = Source(data).map(x => ByteString(x))
-    val resp = CloseDelimited(ContentTypes.`application/json`, source)
+    val data   = Source(List("a", "b", "c")).map(ByteString.apply)
+    val entity = HttpEntity(ContentTypes.`application/octet-stream`, data)
     registry.responsesSize.values() shouldBe empty
-    val fut = registry.onRequest(HttpRequest(), Future.successful(HttpResponse(entity = resp))).map { httpResponse =>
-      val (_, p) = httpResponse.entity.dataBytes.toMat(TestSink.probe[ByteString])(Keep.both).run()
-      p.request(data.length.toLong)
-      p.expectComplete()
-    }
-    Await.ready(fut, Duration.Inf)
-    registry.responsesSize.values().head shouldBe data.length
+    registry.onRequest(HttpRequest(), Future.successful(HttpResponse(entity = entity)))
+    eventually(registry.responsesSize.values().head shouldBe "abc".getBytes.length)
   }
 
   it should "compute the number of connections" in new Fixture() {
@@ -127,33 +132,33 @@ class HttpMetricsRegistrySpec extends AnyFlatSpec with Matchers with Eventually 
     registry.onConnection(promise.future)
     registry.connectionsActive.value() shouldBe 2
     promise.success(Done)
-    registry.connectionsActive.value() shouldBe 0
+    eventually(registry.connectionsActive.value() shouldBe 0)
   }
 
   it should "add status code dimension when enabled" in new Fixture(
     TestRegistry.settings.withIncludeStatusDimension(true)
   ) {
     registry.onRequest(HttpRequest(), Future.successful(HttpResponse()))
-    registry.responses.value(Seq(StatusGroupDimension(StatusCodes.OK))) shouldBe 1
-    registry.responses.value(Seq(StatusGroupDimension(StatusCodes.Found))) shouldBe 0
-    registry.responses.value(Seq(StatusGroupDimension(StatusCodes.BadRequest))) shouldBe 0
-    registry.responses.value(Seq(StatusGroupDimension(StatusCodes.InternalServerError))) shouldBe 0
+    eventually(registry.responses.value(Seq(StatusGroupDimension(StatusCodes.OK))) shouldBe 1)
+    eventually(registry.responses.value(Seq(StatusGroupDimension(StatusCodes.Found))) shouldBe 0)
+    eventually(registry.responses.value(Seq(StatusGroupDimension(StatusCodes.BadRequest))) shouldBe 0)
+    eventually(registry.responses.value(Seq(StatusGroupDimension(StatusCodes.InternalServerError))) shouldBe 0)
   }
 
   it should "add method dimension when enabled" in new Fixture(
     TestRegistry.settings.withIncludeMethodDimension(true)
   ) {
     registry.onRequest(HttpRequest(), Future.successful(HttpResponse()))
-    registry.responses.value(Seq(MethodDimension(HttpMethods.GET))) shouldBe 1
-    registry.responses.value(Seq(MethodDimension(HttpMethods.PUT))) shouldBe 0
+    eventually(registry.responses.value(Seq(MethodDimension(HttpMethods.GET))) shouldBe 1)
+    eventually(registry.responses.value(Seq(MethodDimension(HttpMethods.PUT))) shouldBe 0)
   }
 
   it should "default label dimension to 'unlabelled' when enabled but not annotated by directives" in new Fixture(
     TestRegistry.settings.withIncludePathDimension(true)
   ) {
     registry.onRequest(HttpRequest().withUri("/unlabelled/path"), Future.successful(HttpResponse()))
-    registry.responses.value(Seq(PathDimension("unlabelled"))) shouldBe 1
-    registry.responses.value(Seq(PathDimension("unhandled"))) shouldBe 0
+    eventually(registry.responses.value(Seq(PathDimension("unlabelled"))) shouldBe 1)
+    eventually(registry.responses.value(Seq(PathDimension("unhandled"))) shouldBe 0)
   }
 
   it should "increment proper label dimension" in new Fixture(
@@ -164,8 +169,8 @@ class HttpMetricsRegistrySpec extends AnyFlatSpec with Matchers with Eventually 
       HttpRequest().withUri("/api/path"),
       Future.successful(HttpResponse().withHeaders(PathLabelHeader(label)))
     )
-    registry.responses.value(Seq(PathDimension(label))) shouldBe 1
-    registry.responses.value(Seq(PathDimension("unlabelled"))) shouldBe 0
+    eventually(registry.responses.value(Seq(PathDimension(label))) shouldBe 1)
+    eventually(registry.responses.value(Seq(PathDimension("unlabelled"))) shouldBe 0)
   }
 
   it should "increment proper custom dimension" in new Fixture(
@@ -176,6 +181,6 @@ class HttpMetricsRegistrySpec extends AnyFlatSpec with Matchers with Eventually 
 
     registry.onRequest(HttpRequest(), Future.successful(HttpResponse()))
     registry.requests.value(Seq(TestDimension)) shouldBe 1
-    registry.responses.value(Seq(TestDimension)) shouldBe 1
+    eventually(registry.responses.value(Seq(TestDimension)) shouldBe 1)
   }
 }

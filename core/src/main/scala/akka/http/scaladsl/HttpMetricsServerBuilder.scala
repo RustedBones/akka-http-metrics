@@ -74,7 +74,7 @@ final case class HttpMetricsServerBuilder(
 
   def bind(handler: HttpRequest => Future[HttpResponse]): Future[ServerBinding] =
     http.bindAndHandleAsyncImpl(
-      HttpMetrics.meterFunction(handler, metricsHandler)(materializer.executionContext),
+      HttpMetrics.meterFunction(handler, metricsHandler)(materializer),
       interface,
       port,
       context,
@@ -85,7 +85,7 @@ final case class HttpMetricsServerBuilder(
 
   def bindSync(handler: HttpRequest => HttpResponse): Future[ServerBinding] = bind { req =>
     val p = Promise[HttpResponse]()
-    metricsHandler.onRequest(req, p.future)(materializer.executionContext) // needs to be async
+    metricsHandler.onRequest(req, p.future)(materializer) // needs to be async
     p.success(handler(req))
     p.future
   }

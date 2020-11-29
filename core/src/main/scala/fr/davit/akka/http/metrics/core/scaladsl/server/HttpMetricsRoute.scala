@@ -48,7 +48,7 @@ final class HttpMetricsRoute private (route: Route) extends HttpMetricsDirective
       metricsHandler: HttpMetricsHandler
   )(implicit materializer: Materializer): HttpRequest => Future[HttpResponse] = {
     val handler = HttpMetrics.metricsRouteToFunction(route)(materializer.system)
-    HttpMetrics.meterFunction(handler, metricsHandler)(materializer.executionContext)
+    HttpMetrics.meterFunction(handler, metricsHandler)
   }
 }
 

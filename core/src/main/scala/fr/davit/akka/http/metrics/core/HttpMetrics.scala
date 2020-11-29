@@ -22,10 +22,11 @@ import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.http.scaladsl.server.{Directives, ExceptionHandler, RejectionHandler, Route}
 import akka.http.scaladsl.settings.RoutingSettings
 import akka.http.scaladsl.{HttpExt, HttpMetricsServerBuilder}
+import akka.stream.Materializer
 import akka.stream.scaladsl.{BidiFlow, Flow}
 import fr.davit.akka.http.metrics.core.scaladsl.model.PathLabelHeader
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 final class HttpMetrics(private val http: HttpExt) extends AnyVal {
 
@@ -71,10 +72,11 @@ object HttpMetrics {
   }
 
   def meterFunction(handler: HttpRequest => Future[HttpResponse], metricsHandler: HttpMetricsHandler)(
-      implicit executionContext: ExecutionContext
+      implicit materializer: Materializer
   ): HttpRequest => Future[HttpResponse] = { request: HttpRequest =>
     val response = handler(request)
     metricsHandler.onRequest(request, response)
+    response
   }
 
   def meterFlow(

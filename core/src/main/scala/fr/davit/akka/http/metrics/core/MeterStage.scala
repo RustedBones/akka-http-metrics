@@ -42,7 +42,7 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
     val pending: mutable.Queue[Promise[HttpResponse]] = mutable.Queue.empty
 
     override def preStart(): Unit = {
-      metricsHandler.onConnection(completion.future)(materializer.executionContext)
+      metricsHandler.onConnection(completion.future)(materializer)
     }
 
     override def postStop(): Unit = {
@@ -53,7 +53,7 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
       override def onPush(): Unit = {
         val request = grab(requestIn)
         val promise = Promise[HttpResponse]()
-        metricsHandler.onRequest(request, promise.future)(materializer.executionContext)
+        metricsHandler.onRequest(request, promise.future)(materializer)
         pending.enqueue(promise)
         push(requestOut, request)
       }

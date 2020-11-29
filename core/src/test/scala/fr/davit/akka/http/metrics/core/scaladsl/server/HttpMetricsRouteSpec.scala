@@ -21,6 +21,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.{Directives, RequestContext, RouteResult}
+import akka.stream.Materializer
 import akka.stream.scaladsl.Keep
 import akka.stream.testkit.scaladsl.{TestSink, TestSource}
 import akka.testkit.TestKit
@@ -34,7 +35,6 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
 class HttpMetricsRouteSpec
@@ -47,12 +47,14 @@ class HttpMetricsRouteSpec
 
   import Directives._
 
+  implicit val ec: ExecutionContext = system.dispatcher
+
   abstract class Fixture[T] {
     val metricsHandler = mock[HttpMetricsHandler]
     val server         = mockFunction[RequestContext, Future[RouteResult]]
 
     (metricsHandler
-      .onConnection(_: Future[Done])(_: ExecutionContext))
+      .onConnection(_: Future[Done])(_: Materializer))
       .expects(*, *)
       .returns((): Unit)
 
@@ -73,7 +75,7 @@ class HttpMetricsRouteSpec
     val server         = mockFunction[RequestContext, Future[RouteResult]]
 
     (metricsHandler
-      .onConnection(_: Future[Done])(_: ExecutionContext))
+      .onConnection(_: Future[Done])(_: Materializer))
       .expects(*, *)
       .returns((): Unit)
 
@@ -90,17 +92,16 @@ class HttpMetricsRouteSpec
 
   it should "call the metrics handler on handled requests" in new Fixture {
     val request  = HttpRequest()
-    val responseFuture = Marshal(StatusCodes.OK).to[HttpResponse]
-    val response = responseFuture.futureValue
+    val response = Marshal(StatusCodes.OK).to[HttpResponse].futureValue
     val actual   = CaptureOne[Future[HttpResponse]]()
 
     server
       .expects(*)
       .onCall(complete(StatusCodes.OK))
     (metricsHandler
-      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
+      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: Materializer))
       .expects(request, capture(actual), *)
-      .returns(responseFuture)
+      .returns((): Unit)
 
     sink.request(1)
     source.sendNext(request)
@@ -112,9 +113,8 @@ class HttpMetricsRouteSpec
   it should "call the metrics handler on rejected requests" in new Fixture {
     val request = HttpRequest()
 
-    val responseFuture = Marshal(StatusCodes.NotFound -> "The requested resource could not be found.")
+    val response = Marshal(StatusCodes.NotFound -> "The requested resource could not be found.")
       .to[HttpResponse]
-    val response = responseFuture
       .map(_.withHeaders(PathLabelHeader("unhandled")))
       .futureValue
     val actual = CaptureOne[Future[HttpResponse]]()
@@ -123,9 +123,9 @@ class HttpMetricsRouteSpec
       .expects(*)
       .onCall(reject)
     (metricsHandler
-      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
+      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: Materializer))
       .expects(request, capture(actual), *)
-      .returns(responseFuture)
+      .returns((): Unit)
 
     sink.request(1)
     source.sendNext(request)
@@ -137,9 +137,8 @@ class HttpMetricsRouteSpec
   it should "call the metrics handler on error requests" in new Fixture {
     val request = HttpRequest()
 
-    val responseFuture = Marshal(StatusCodes.InternalServerError)
+    val response = Marshal(StatusCodes.InternalServerError)
       .to[HttpResponse]
-    val response = responseFuture
       .map(_.withHeaders(PathLabelHeader("unhandled")))
       .futureValue
     val actual = CaptureOne[Future[HttpResponse]]()
@@ -148,9 +147,9 @@ class HttpMetricsRouteSpec
       .expects(*)
       .onCall(failWith(new Exception("BOOM!")))
     (metricsHandler
-      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
+      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: Materializer))
       .expects(request, capture(actual), *)
-      .returns(responseFuture)
+      .returns((): Unit)
 
     sink.request(1)
     source.sendNext(request)

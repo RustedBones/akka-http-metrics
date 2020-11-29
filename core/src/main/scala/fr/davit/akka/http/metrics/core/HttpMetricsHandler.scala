@@ -18,12 +18,13 @@ package fr.davit.akka.http.metrics.core
 
 import akka.Done
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
+import akka.stream.Materializer
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 trait HttpMetricsHandler {
 
-  def onRequest(request: HttpRequest, response: Future[HttpResponse])(implicit executionContext: ExecutionContext): Future[HttpResponse]
+  def onRequest(request: HttpRequest, response: Future[HttpResponse])(implicit fm: Materializer): Unit
 
-  def onConnection(completion: Future[Done])(implicit executionContext: ExecutionContext): Unit
+  def onConnection(completion: Future[Done])(implicit fm: Materializer): Unit
 }

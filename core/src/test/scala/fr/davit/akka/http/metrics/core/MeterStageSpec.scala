@@ -19,9 +19,9 @@ package fr.davit.akka.http.metrics.core
 import akka.Done
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
-import akka.stream.ClosedShape
 import akka.stream.scaladsl.{GraphDSL, RunnableGraph}
 import akka.stream.testkit.scaladsl.{TestSink, TestSource}
+import akka.stream.{ClosedShape, Materializer}
 import akka.testkit.TestKit
 import org.scalamock.matchers.ArgCapture.CaptureOne
 import org.scalamock.scalatest.MockFactory
@@ -29,7 +29,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 class MeterStageSpec
     extends TestKit(ActorSystem("HttpMetricsSpec"))
@@ -43,7 +43,7 @@ class MeterStageSpec
     val terminationFuture = CaptureOne[Future[Done]]()
 
     (handler
-      .onConnection(_: Future[Done])(_: ExecutionContext))
+      .onConnection(_: Future[Done])(_: Materializer))
       .expects(capture(terminationFuture), *)
       .returns((): Unit)
 
@@ -88,7 +88,7 @@ class MeterStageSpec
     val responseFuture = CaptureOne[Future[HttpResponse]]()
 
     (handler
-      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
+      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: Materializer))
       .expects(request, capture(responseFuture), *)
       .returns(Future.successful(response))
 
@@ -104,12 +104,12 @@ class MeterStageSpec
   }
 
   it should "flush the stream before stopping" in new Fixture {
-    val request = HttpRequest()
+    val request  = HttpRequest()
     val response = HttpResponse()
-    val actual  = CaptureOne[Future[HttpResponse]]()
+    val actual   = CaptureOne[Future[HttpResponse]]()
 
     (handler
-      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
+      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: Materializer))
       .expects(request, capture(actual), *)
       .returns(Future.successful(response))
 
@@ -130,12 +130,12 @@ class MeterStageSpec
   }
 
   it should "propagate error from request in" in new Fixture {
-    val request = HttpRequest()
+    val request  = HttpRequest()
     val response = HttpResponse()
-    val actual  = CaptureOne[Future[HttpResponse]]()
+    val actual   = CaptureOne[Future[HttpResponse]]()
 
     (handler
-      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
+      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: Materializer))
       .expects(request, capture(actual), *)
       .returns(Future.successful(response))
 
@@ -148,12 +148,12 @@ class MeterStageSpec
   }
 
   it should "propagate error from request out" in new Fixture {
-    val request = HttpRequest()
+    val request  = HttpRequest()
     val response = HttpResponse()
-    val actual  = CaptureOne[Future[HttpResponse]]()
+    val actual   = CaptureOne[Future[HttpResponse]]()
 
     (handler
-      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
+      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: Materializer))
       .expects(request, capture(actual), *)
       .returns(Future.successful(response))
 
@@ -166,12 +166,12 @@ class MeterStageSpec
   }
 
   it should "propagate error from response in and complete pending" in new Fixture {
-    val request = HttpRequest()
+    val request  = HttpRequest()
     val response = HttpResponse()
-    val actual  = CaptureOne[Future[HttpResponse]]()
+    val actual   = CaptureOne[Future[HttpResponse]]()
 
     (handler
-      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
+      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: Materializer))
       .expects(request, capture(actual), *)
       .returns(Future.successful(response))
 
@@ -186,12 +186,12 @@ class MeterStageSpec
   }
 
   it should "propagate error from response out and complete pending" in new Fixture {
-    val request = HttpRequest()
+    val request  = HttpRequest()
     val response = HttpResponse()
-    val actual  = CaptureOne[Future[HttpResponse]]()
+    val actual   = CaptureOne[Future[HttpResponse]]()
 
     (handler
-      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
+      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: Materializer))
       .expects(request, capture(actual), *)
       .returns(Future.successful(response))
 

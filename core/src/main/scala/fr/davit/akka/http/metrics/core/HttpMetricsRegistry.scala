@@ -16,18 +16,14 @@
 
 package fr.davit.akka.http.metrics.core
 
-import java.util.concurrent.atomic.AtomicLong
-
 import akka.Done
 import akka.http.scaladsl.model._
+import akka.stream.Materializer
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{MethodDimension, PathDimension, StatusGroupDimension}
 import fr.davit.akka.http.metrics.core.scaladsl.model.PathLabelHeader
+
 import scala.concurrent.duration.Deadline
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
-
-import akka.stream.scaladsl.Flow
-import akka.util.ByteString
 
 object HttpMetricsRegistry {
 
@@ -115,17 +111,24 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
     response.header[PathLabelHeader].getOrElse(PathLabelHeader.UnLabelled).value
   }
 
+  // Since Content-Length header can't be relied on, see [[HttpEntity.contentLengthOption]]:
+  // In many cases it's dangerous to rely on the (non-)existence of a content-length.
+  // Compute the entity size from the data itself
+  private def entitySize(entity: HttpEntity)(implicit mat: Materializer): Future[Long] =
+    entity.dataBytes.map(_.length).runFold(0L)(_ + _)
+
   override def onRequest(request: HttpRequest, response: Future[HttpResponse])(
-      implicit executionContext: ExecutionContext
-  ): Future[HttpResponse] = {
-    val serverDimensions = settings.serverDimensions
+      implicit fm: Materializer
+  ): Unit = {
+    implicit val ec: ExecutionContext = fm.executionContext
+    val serverDimensions              = settings.serverDimensions
 
     requestsActive.inc(serverDimensions)
     requests.inc(serverDimensions)
-    requestsSize.update(request.entity.contentLengthOption.getOrElse(0L), serverDimensions)
+    entitySize(request.entity).foreach(requestsSize.update(_, serverDimensions))
     val start = Deadline.now
 
-    response.map { r =>
+    response.foreach { r =>
       // compute dimensions
       // format: off
       val methodDim = if (settings.includeMethodDimension) Some(MethodDimension(request.method)) else None
@@ -141,36 +144,14 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
       if (settings.defineError(r)) {
         responsesErrors.inc(dimensions)
       }
-      r.entity.contentLengthOption match {
-        case Some(length) =>
-          responsesSize.update(length, dimensions)
-          r
-        case None  =>
-          val bytesSent = new AtomicLong()
-          val transformer: Flow[ByteString, ByteString, Any] =
-            Flow[ByteString].map{ s =>
-              bytesSent.addAndGet(s.length.toLong)
-              s
-            }.watchTermination() { (_, done) =>
-              done.onComplete {
-                case Success(_) => responsesSize.update(bytesSent.longValue(), dimensions)
-                case Failure(_) => // nothing to update for failed streamed responses
-              }
-            }
-          HttpResponse(
-            status = r.status,
-            headers = r.headers,
-            entity = r.entity.transformDataBytes(transformer),
-            protocol = r.protocol
-          )
-      }
+      entitySize(r.entity).foreach(responsesSize.update(_, dimensions))
     }
   }
 
-  override def onConnection(completion: Future[Done])(implicit executionContext: ExecutionContext): Unit = {
+  override def onConnection(completion: Future[Done])(implicit fm: Materializer): Unit = {
     val serverDimensions = settings.serverDimensions
     connections.inc(serverDimensions)
     connectionsActive.inc(serverDimensions)
-    completion.onComplete(_ => connectionsActive.dec(serverDimensions))
+    completion.onComplete(_ => connectionsActive.dec(serverDimensions))(fm.executionContext)
   }
 }
