@@ -33,13 +33,8 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
 
-    override def preStart(): Unit = {
-      metricsHandler.onConnection()
-    }
-
-    override def postStop(): Unit = {
-      metricsHandler.onDisconnection()
-    }
+    override def preStart(): Unit = metricsHandler.onConnection()
+    override def postStop(): Unit = metricsHandler.onDisconnection()
 
     val requestHandler = new InHandler with OutHandler {
       override def onPush(): Unit = {
@@ -60,18 +55,9 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
       }
       override def onPull(): Unit = pull(responseIn)
 
-      override def onUpstreamFinish(): Unit = {
-        // pending.foreach(_.failure(new IllegalStateException("Server stopped with pending requests")))
-        complete(responseOut)
-      }
-      override def onUpstreamFailure(ex: Throwable): Unit = {
-        // pending.foreach(_.failure(ex))
-        fail(responseOut, ex)
-      }
-      override def onDownstreamFinish(cause: Throwable): Unit = {
-        // pending.foreach(_.failure(cause))
-        cancel(responseIn)
-      }
+      override def onUpstreamFinish(): Unit                   = complete(responseOut)
+      override def onUpstreamFailure(ex: Throwable): Unit     = fail(responseOut, ex)
+      override def onDownstreamFinish(cause: Throwable): Unit = cancel(responseIn)
     }
 
     setHandlers(requestIn, requestOut, requestHandler)
