@@ -52,7 +52,7 @@ class HttpMetricsSpec
   }
 
   it should "not accept non traced requests" in {
-    val handler  = HttpMetrics.metricsRouteToFunction(complete(StatusCodes.OK))
+    val handler = HttpMetrics.metricsRouteToFunction(complete(StatusCodes.OK))
     handler(tracedRequest).futureValue.status shouldBe StatusCodes.OK
     handler(HttpRequest()).futureValue.status shouldBe StatusCodes.InternalServerError
   }

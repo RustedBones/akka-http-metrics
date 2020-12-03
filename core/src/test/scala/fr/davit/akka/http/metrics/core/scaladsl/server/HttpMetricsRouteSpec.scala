@@ -46,9 +46,9 @@ class HttpMetricsRouteSpec
 
   implicit val ec: ExecutionContext = system.dispatcher
 
-  val request        = HttpRequest()
-  val traceId        = UUID.fromString("00000000-0000-0000-0000-000000000000")
-  val tracedRequest  = HttpRequest().addAttribute(HttpMetrics.TracingId, traceId)
+  val request       = HttpRequest()
+  val traceId       = UUID.fromString("00000000-0000-0000-0000-000000000000")
+  val tracedRequest = HttpRequest().addAttribute(HttpMetrics.TracingId, traceId)
 
   abstract class Fixture[T] {
     val metricsHandler = mock[HttpMetricsHandler]
@@ -101,6 +101,7 @@ class HttpMetricsRouteSpec
     server
       .expects(*)
       .onCall(complete(StatusCodes.OK))
+
     val tracedResponse = Marshal(StatusCodes.OK)
       .to[HttpResponse]
       .futureValue
@@ -126,6 +127,7 @@ class HttpMetricsRouteSpec
     server
       .expects(*)
       .onCall(reject)
+
     val tracedResponse = Marshal(StatusCodes.NotFound -> "The requested resource could not be found.")
       .to[HttpResponse]
       .futureValue
@@ -152,6 +154,7 @@ class HttpMetricsRouteSpec
     server
       .expects(*)
       .onCall(failWith(new Exception("BOOM!")))
+
     val tracedResponse = Marshal(StatusCodes.InternalServerError)
       .to[HttpResponse]
       .futureValue
