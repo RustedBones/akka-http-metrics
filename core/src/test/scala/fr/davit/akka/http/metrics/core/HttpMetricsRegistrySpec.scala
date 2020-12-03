@@ -48,10 +48,10 @@ class HttpMetricsRegistrySpec
   val traceId2 = UUID.fromString("00000000-0000-0000-0000-000000000002")
 
   def tracedRequest(traceId: UUID = traceId0): HttpRequest =
-    HttpRequest().addAttribute(HttpMetrics.TracingId, traceId)
+    HttpRequest().addAttribute(HttpMetrics.TraceId, traceId)
 
   def tracedResponse(traceId: UUID = traceId0): HttpResponse =
-    HttpResponse().addAttribute(HttpMetrics.TracingId, traceId)
+    HttpResponse().addAttribute(HttpMetrics.TraceId, traceId)
 
   abstract class Fixture(settings: HttpMetricsSettings = TestRegistry.settings) {
     val registry = new TestRegistry(settings)

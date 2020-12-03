@@ -39,7 +39,7 @@ class HttpMetricsSpec
   }
 
   val traceId       = UUID.fromString("00000000-0000-0000-0000-000000000000")
-  val tracedRequest = HttpRequest().addAttribute(HttpMetrics.TracingId, traceId)
+  val tracedRequest = HttpRequest().addAttribute(HttpMetrics.TraceId, traceId)
 
   "HttpMetrics" should "provide newMeteredServerAt extension" in {
     """

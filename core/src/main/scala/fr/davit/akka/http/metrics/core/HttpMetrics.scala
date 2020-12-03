@@ -37,12 +37,12 @@ final class HttpMetrics(private val http: HttpExt) extends AnyVal {
 
 object HttpMetrics {
 
-  val TracingId: AttributeKey[UUID]   = AttributeKey("tracing-id", classOf[UUID])
+  val TraceId: AttributeKey[UUID]     = AttributeKey("trace-id", classOf[UUID])
   val PathLabel: AttributeKey[String] = AttributeKey("path-label", classOf[String])
 
   implicit def enrichHttp(http: HttpExt): HttpMetrics = new HttpMetrics(http)
 
-  private def traceRequest(request: HttpRequest): HttpRequest = request.addAttribute(TracingId, UUID.randomUUID())
+  private def traceRequest(request: HttpRequest): HttpRequest = request.addAttribute(TraceId, UUID.randomUUID())
 
   private def markUnhandled(inner: Route): Route = {
     Directives.mapResponse(markUnhandled).tapply(_ => inner)
@@ -76,8 +76,8 @@ object HttpMetrics {
     Route.toFunction {
       // trace the server request to response by extracting the trace attribute
       // and injecting it to the response after being sealed by the rejection and exception handlers
-      attribute(TracingId) { id =>
-        mapResponse(_.addAttribute(TracingId, id)) {
+      attribute(TraceId) { id =>
+        mapResponse(_.addAttribute(TraceId, id)) {
           (handleExceptions(exceptionHandler) & handleRejections(rejectionHandler)) {
             route
           }

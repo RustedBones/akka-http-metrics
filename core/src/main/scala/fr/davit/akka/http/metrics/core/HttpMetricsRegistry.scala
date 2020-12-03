@@ -130,7 +130,7 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
   private val responseBytesTransformer = onData(responsesSize.update(_, settings.serverDimensions))
 
   override def onRequest(request: HttpRequest): HttpRequest = {
-    val id = request.attribute(HttpMetrics.TracingId).get
+    val id = request.attribute(HttpMetrics.TraceId).get
     pendingRequests.put(id, (request, Deadline.now))
     requestsActive.inc(settings.serverDimensions)
     requests.inc(settings.serverDimensions)
@@ -138,7 +138,7 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
   }
 
   override def onResponse(response: HttpResponse): HttpResponse = {
-    val id               = response.attribute(HttpMetrics.TracingId).get
+    val id               = response.attribute(HttpMetrics.TraceId).get
     val (request, start) = pendingRequests(id)
     pendingRequests.remove(id)
     val pathDim        = if (settings.includePathDimension) Some(PathDimension(pathLabel(response))) else None

@@ -48,7 +48,7 @@ class HttpMetricsRouteSpec
 
   val request       = HttpRequest()
   val traceId       = UUID.fromString("00000000-0000-0000-0000-000000000000")
-  val tracedRequest = HttpRequest().addAttribute(HttpMetrics.TracingId, traceId)
+  val tracedRequest = HttpRequest().addAttribute(HttpMetrics.TraceId, traceId)
 
   abstract class Fixture[T] {
     val metricsHandler = mock[HttpMetricsHandler]
@@ -105,7 +105,7 @@ class HttpMetricsRouteSpec
     val tracedResponse = Marshal(StatusCodes.OK)
       .to[HttpResponse]
       .futureValue
-      .addAttribute(HttpMetrics.TracingId, traceId)
+      .addAttribute(HttpMetrics.TraceId, traceId)
 
     (metricsHandler.onResponse _)
       .expects(tracedResponse)
@@ -131,7 +131,7 @@ class HttpMetricsRouteSpec
     val tracedResponse = Marshal(StatusCodes.NotFound -> "The requested resource could not be found.")
       .to[HttpResponse]
       .futureValue
-      .addAttribute(HttpMetrics.TracingId, traceId)
+      .addAttribute(HttpMetrics.TraceId, traceId)
       .addAttribute(HttpMetrics.PathLabel, "unhandled")
 
     (metricsHandler.onResponse _)
@@ -158,7 +158,7 @@ class HttpMetricsRouteSpec
     val tracedResponse = Marshal(StatusCodes.InternalServerError)
       .to[HttpResponse]
       .futureValue
-      .addAttribute(HttpMetrics.TracingId, traceId)
+      .addAttribute(HttpMetrics.TraceId, traceId)
       .addAttribute(HttpMetrics.PathLabel, "unhandled")
 
     (metricsHandler.onResponse _)
