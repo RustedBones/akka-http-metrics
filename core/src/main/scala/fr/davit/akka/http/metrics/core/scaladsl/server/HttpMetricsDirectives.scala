@@ -17,17 +17,13 @@
 package fr.davit.akka.http.metrics.core.scaladsl.server
 
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.model.HttpHeader
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.PathMatcher.{Matched, Unmatched}
 import akka.http.scaladsl.server.directives.BasicDirectives.{mapRequestContext, tprovide}
 import akka.http.scaladsl.server.directives.RouteDirectives.reject
 import akka.http.scaladsl.server.util.Tuple
 import akka.http.scaladsl.server.{Directive, PathMatcher, StandardRoute}
-import fr.davit.akka.http.metrics.core.HttpMetricsRegistry
-import fr.davit.akka.http.metrics.core.scaladsl.model.PathLabelHeader
-
-import scala.collection.immutable
+import fr.davit.akka.http.metrics.core.{HttpMetrics, HttpMetricsRegistry}
 
 trait HttpMetricsDirectives {
 
@@ -57,20 +53,13 @@ trait HttpMetricsDirectives {
       val pathCandidate = ctx.unmatchedPath.toString
       pm(ctx.unmatchedPath) match {
         case Matched(rest, values) =>
-          tprovide(values) & mapRequestContext(_ withUnmatchedPath rest) & mapResponseHeaders { headers =>
-            var pathHeader = label match {
-              case Some(l) => PathLabelHeader("/" + l) // pm matches additional slash prefix
-              case None    => PathLabelHeader(pathCandidate.substring(0, pathCandidate.length - rest.charCount))
+          tprovide(values) & mapRequestContext(_ withUnmatchedPath rest) & mapResponse { response =>
+            val suffix = response.attribute(HttpMetrics.PathLabel).getOrElse("")
+            val pathLabel = label match {
+              case Some(l) => "/" + l + suffix // pm matches additional slash prefix
+              case None    => pathCandidate.substring(0, pathCandidate.length - rest.charCount) + suffix
             }
-            val builder = immutable.Seq.newBuilder[HttpHeader]
-            headers.foreach {
-              case PathLabelHeader(suffix) =>
-                pathHeader = PathLabelHeader(pathHeader.value + suffix)
-              case h: HttpHeader =>
-                builder += h
-            }
-            builder += pathHeader
-            builder.result()
+            response.addAttribute(HttpMetrics.PathLabel, pathLabel)
           }
         case Unmatched =>
           reject

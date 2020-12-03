@@ -20,8 +20,7 @@ import akka.http.scaladsl.marshalling.PredefinedToEntityMarshallers._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import fr.davit.akka.http.metrics.core.TestRegistry
-import fr.davit.akka.http.metrics.core.scaladsl.model.PathLabelHeader
+import fr.davit.akka.http.metrics.core.{HttpMetrics, TestRegistry}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -53,7 +52,7 @@ class HttpMetricsDirectivesSpec extends AnyFlatSpec with Matchers with Scalatest
     }
 
     Get("/api/user/1234/address") ~> route ~> check {
-      header[PathLabelHeader] shouldBe Some(PathLabelHeader("/api"))
+      response.attribute(HttpMetrics.PathLabel) shouldBe Some("/api")
     }
   }
 
@@ -67,11 +66,11 @@ class HttpMetricsDirectivesSpec extends AnyFlatSpec with Matchers with Scalatest
     }
 
     Get("/api/user/1234/address") ~> route ~> check {
-      header[PathLabelHeader] shouldBe Some(PathLabelHeader("/api/user/:userId/address"))
+      response.attribute(HttpMetrics.PathLabel) shouldBe Some("/api/user/:userId/address")
     }
   }
 
-  it should "not add extra header when label directives are not used" in {
+  it should "not add extra attribute when label directives are not used" in {
     val route = pathPrefix("api") {
       pathPrefix("user" / LongNumber) { _ =>
         path("address") {
@@ -81,7 +80,7 @@ class HttpMetricsDirectivesSpec extends AnyFlatSpec with Matchers with Scalatest
     }
 
     Get("/api/user/1234/address") ~> route ~> check {
-      header[PathLabelHeader] shouldBe empty
+      response.attribute(HttpMetrics.PathLabel) shouldBe empty
     }
   }
 }

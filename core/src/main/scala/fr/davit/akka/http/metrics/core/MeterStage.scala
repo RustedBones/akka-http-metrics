@@ -16,13 +16,9 @@
 
 package fr.davit.akka.http.metrics.core
 
-import akka.Done
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
-import akka.stream.{Attributes, BidiShape, Inlet, Outlet}
 import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
-
-import scala.collection.mutable
-import scala.concurrent.Promise
+import akka.stream.{Attributes, BidiShape, Inlet, Outlet}
 
 private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
     extends GraphStage[BidiShape[HttpRequest, HttpRequest, HttpResponse, HttpResponse]] {
@@ -36,26 +32,19 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
   val shape = new BidiShape(requestIn, requestOut, responseIn, responseOut)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
-    val completion: Promise[Done] = Promise()
-    // Use a FIFO structure to store response promises
-    // All routes are converted to flow with a mapAsync(1) so order is respected
-    val pending: mutable.Queue[Promise[HttpResponse]] = mutable.Queue.empty
 
     override def preStart(): Unit = {
-      metricsHandler.onConnection(completion.future)(materializer)
+      metricsHandler.onConnection()
     }
 
     override def postStop(): Unit = {
-      completion.success(Done)
+      metricsHandler.onDisconnection()
     }
 
     val requestHandler = new InHandler with OutHandler {
       override def onPush(): Unit = {
         val request = grab(requestIn)
-        val promise = Promise[HttpResponse]()
-        metricsHandler.onRequest(request, promise.future)(materializer)
-        pending.enqueue(promise)
-        push(requestOut, request)
+        push(requestOut, metricsHandler.onRequest(request))
       }
       override def onPull(): Unit = pull(requestIn)
 
@@ -66,23 +55,21 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
 
     val responseHandler = new InHandler with OutHandler {
       override def onPush(): Unit = {
-        val promise  = pending.dequeue()
         val response = grab(responseIn)
-        promise.success(response)
-        push(responseOut, response)
+        push(responseOut, metricsHandler.onResponse(response))
       }
       override def onPull(): Unit = pull(responseIn)
 
       override def onUpstreamFinish(): Unit = {
-        pending.foreach(_.failure(new IllegalStateException("Server stopped with pending requests")))
+        // pending.foreach(_.failure(new IllegalStateException("Server stopped with pending requests")))
         complete(responseOut)
       }
       override def onUpstreamFailure(ex: Throwable): Unit = {
-        pending.foreach(_.failure(ex))
+        // pending.foreach(_.failure(ex))
         fail(responseOut, ex)
       }
       override def onDownstreamFinish(cause: Throwable): Unit = {
-        pending.foreach(_.failure(cause))
+        // pending.foreach(_.failure(cause))
         cancel(responseIn)
       }
     }

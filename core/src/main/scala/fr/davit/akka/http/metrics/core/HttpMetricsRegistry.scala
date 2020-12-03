@@ -16,14 +16,14 @@
 
 package fr.davit.akka.http.metrics.core
 
-import akka.Done
 import akka.http.scaladsl.model._
-import akka.stream.Materializer
-import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{MethodDimension, PathDimension, StatusGroupDimension}
-import fr.davit.akka.http.metrics.core.scaladsl.model.PathLabelHeader
+import akka.stream.scaladsl.{Flow, Sink}
+import akka.util.ByteString
 
+import java.util.UUID
+import scala.collection.concurrent
+import scala.collection.concurrent.TrieMap
 import scala.concurrent.duration.Deadline
-import scala.concurrent.{ExecutionContext, Future}
 
 object HttpMetricsRegistry {
 
@@ -61,6 +61,8 @@ object HttpMetricsRegistry {
 }
 
 abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMetricsHandler {
+
+  import HttpMetricsRegistry._
 
   //--------------------------------------------------------------------------------------------------------------------
   // requests
@@ -108,50 +110,57 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
   def connected: Gauge = connectionsActive
 
   private def pathLabel(response: HttpResponse): String = {
-    response.header[PathLabelHeader].getOrElse(PathLabelHeader.UnLabelled).value
+    response.attribute(HttpMetrics.PathLabel).getOrElse("unlabelled")
   }
+
+  private val pendingRequests: concurrent.Map[UUID, (HttpRequest, Deadline)] = TrieMap.empty
 
   // Since Content-Length header can't be relied on, see [[HttpEntity.contentLengthOption]]:
   // In many cases it's dangerous to rely on the (non-)existence of a content-length.
   // Compute the entity size from the data itself
-  private def entitySize(entity: HttpEntity)(implicit mat: Materializer): Future[Long] =
-    entity.dataBytes.map(_.length).runFold(0L)(_ + _)
-
-  override def onRequest(request: HttpRequest, response: Future[HttpResponse])(
-      implicit fm: Materializer
-  ): Unit = {
-    implicit val ec: ExecutionContext = fm.executionContext
-    val serverDimensions              = settings.serverDimensions
-
-    requestsActive.inc(serverDimensions)
-    requests.inc(serverDimensions)
-    entitySize(request.entity).foreach(requestsSize.update(_, serverDimensions))
-    val start = Deadline.now
-
-    response.foreach { r =>
-      // compute dimensions
-      // format: off
-      val methodDim = if (settings.includeMethodDimension) Some(MethodDimension(request.method)) else None
-      val pathDim = if (settings.includePathDimension) Some(PathDimension(pathLabel(r))) else None
-      val statusGroupDim = if (settings.includeStatusDimension) Some(StatusGroupDimension(r.status)) else None
-
-      val dimensions = (methodDim ++ pathDim ++ statusGroupDim).toSeq ++ serverDimensions
-      // format: on
-
-      requestsActive.dec(serverDimensions)
-      responses.inc(dimensions)
-      responsesDuration.observe(Deadline.now - start, dimensions)
-      if (settings.defineError(r)) {
-        responsesErrors.inc(dimensions)
-      }
-      entitySize(r.entity).foreach(responsesSize.update(_, dimensions))
-    }
+  private def onData(handler: Long => Unit): Flow[ByteString, ByteString, Any] = {
+    val collectSizeSink = Flow[ByteString]
+      .map(_.length)
+      .fold(0L)(_ + _)
+      .to(Sink.foreach(handler))
+    Flow[ByteString].wireTap(collectSizeSink)
   }
 
-  override def onConnection(completion: Future[Done])(implicit fm: Materializer): Unit = {
-    val serverDimensions = settings.serverDimensions
-    connections.inc(serverDimensions)
-    connectionsActive.inc(serverDimensions)
-    completion.onComplete(_ => connectionsActive.dec(serverDimensions))(fm.executionContext)
+  private val requestBytesTransformer  = onData(requestsSize.update(_, settings.serverDimensions))
+  private val responseBytesTransformer = onData(responsesSize.update(_, settings.serverDimensions))
+
+  override def onRequest(request: HttpRequest): HttpRequest = {
+    val id = request.attribute(HttpMetrics.TracingId).get
+    pendingRequests.put(id, (request, Deadline.now))
+    requestsActive.inc(settings.serverDimensions)
+    requests.inc(settings.serverDimensions)
+    request.transformEntityDataBytes(requestBytesTransformer)
+  }
+
+  override def onResponse(response: HttpResponse): HttpResponse = {
+    val id               = response.attribute(HttpMetrics.TracingId).get
+    val (request, start) = pendingRequests(id)
+    pendingRequests.remove(id)
+    val pathDim        = if (settings.includePathDimension) Some(PathDimension(pathLabel(response))) else None
+    val statusGroupDim = if (settings.includeStatusDimension) Some(StatusGroupDimension(response.status)) else None
+    val methodDim      = if (settings.includeMethodDimension) Some(MethodDimension(request.method)) else None
+    val dimensions     = (methodDim ++ pathDim ++ statusGroupDim).toSeq ++ settings.serverDimensions
+
+    requestsActive.dec(settings.serverDimensions)
+    responses.inc(dimensions)
+    responsesDuration.observe(Deadline.now - start, dimensions)
+    if (settings.defineError(response)) {
+      responsesErrors.inc(dimensions)
+    }
+    response.transformEntityDataBytes(responseBytesTransformer)
+  }
+
+  override def onConnection(): Unit = {
+    connections.inc(settings.serverDimensions)
+    connectionsActive.inc(settings.serverDimensions)
+  }
+
+  override def onDisconnection(): Unit = {
+    connectionsActive.dec(settings.serverDimensions)
   }
 }
