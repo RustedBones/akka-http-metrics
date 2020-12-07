@@ -19,13 +19,14 @@ package fr.davit.akka.http.metrics.core
 import akka.NotUsed
 import akka.actor.ClassicActorSystemProvider
 import akka.http.scaladsl.model.{AttributeKey, HttpRequest, HttpResponse}
-import akka.http.scaladsl.server.{Directives, ExceptionHandler, RejectionHandler, Route}
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.{Directives, ExceptionHandler, RejectionHandler, Route}
 import akka.http.scaladsl.settings.RoutingSettings
 import akka.http.scaladsl.{HttpExt, HttpMetricsServerBuilder}
 import akka.stream.scaladsl.{BidiFlow, Flow}
 
 import java.util.UUID
+import scala.concurrent.duration.Deadline
 import scala.concurrent.{ExecutionContext, Future}
 
 final class HttpMetrics(private val http: HttpExt) extends AnyVal {
@@ -37,12 +38,16 @@ final class HttpMetrics(private val http: HttpExt) extends AnyVal {
 
 object HttpMetrics {
 
-  val TraceId: AttributeKey[UUID]     = AttributeKey("trace-id", classOf[UUID])
-  val PathLabel: AttributeKey[String] = AttributeKey("path-label", classOf[String])
+  val TraceId: AttributeKey[UUID]            = AttributeKey("trace-id", classOf[UUID])
+  val TraceTimestamp: AttributeKey[Deadline] = AttributeKey("trace-time", classOf[Deadline])
+  val PathLabel: AttributeKey[String]        = AttributeKey("path-label", classOf[String])
 
   implicit def enrichHttp(http: HttpExt): HttpMetrics = new HttpMetrics(http)
 
-  private def traceRequest(request: HttpRequest): HttpRequest = request.addAttribute(TraceId, UUID.randomUUID())
+  private def traceRequest(request: HttpRequest): HttpRequest =
+    request
+      .addAttribute(TraceId, UUID.randomUUID())
+      .addAttribute(TraceTimestamp, Deadline.now)
 
   private def markUnhandled(inner: Route): Route = {
     Directives.mapResponse(markUnhandled).tapply(_ => inner)
@@ -92,7 +97,24 @@ object HttpMetrics {
     (traceRequest _)
       .andThen(metricsHandler.onRequest)
       .andThen(handler)
-      .andThen(_.map(metricsHandler.onResponse))
+      .andThen(
+        _.transform(
+          metricsHandler.onResponse(request, _),
+          metricsHandler.onFailure(request, _)
+        )
+      )
+      .apply(request)
+  }
+
+  def meterFunctionSync(
+      handler: HttpRequest => HttpResponse,
+      metricsHandler: HttpMetricsHandler
+  ): HttpRequest => Future[HttpResponse] = { request: HttpRequest =>
+    (traceRequest _)
+      .andThen(metricsHandler.onRequest)
+      .andThen(handler)
+      .andThen(metricsHandler.onResponse(request, _))
+      .andThen(Future.successful)
       .apply(request)
   }
 

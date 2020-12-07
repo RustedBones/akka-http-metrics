@@ -20,9 +20,6 @@ import akka.http.scaladsl.model._
 import akka.stream.scaladsl.{Flow, Sink}
 import akka.util.ByteString
 
-import java.util.UUID
-import scala.collection.concurrent
-import scala.collection.concurrent.TrieMap
 import scala.concurrent.duration.Deadline
 
 object HttpMetricsRegistry {
@@ -113,34 +110,39 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
     response.attribute(HttpMetrics.PathLabel).getOrElse("unlabelled")
   }
 
-  private val pendingRequests: concurrent.Map[UUID, (HttpRequest, Deadline)] = TrieMap.empty
-
-  // Since Content-Length header can't be relied on, see [[HttpEntity.contentLengthOption]]:
-  // In many cases it's dangerous to rely on the (non-)existence of a content-length.
-  // Compute the entity size from the data itself
   private def onData(handler: Long => Unit): Flow[ByteString, ByteString, Any] = {
     val collectSizeSink = Flow[ByteString]
       .map(_.length)
       .fold(0L)(_ + _)
       .to(Sink.foreach(handler))
-    Flow[ByteString].wireTap(collectSizeSink)
+    Flow[ByteString].alsoTo(collectSizeSink)
   }
 
-  private val requestBytesTransformer  = onData(requestsSize.update(_, settings.serverDimensions))
-  private val responseBytesTransformer = onData(responsesSize.update(_, settings.serverDimensions))
+  // Since Content-Length header can't be relied on, see [[HttpEntity.contentLengthOption]]:
+  // In many cases it's dangerous to rely on the (non-)existence of a content-length.
+  // Compute the entity size from the data itself
+  private val requestBytesTransformer: Flow[ByteString, ByteString, Any] =
+    onData(requestsSize.update(_, settings.serverDimensions))
+
+  // Same for response, and also observe duration only when all bytes are sent
+  private def responseBytesTransformer(
+      request: HttpRequest,
+      dimension: Seq[Dimension]
+  ): Flow[ByteString, ByteString, Any] =
+    onData { size =>
+      val start    = request.attribute(HttpMetrics.TraceTimestamp).get
+      val duration = Deadline.now - start
+      responsesSize.update(size, dimension)
+      responsesDuration.observe(duration, dimension)
+    }
 
   override def onRequest(request: HttpRequest): HttpRequest = {
-    val id = request.attribute(HttpMetrics.TraceId).get
-    pendingRequests.put(id, (request, Deadline.now))
     requestsActive.inc(settings.serverDimensions)
     requests.inc(settings.serverDimensions)
     request.transformEntityDataBytes(requestBytesTransformer)
   }
 
-  override def onResponse(response: HttpResponse): HttpResponse = {
-    val id               = response.attribute(HttpMetrics.TraceId).get
-    val (request, start) = pendingRequests(id)
-    pendingRequests.remove(id)
+  override def onResponse(request: HttpRequest, response: HttpResponse): HttpResponse = {
     val pathDim        = if (settings.includePathDimension) Some(PathDimension(pathLabel(response))) else None
     val statusGroupDim = if (settings.includeStatusDimension) Some(StatusGroupDimension(response.status)) else None
     val methodDim      = if (settings.includeMethodDimension) Some(MethodDimension(request.method)) else None
@@ -148,11 +150,13 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
 
     requestsActive.dec(settings.serverDimensions)
     responses.inc(dimensions)
-    responsesDuration.observe(Deadline.now - start, dimensions)
-    if (settings.defineError(response)) {
-      responsesErrors.inc(dimensions)
-    }
-    response.transformEntityDataBytes(responseBytesTransformer)
+    if (settings.defineError(response)) responsesErrors.inc(dimensions)
+    response.transformEntityDataBytes(responseBytesTransformer(request, dimensions))
+  }
+
+  override def onFailure(request: HttpRequest, cause: Throwable): Throwable = {
+    requestsActive.dec(settings.serverDimensions)
+    cause
   }
 
   override def onConnection(): Unit = {

@@ -27,7 +27,6 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 
-import java.util.UUID
 import scala.concurrent.duration._
 
 class HttpMetricsRegistrySpec
@@ -43,63 +42,41 @@ class HttpMetricsRegistrySpec
     override def value: String = "test"
   }
 
-  val traceId0 = UUID.fromString("00000000-0000-0000-0000-000000000000")
-  val traceId1 = UUID.fromString("00000000-0000-0000-0000-000000000001")
-  val traceId2 = UUID.fromString("00000000-0000-0000-0000-000000000002")
-
-  def tracedRequest(traceId: UUID = traceId0): HttpRequest =
-    HttpRequest().addAttribute(HttpMetrics.TraceId, traceId)
-
-  def tracedResponse(traceId: UUID = traceId0): HttpResponse =
-    HttpResponse().addAttribute(HttpMetrics.TraceId, traceId)
-
   abstract class Fixture(settings: HttpMetricsSettings = TestRegistry.settings) {
     val registry = new TestRegistry(settings)
   }
 
   "HttpMetricsRegistry" should "compute the number of requests" in new Fixture() {
     registry.requests.value() shouldBe 0
-    registry.onRequest(tracedRequest())
+    registry.onRequest(HttpRequest())
     registry.requests.value() shouldBe 1
-    registry.onRequest(tracedRequest())
+    registry.onRequest(HttpRequest())
     registry.requests.value() shouldBe 2
   }
 
   it should "compute the number of errors" in new Fixture() {
-    registry.onRequest(tracedRequest(traceId0))
-    registry.onRequest(tracedRequest(traceId1))
-    registry.onRequest(tracedRequest(traceId2))
-
     registry.responsesErrors.value() shouldBe 0
-    registry.onResponse(tracedResponse(traceId0).withStatus(StatusCodes.OK))
-    registry.onResponse(tracedResponse(traceId1).withStatus(StatusCodes.BadRequest))
+    registry.onResponse(HttpRequest(), HttpResponse(StatusCodes.OK))
+    registry.onResponse(HttpRequest(), HttpResponse(StatusCodes.TemporaryRedirect))
+    registry.onResponse(HttpRequest(), HttpResponse(StatusCodes.BadRequest))
     registry.responsesErrors.value() shouldBe 0
-    registry.onResponse(tracedResponse(traceId2).withStatus(StatusCodes.InternalServerError))
+    registry.onResponse(HttpRequest(), HttpResponse(StatusCodes.InternalServerError))
     registry.responsesErrors.value() shouldBe 1
   }
 
   it should "compute the number of active requests" in new Fixture() {
     registry.requestsActive.value() shouldBe 0
-    registry.onRequest(tracedRequest(traceId0))
-    registry.onRequest(tracedRequest(traceId1))
+    registry.onRequest(HttpRequest())
+    registry.onRequest(HttpRequest())
     registry.requestsActive.value() shouldBe 2
-    registry.onResponse(tracedResponse(traceId0))
-    registry.onResponse(tracedResponse(traceId1))
+    registry.onResponse(HttpRequest(), HttpResponse())
+    registry.onFailure(HttpRequest(), new Exception("BOOM!"))
     registry.requestsActive.value() shouldBe 0
-  }
-
-  it should "compute the requests time" in new Fixture() {
-    val duration = 500.millis
-    registry.responsesDuration.values() shouldBe empty
-    registry.onRequest(tracedRequest())
-    Thread.sleep(duration.toMillis)
-    registry.onResponse(tracedResponse())
-    registry.responsesDuration.values().head should be > duration
   }
 
   it should "compute the requests size" in new Fixture() {
     val data    = "This is the request content"
-    val request = tracedRequest().withEntity(data)
+    val request = HttpRequest(entity = data)
     registry.requestsSize.values() shouldBe empty
     registry.onRequest(request).discardEntityBytes().future().futureValue
     registry.requestsSize.values().head shouldBe data.getBytes.length
@@ -107,29 +84,37 @@ class HttpMetricsRegistrySpec
 
   it should "compute the requests size for streamed data" in new Fixture() {
     val data    = Source(List("a", "b", "c")).map(ByteString.apply)
-    val request = tracedRequest().withEntity(HttpEntity(ContentTypes.`application/octet-stream`, data))
+    val request = HttpRequest(entity = HttpEntity(ContentTypes.`application/octet-stream`, data))
     registry.requestsSize.values() shouldBe empty
     registry.onRequest(request).discardEntityBytes().future().futureValue
-    Thread.sleep(1000)
     registry.requestsSize.values().head shouldBe "abc".getBytes.length
   }
 
   it should "compute the response size" in new Fixture() {
     val data     = "This is the response content"
-    val response = tracedResponse().withEntity(data)
-    registry.onRequest(tracedRequest())
+    val request  = HttpRequest().addAttribute(HttpMetrics.TraceTimestamp, Deadline.now)
+    val response = HttpResponse(entity = data)
     registry.responsesSize.values() shouldBe empty
-    registry.onResponse(response).discardEntityBytes().future().futureValue
+    registry.onResponse(request, response).discardEntityBytes().future().futureValue
     registry.responsesSize.values().head shouldBe data.getBytes.length
   }
 
   it should "compute the response size for streamed data" in new Fixture() {
     val data     = Source(List("a", "b", "c")).map(ByteString.apply)
-    val response = tracedResponse().withEntity(HttpEntity(ContentTypes.`application/octet-stream`, data))
-    registry.onRequest(tracedRequest())
+    val request  = HttpRequest().addAttribute(HttpMetrics.TraceTimestamp, Deadline.now)
+    val response = HttpResponse(entity = HttpEntity(ContentTypes.`application/octet-stream`, data))
     registry.responsesSize.values() shouldBe empty
-    registry.onResponse(response).discardEntityBytes().future().futureValue
+    registry.onResponse(request, response).discardEntityBytes().future().futureValue
     registry.responsesSize.values().head shouldBe "abc".getBytes.length
+  }
+
+  it should "compute the response time" in new Fixture() {
+    val duration = 500.millis
+    val start    = Deadline.now - duration
+    val request  = HttpRequest().addAttribute(HttpMetrics.TraceTimestamp, start)
+    registry.responsesDuration.values() shouldBe empty
+    registry.onResponse(request, HttpResponse()).discardEntityBytes().future().futureValue
+    registry.responsesDuration.values().head should be > duration
   }
 
   it should "compute the number of connections" in new Fixture() {
@@ -154,8 +139,7 @@ class HttpMetricsRegistrySpec
   it should "add status code dimension when enabled" in new Fixture(
     TestRegistry.settings.withIncludeStatusDimension(true)
   ) {
-    registry.onRequest(tracedRequest())
-    registry.onResponse(tracedResponse())
+    registry.onResponse(HttpRequest(), HttpResponse())
     registry.responses.value(Seq(StatusGroupDimension(StatusCodes.OK))) shouldBe 1
     registry.responses.value(Seq(StatusGroupDimension(StatusCodes.Found))) shouldBe 0
     registry.responses.value(Seq(StatusGroupDimension(StatusCodes.BadRequest))) shouldBe 0
@@ -165,8 +149,7 @@ class HttpMetricsRegistrySpec
   it should "add method dimension when enabled" in new Fixture(
     TestRegistry.settings.withIncludeMethodDimension(true)
   ) {
-    registry.onRequest(tracedRequest())
-    registry.onResponse(tracedResponse())
+    registry.onResponse(HttpRequest(), HttpResponse())
     registry.responses.value(Seq(MethodDimension(HttpMethods.GET))) shouldBe 1
     registry.responses.value(Seq(MethodDimension(HttpMethods.PUT))) shouldBe 0
   }
@@ -174,8 +157,7 @@ class HttpMetricsRegistrySpec
   it should "default label dimension to 'unlabelled' when enabled but not annotated by directives" in new Fixture(
     TestRegistry.settings.withIncludePathDimension(true)
   ) {
-    registry.onRequest(tracedRequest().withUri("/unlabelled/path"))
-    registry.onResponse(tracedResponse())
+    registry.onResponse(HttpRequest(), HttpResponse())
     registry.responses.value(Seq(PathDimension("unlabelled"))) shouldBe 1
     registry.responses.value(Seq(PathDimension("unhandled"))) shouldBe 0
   }
@@ -184,8 +166,7 @@ class HttpMetricsRegistrySpec
     TestRegistry.settings.withIncludePathDimension(true)
   ) {
     val label = "/api"
-    registry.onRequest(tracedRequest().withUri("/api/path"))
-    registry.onResponse(tracedResponse().addAttribute(HttpMetrics.PathLabel, label))
+    registry.onResponse(HttpRequest(), HttpResponse().addAttribute(HttpMetrics.PathLabel, label))
     registry.responses.value(Seq(PathDimension(label))) shouldBe 1
     registry.responses.value(Seq(PathDimension("unlabelled"))) shouldBe 0
   }
@@ -196,8 +177,8 @@ class HttpMetricsRegistrySpec
     registry.onConnection()
     registry.connections.value(Seq(TestDimension)) shouldBe 1
 
-    registry.onRequest(tracedRequest())
-    registry.onResponse(tracedResponse())
+    registry.onRequest(HttpRequest())
+    registry.onResponse(HttpRequest(), HttpResponse())
     registry.requests.value(Seq(TestDimension)) shouldBe 1
     registry.responses.value(Seq(TestDimension)) shouldBe 1
   }

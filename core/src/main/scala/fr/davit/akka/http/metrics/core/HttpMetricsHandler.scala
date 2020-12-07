@@ -22,7 +22,9 @@ trait HttpMetricsHandler {
 
   def onRequest(request: HttpRequest): HttpRequest
 
-  def onResponse(response: HttpResponse): HttpResponse
+  def onResponse(request: HttpRequest, response: HttpResponse): HttpResponse
+
+  def onFailure(request: HttpRequest, cause: Throwable): Throwable
 
   def onConnection(): Unit
 

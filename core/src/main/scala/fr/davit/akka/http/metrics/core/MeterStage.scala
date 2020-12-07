@@ -20,8 +20,18 @@ import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
 import akka.stream.{Attributes, BidiShape, Inlet, Outlet}
 
+import java.util.UUID
+import scala.collection.mutable
+
+object MeterStage {
+  val PrematureCloseException = new IllegalStateException("Stream completed prematurely")
+}
+
 private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
     extends GraphStage[BidiShape[HttpRequest, HttpRequest, HttpResponse, HttpResponse]] {
+
+  import MeterStage._
+
   private val requestIn   = Inlet[HttpRequest]("MeterStage.requestIn")
   private val requestOut  = Outlet[HttpRequest]("MeterStage.requestOut")
   private val responseIn  = Inlet[HttpResponse]("MeterStage.responseIn")
@@ -33,17 +43,29 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
 
-    override def preStart(): Unit = metricsHandler.onConnection()
-    override def postStop(): Unit = metricsHandler.onDisconnection()
+    private val pending = mutable.Map.empty[UUID, HttpRequest]
+    private var failure = Option.empty[Throwable]
+
+    override def preStart(): Unit = {
+      metricsHandler.onConnection()
+    }
+
+    override def postStop(): Unit = {
+      val cause = failure.getOrElse(PrematureCloseException)
+      pending.values.foreach(metricsHandler.onFailure(_, cause))
+      metricsHandler.onDisconnection()
+    }
 
     val requestHandler = new InHandler with OutHandler {
       override def onPush(): Unit = {
         val request = grab(requestIn)
+        val id      = request.getAttribute(HttpMetrics.TraceId).get
+        pending += id -> request
         push(requestOut, metricsHandler.onRequest(request))
       }
       override def onPull(): Unit = pull(requestIn)
 
-      override def onUpstreamFinish(): Unit                   = complete(requestOut) // do not completeStage and flush stream
+      override def onUpstreamFinish(): Unit                   = complete(requestOut)
       override def onUpstreamFailure(ex: Throwable): Unit     = fail(requestOut, ex)
       override def onDownstreamFinish(cause: Throwable): Unit = cancel(requestIn)
     }
@@ -51,13 +73,23 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
     val responseHandler = new InHandler with OutHandler {
       override def onPush(): Unit = {
         val response = grab(responseIn)
-        push(responseOut, metricsHandler.onResponse(response))
+        val id       = response.getAttribute(HttpMetrics.TraceId).get
+        val request  = pending.remove(id).get
+        push(responseOut, metricsHandler.onResponse(request, response))
       }
       override def onPull(): Unit = pull(responseIn)
 
-      override def onUpstreamFinish(): Unit                   = complete(responseOut)
-      override def onUpstreamFailure(ex: Throwable): Unit     = fail(responseOut, ex)
-      override def onDownstreamFinish(cause: Throwable): Unit = cancel(responseIn)
+      override def onUpstreamFinish(): Unit = {
+        complete(responseOut)
+      }
+      override def onUpstreamFailure(ex: Throwable): Unit = {
+        failure = Some(ex)
+        fail(responseOut, ex)
+      }
+      override def onDownstreamFinish(cause: Throwable): Unit = {
+        failure = Some(cause)
+        cancel(responseIn)
+      }
     }
 
     setHandlers(requestIn, requestOut, requestHandler)

@@ -83,13 +83,8 @@ final case class HttpMetricsServerBuilder(
       log
     )(materializer)
 
-  def bindSync(handler: HttpRequest => HttpResponse): Future[ServerBinding] = bind { req =>
-    (metricsHandler.onRequest _)
-      .andThen(handler)
-      .andThen(metricsHandler.onResponse)
-      .andThen(Future.successful)
-      .apply(req)
-  }
+  def bindSync(handler: HttpRequest => HttpResponse): Future[ServerBinding] =
+    bind(HttpMetrics.meterFunctionSync(handler, metricsHandler))
 }
 
 object HttpMetricsServerBuilder {
