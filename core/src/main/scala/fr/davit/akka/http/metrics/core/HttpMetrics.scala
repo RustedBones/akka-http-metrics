@@ -28,6 +28,7 @@ import akka.stream.scaladsl.{BidiFlow, Flow}
 import java.util.UUID
 import scala.concurrent.duration.Deadline
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
 
 final class HttpMetrics(private val http: HttpExt) extends AnyVal {
 
@@ -112,9 +113,14 @@ object HttpMetrics {
   ): HttpRequest => Future[HttpResponse] = { request: HttpRequest =>
     (traceRequest _)
       .andThen(metricsHandler.onRequest)
-      .andThen(handler)
-      .andThen(metricsHandler.onResponse(request, _))
-      .andThen(Future.successful)
+      .andThen(r => Try(handler(r)))
+      .andThen(
+        _.transform(
+          response => Success(metricsHandler.onResponse(request, response)),
+          cause => Failure(metricsHandler.onFailure(request, cause))
+        )
+      )
+      .andThen(Future.fromTry)
       .apply(request)
   }
 
