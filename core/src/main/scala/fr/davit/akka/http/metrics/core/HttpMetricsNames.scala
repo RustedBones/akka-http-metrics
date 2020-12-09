@@ -26,6 +26,7 @@ trait HttpMetricsNames {
   def responsesSize: String
   def connections: String
   def connectionsActive: String
+  def failures: String
 
   def withRequests(name: String): HttpMetricsNames
   def withRequestsActive(name: String): HttpMetricsNames
@@ -36,6 +37,7 @@ trait HttpMetricsNames {
   def withResponseSize(name: String): HttpMetricsNames
   def withConnections(name: String): HttpMetricsNames
   def withConnectionsActive(name: String): HttpMetricsNames
+  def withFailures(name: String): HttpMetricsNames
 
 }
 
@@ -50,7 +52,8 @@ object HttpMetricsNames {
       responsesDuration: String,
       responsesSize: String,
       connections: String,
-      connectionsActive: String
+      connectionsActive: String,
+      failures: String
   ) extends HttpMetricsNames {
     def withRequests(name: String): HttpMetricsNamesImpl          = copy(requests = name)
     def withRequestsActive(name: String): HttpMetricsNamesImpl    = copy(requestsActive = name)
@@ -61,6 +64,7 @@ object HttpMetricsNames {
     def withResponseSize(name: String): HttpMetricsNamesImpl      = copy(responsesSize = name)
     def withConnections(name: String): HttpMetricsNamesImpl       = copy(connections = name)
     def withConnectionsActive(name: String): HttpMetricsNamesImpl = copy(connectionsActive = name)
+    override def withFailures(name: String): HttpMetricsNames     = copy(failures = name)
   }
 
 }

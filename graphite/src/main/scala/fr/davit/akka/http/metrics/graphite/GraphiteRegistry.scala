@@ -37,4 +37,5 @@ class GraphiteRegistry(settings: HttpMetricsSettings)(implicit client: CarbonCli
   lazy val responsesSize: Histogram = new CarbonHistogram(settings.namespace, settings.metricsNames.responsesSize)
   lazy val connections: Counter     = new CarbonCounter(settings.namespace, settings.metricsNames.connections)
   lazy val connectionsActive: Gauge = new CarbonGauge(settings.namespace, settings.metricsNames.connectionsActive)
+  lazy val failures: Counter        = new CarbonCounter(settings.namespace, settings.metricsNames.failures)
 }

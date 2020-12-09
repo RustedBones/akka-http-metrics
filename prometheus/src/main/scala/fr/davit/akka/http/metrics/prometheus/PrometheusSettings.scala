@@ -63,7 +63,8 @@ object PrometheusMetricsNames {
     responsesDuration = "responses_duration_seconds",
     responsesSize = "responses_size_bytes",
     connections = "connections_total",
-    connectionsActive = "connections_active"
+    connectionsActive = "connections_active",
+    failures = "failures_total"
   )
 }
 

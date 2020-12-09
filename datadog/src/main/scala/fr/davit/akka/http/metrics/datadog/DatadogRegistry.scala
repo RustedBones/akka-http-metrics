@@ -42,5 +42,5 @@ class DatadogRegistry(settings: HttpMetricsSettings)(implicit client: StatsDClie
   lazy val responsesSize: Histogram = new StatsDHistogram(settings.namespace, settings.metricsNames.responsesSize)
   lazy val connections: Counter     = new StatsDCounter(settings.namespace, settings.metricsNames.connections)
   lazy val connectionsActive: Gauge = new StatsDGauge(settings.namespace, settings.metricsNames.connectionsActive)
-
+  lazy val failures: Counter        = new StatsDCounter(settings.namespace, settings.metricsNames.failures)
 }

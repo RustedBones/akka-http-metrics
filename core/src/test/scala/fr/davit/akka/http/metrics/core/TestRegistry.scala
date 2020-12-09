@@ -28,7 +28,7 @@ object TestRegistry {
 
   val settings: HttpMetricsSettings = HttpMetricsSettingsImpl(
     "", // not used
-    HttpMetricsNamesImpl("", "", "", "", "", "", "", "", ""), // not used
+    HttpMetricsNamesImpl("", "", "", "", "", "", "", "", "", ""), // not used
     _.status.isInstanceOf[StatusCodes.ServerError],
     includeMethodDimension = false,
     includePathDimension = false,
@@ -106,4 +106,5 @@ final class TestRegistry(settings: HttpMetricsSettings = TestRegistry.settings) 
   override val responsesSize     = new TestHistogram
   override val connections       = new TestCounter
   override val connectionsActive = new TestGauge
+  override val failures          = new TestCounter
 }

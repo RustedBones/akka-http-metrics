@@ -41,4 +41,5 @@ class DropwizardRegistry(settings: HttpMetricsSettings)(implicit val underlying:
   lazy val responsesSize: Histogram = new DropwizardHistogram(settings.namespace, settings.metricsNames.responsesSize)
   lazy val connections: Counter     = new DropwizardCounter(settings.namespace, settings.metricsNames.connections)
   lazy val connectionsActive: Gauge = new DropwizardGauge(settings.namespace, settings.metricsNames.connectionsActive)
+  lazy val failures: Counter        = new DropwizardCounter(settings.namespace, settings.metricsNames.failures)
 }

@@ -103,11 +103,22 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
 
   def connectionsActive: Gauge
 
-  @deprecated("Use connectionsActive", "1.2.0")
-  def connected: Gauge = connectionsActive
+  //--------------------------------------------------------------------------------------------------------------------
+  // Failures
+  //--------------------------------------------------------------------------------------------------------------------
+  def failures: Counter
 
-  private def pathLabel(response: HttpResponse): String = {
-    response.attribute(HttpMetrics.PathLabel).getOrElse("unlabelled")
+  private def methodDimension(request: HttpRequest): Option[MethodDimension] = {
+    if (settings.includeMethodDimension) Some(MethodDimension(request.method)) else None
+  }
+
+  private def pathDimension(response: HttpResponse): Option[PathDimension] = {
+    val pathLabel = response.attribute(HttpMetrics.PathLabel).getOrElse("unlabelled")
+    if (settings.includePathDimension) Some(PathDimension(pathLabel)) else None
+  }
+
+  private def statusGroupDimension(response: HttpResponse): Option[StatusGroupDimension] = {
+    if (settings.includeStatusDimension) Some(StatusGroupDimension(response.status)) else None
   }
 
   private def onData(handler: Long => Unit): Flow[ByteString, ByteString, Any] = {
@@ -121,8 +132,8 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
   // Since Content-Length header can't be relied on, see [[HttpEntity.contentLengthOption]]:
   // In many cases it's dangerous to rely on the (non-)existence of a content-length.
   // Compute the entity size from the data itself
-  private val requestBytesTransformer: Flow[ByteString, ByteString, Any] =
-    onData(requestsSize.update(_, settings.serverDimensions))
+  private def requestBytesTransformer(dimensions: Seq[Dimension]): Flow[ByteString, ByteString, Any] =
+    onData(requestsSize.update(_, dimensions))
 
   // Same for response, and also observe duration only when all bytes are sent
   private def responseBytesTransformer(
@@ -137,25 +148,26 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
     }
 
   override def onRequest(request: HttpRequest): HttpRequest = {
-    requestsActive.inc(settings.serverDimensions)
-    requests.inc(settings.serverDimensions)
-    request.transformEntityDataBytes(requestBytesTransformer)
+    val dimensions = settings.serverDimensions ++ methodDimension(request)
+    requestsActive.inc(dimensions)
+    requests.inc(dimensions)
+    request.transformEntityDataBytes(requestBytesTransformer(dimensions))
   }
 
   override def onResponse(request: HttpRequest, response: HttpResponse): HttpResponse = {
-    val pathDim        = if (settings.includePathDimension) Some(PathDimension(pathLabel(response))) else None
-    val statusGroupDim = if (settings.includeStatusDimension) Some(StatusGroupDimension(response.status)) else None
-    val methodDim      = if (settings.includeMethodDimension) Some(MethodDimension(request.method)) else None
-    val dimensions     = (methodDim ++ pathDim ++ statusGroupDim).toSeq ++ settings.serverDimensions
+    val requestDimensions  = settings.serverDimensions ++ methodDimension(request)
+    val responseDimensions = requestDimensions ++ pathDimension(response) ++ statusGroupDimension(response)
 
-    requestsActive.dec(settings.serverDimensions)
-    responses.inc(dimensions)
-    if (settings.defineError(response)) responsesErrors.inc(dimensions)
-    response.transformEntityDataBytes(responseBytesTransformer(request, dimensions))
+    requestsActive.dec(requestDimensions)
+    responses.inc(responseDimensions)
+    if (settings.defineError(response)) responsesErrors.inc(responseDimensions)
+    response.transformEntityDataBytes(responseBytesTransformer(request, responseDimensions))
   }
 
   override def onFailure(request: HttpRequest, cause: Throwable): Throwable = {
-    requestsActive.dec(settings.serverDimensions)
+    val dimensions = settings.serverDimensions ++ methodDimension(request)
+    requestsActive.dec(dimensions)
+    failures.inc(dimensions)
     cause
   }
 

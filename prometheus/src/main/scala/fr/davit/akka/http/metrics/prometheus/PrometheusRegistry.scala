@@ -190,4 +190,12 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
     .help("Active TCP connections")
     .labelNames(serverLabels: _*)
     .register(underlying)
+
+  lazy val failures: Counter = io.prometheus.client.Counter
+    .build()
+    .namespace(settings.namespace)
+    .name(settings.metricsNames.failures)
+    .help("Total unserved requests")
+    .labelNames(serverLabels: _*)
+    .register(underlying)
 }

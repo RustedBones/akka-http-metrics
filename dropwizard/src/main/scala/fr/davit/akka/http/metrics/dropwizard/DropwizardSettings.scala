@@ -32,7 +32,8 @@ object DropwizardMetricsNames {
     responsesDuration = "responses.duration",
     responsesSize = "responses.bytes",
     connections = "connections",
-    connectionsActive = "connections.active"
+    connectionsActive = "connections.active",
+    failures = "failures"
   )
 
 }

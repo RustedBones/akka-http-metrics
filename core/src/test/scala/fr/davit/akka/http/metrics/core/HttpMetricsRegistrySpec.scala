@@ -64,6 +64,12 @@ class HttpMetricsRegistrySpec
     registry.responsesErrors.value() shouldBe 1
   }
 
+  it should "compute the number of failures" in new Fixture() {
+    registry.requestsActive.value() shouldBe 0
+    registry.onFailure(HttpRequest(), new Exception("BOOM!"))
+    registry.failures.value() shouldBe 1
+  }
+
   it should "compute the number of active requests" in new Fixture() {
     registry.requestsActive.value() shouldBe 0
     registry.onRequest(HttpRequest())
@@ -136,6 +142,20 @@ class HttpMetricsRegistrySpec
     registry.connectionsActive.value() shouldBe 0
   }
 
+  it should "add method dimension when enabled" in new Fixture(
+    TestRegistry.settings.withIncludeMethodDimension(true)
+  ) {
+    registry.onRequest(HttpRequest())
+    registry.onResponse(HttpRequest(), HttpResponse())
+    registry.onFailure(HttpRequest(), new Exception("BOOM!"))
+    registry.requests.value(Seq(MethodDimension(HttpMethods.GET))) shouldBe 1
+    registry.requests.value(Seq(MethodDimension(HttpMethods.PUT))) shouldBe 0
+    registry.responses.value(Seq(MethodDimension(HttpMethods.GET))) shouldBe 1
+    registry.responses.value(Seq(MethodDimension(HttpMethods.PUT))) shouldBe 0
+    registry.failures.value(Seq(MethodDimension(HttpMethods.GET))) shouldBe 1
+    registry.failures.value(Seq(MethodDimension(HttpMethods.PUT))) shouldBe 0
+  }
+
   it should "add status code dimension when enabled" in new Fixture(
     TestRegistry.settings.withIncludeStatusDimension(true)
   ) {
@@ -144,14 +164,6 @@ class HttpMetricsRegistrySpec
     registry.responses.value(Seq(StatusGroupDimension(StatusCodes.Found))) shouldBe 0
     registry.responses.value(Seq(StatusGroupDimension(StatusCodes.BadRequest))) shouldBe 0
     registry.responses.value(Seq(StatusGroupDimension(StatusCodes.InternalServerError))) shouldBe 0
-  }
-
-  it should "add method dimension when enabled" in new Fixture(
-    TestRegistry.settings.withIncludeMethodDimension(true)
-  ) {
-    registry.onResponse(HttpRequest(), HttpResponse())
-    registry.responses.value(Seq(MethodDimension(HttpMethods.GET))) shouldBe 1
-    registry.responses.value(Seq(MethodDimension(HttpMethods.PUT))) shouldBe 0
   }
 
   it should "default label dimension to 'unlabelled' when enabled but not annotated by directives" in new Fixture(
