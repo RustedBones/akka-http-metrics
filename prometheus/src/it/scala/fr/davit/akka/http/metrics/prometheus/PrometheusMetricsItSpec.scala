@@ -50,7 +50,11 @@ class PrometheusMetricsItSpec
   }
 
   "PrometheusMetrics" should "expose external metrics" in {
-    val settings = PrometheusSettings.default
+    val settings = PrometheusSettings
+      .default
+      .withIncludeMethodDimension(true)
+      .withIncludePathDimension(true)
+      .withIncludeStatusDimension(true)
     DefaultExports.initialize() // JVM
     val registry = PrometheusRegistry(settings = settings)
 

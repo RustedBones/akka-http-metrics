@@ -51,22 +51,20 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
   import PrometheusConverters._
   import PrometheusRegistry._
 
-  private val serverLabels: Seq[String] = settings.serverDimensions.map(_.key)
+  private val methodLabel = if (settings.includeMethodDimension) Some(MethodDimension.Key) else None
+  private val pathLabel   = if (settings.includePathDimension) Some(PathDimension.Key) else None
+  private val statusLabel = if (settings.includeStatusDimension) Some(StatusGroupDimension.Key) else None
 
-  private val labels: Seq[String] = {
-    val methodLabel = if (settings.includeMethodDimension) Some(MethodDimension.Key) else None
-    val pathLabel   = if (settings.includePathDimension) Some(PathDimension.Key) else None
-    val statusLabel = if (settings.includeStatusDimension) Some(StatusGroupDimension.Key) else None
-
-    (methodLabel ++ pathLabel ++ statusLabel ++ serverLabels).toSeq
-  }
+  private val serverLabels: Seq[String]    = settings.serverDimensions.map(_.key)
+  private val requestsLabels: Seq[String]  = serverLabels ++ methodLabel
+  private val responsesLabels: Seq[String] = requestsLabels ++ pathLabel ++ statusLabel
 
   lazy val requests: Counter = io.prometheus.client.Counter
     .build()
     .namespace(settings.namespace)
     .name(settings.metricsNames.requests)
     .help("Total HTTP requests")
-    .labelNames(serverLabels: _*)
+    .labelNames(requestsLabels: _*)
     .register(underlying)
 
   lazy val requestsActive: Gauge = io.prometheus.client.Gauge
@@ -74,7 +72,7 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
     .namespace(settings.namespace)
     .name(settings.metricsNames.requestsActive)
     .help("Active HTTP requests")
-    .labelNames(serverLabels: _*)
+    .labelNames(requestsLabels: _*)
     .register(underlying)
 
   lazy val requestsSize: Histogram = {
@@ -86,7 +84,7 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
           .namespace(settings.namespace)
           .name(settings.metricsNames.requestsSize)
           .help(help)
-          .labelNames(serverLabels: _*)
+          .labelNames(requestsLabels: _*)
           .quantiles(qs: _*)
           .maxAgeSeconds(maxAge.toSeconds)
           .ageBuckets(ageBuckets)
@@ -98,7 +96,7 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
           .namespace(settings.namespace)
           .name(settings.metricsNames.requestsSize)
           .help(help)
-          .labelNames(serverLabels: _*)
+          .labelNames(requestsLabels: _*)
           .buckets(bs: _*)
           .register(underlying)
     }
@@ -109,7 +107,7 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
     .namespace(settings.namespace)
     .name(settings.metricsNames.responses)
     .help("HTTP responses")
-    .labelNames(labels: _*)
+    .labelNames(responsesLabels: _*)
     .register(underlying)
 
   lazy val responsesErrors: Counter = io.prometheus.client.Counter
@@ -117,7 +115,7 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
     .namespace(settings.namespace)
     .name(settings.metricsNames.responsesErrors)
     .help("Total HTTP errors")
-    .labelNames(labels: _*)
+    .labelNames(responsesLabels: _*)
     .register(underlying)
 
   lazy val responsesDuration: Timer = {
@@ -130,7 +128,7 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
           .namespace(settings.namespace)
           .name(settings.metricsNames.responsesDuration)
           .help(help)
-          .labelNames(labels: _*)
+          .labelNames(responsesLabels: _*)
           .quantiles(qs: _*)
           .maxAgeSeconds(maxAge.toSeconds)
           .ageBuckets(ageBuckets)
@@ -141,7 +139,7 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
           .namespace(settings.namespace)
           .name(settings.metricsNames.responsesDuration)
           .help(help)
-          .labelNames(labels: _*)
+          .labelNames(responsesLabels: _*)
           .buckets(bs: _*)
           .register(underlying)
     }
@@ -157,7 +155,7 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
           .namespace(settings.namespace)
           .name(settings.metricsNames.responsesSize)
           .help(help)
-          .labelNames(labels: _*)
+          .labelNames(responsesLabels: _*)
           .quantiles(qs: _*)
           .maxAgeSeconds(maxAge.toSeconds)
           .ageBuckets(ageBuckets)
@@ -169,7 +167,7 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
           .namespace(settings.namespace)
           .name(settings.metricsNames.responsesSize)
           .help(help)
-          .labelNames(labels: _*)
+          .labelNames(responsesLabels: _*)
           .buckets(bs: _*)
           .register(underlying)
     }
@@ -196,6 +194,6 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
     .namespace(settings.namespace)
     .name(settings.metricsNames.failures)
     .help("Total unserved requests")
-    .labelNames(serverLabels: _*)
+    .labelNames(requestsLabels: _*)
     .register(underlying)
 }
