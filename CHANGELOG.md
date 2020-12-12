@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.4.0 (2020-12-12)
+
+- Split HttpMetricsHandler API with separated callbacks
+- Add requests failures counter for unserved requests
+- Compute sizes and durations metrics on end of entity stream
+- Remove deprecated API
+
 ## 1.3.0 (2020-11-09)
 
 - Fix Metrics BidiFlow closing
