@@ -30,7 +30,7 @@ import org.scalatest.matchers.should.Matchers
 import java.util.UUID
 
 class MeterStageSpec
-    extends TestKit(ActorSystem("HttpMetricsSpec"))
+    extends TestKit(ActorSystem("MeterStageSpec"))
     with AnyFlatSpecLike
     with Matchers
     with MockFactory
