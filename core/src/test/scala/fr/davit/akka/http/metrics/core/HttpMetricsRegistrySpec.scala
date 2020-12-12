@@ -53,21 +53,10 @@ class HttpMetricsRegistrySpec
     registry.onRequest(HttpRequest())
     registry.requests.value() shouldBe 2
   }
-
-  it should "compute the number of errors" in new Fixture() {
-    registry.responsesErrors.value() shouldBe 0
-    registry.onResponse(HttpRequest(), HttpResponse(StatusCodes.OK))
-    registry.onResponse(HttpRequest(), HttpResponse(StatusCodes.TemporaryRedirect))
-    registry.onResponse(HttpRequest(), HttpResponse(StatusCodes.BadRequest))
-    registry.responsesErrors.value() shouldBe 0
-    registry.onResponse(HttpRequest(), HttpResponse(StatusCodes.InternalServerError))
-    registry.responsesErrors.value() shouldBe 1
-  }
-
   it should "compute the number of failures" in new Fixture() {
-    registry.requestsActive.value() shouldBe 0
+    registry.requestsFailures.value() shouldBe 0
     registry.onFailure(HttpRequest(), new Exception("BOOM!"))
-    registry.failures.value() shouldBe 1
+    registry.requestsFailures.value() shouldBe 1
   }
 
   it should "compute the number of active requests" in new Fixture() {
@@ -94,6 +83,16 @@ class HttpMetricsRegistrySpec
     registry.requestsSize.values() shouldBe empty
     registry.onRequest(request).discardEntityBytes().future().futureValue
     registry.requestsSize.values().head shouldBe "abc".getBytes.length
+  }
+
+  it should "compute the number of errors" in new Fixture() {
+    registry.responsesErrors.value() shouldBe 0
+    registry.onResponse(HttpRequest(), HttpResponse(StatusCodes.OK))
+    registry.onResponse(HttpRequest(), HttpResponse(StatusCodes.TemporaryRedirect))
+    registry.onResponse(HttpRequest(), HttpResponse(StatusCodes.BadRequest))
+    registry.responsesErrors.value() shouldBe 0
+    registry.onResponse(HttpRequest(), HttpResponse(StatusCodes.InternalServerError))
+    registry.responsesErrors.value() shouldBe 1
   }
 
   it should "compute the response size" in new Fixture() {
@@ -150,10 +149,10 @@ class HttpMetricsRegistrySpec
     registry.onFailure(HttpRequest(), new Exception("BOOM!"))
     registry.requests.value(Seq(MethodDimension(HttpMethods.GET))) shouldBe 1
     registry.requests.value(Seq(MethodDimension(HttpMethods.PUT))) shouldBe 0
+    registry.requestsFailures.value(Seq(MethodDimension(HttpMethods.GET))) shouldBe 1
+    registry.requestsFailures.value(Seq(MethodDimension(HttpMethods.PUT))) shouldBe 0
     registry.responses.value(Seq(MethodDimension(HttpMethods.GET))) shouldBe 1
     registry.responses.value(Seq(MethodDimension(HttpMethods.PUT))) shouldBe 0
-    registry.failures.value(Seq(MethodDimension(HttpMethods.GET))) shouldBe 1
-    registry.failures.value(Seq(MethodDimension(HttpMethods.PUT))) shouldBe 0
   }
 
   it should "add status code dimension when enabled" in new Fixture(

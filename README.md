@@ -55,6 +55,7 @@ following labeled metrics are recorded:
 
 - requests (`counter`) [method]
 - requests active (`gauge`) [method]
+- requests failures (`counter`) [method]
 - requests size (`histogram`) [method]
 - responses (`counter`) [method | path | status group]
 - responses errors [method | path | status group]
@@ -62,7 +63,6 @@ following labeled metrics are recorded:
 - response size (`histogram`) [method | path | status group]
 - connections (`counter`)
 - connections active (`gauge`)
-- failures (`counter`) [method]
 
 Record metrics from your akka server by importing the implicits from `HttpMetricsRoute`. Convert your route to the
 flow that will handle requests with `recordMetrics` and bind your server to the desired port.
@@ -86,6 +86,8 @@ val route: Route = ... // your route
 Http().newMeteredServerAt("localhost", 8080, registry).bindFlow(route)
 ```
 
+Requests failure counter is incremented when no response could be emitted by the server (network error, ...)
+
 By default, the response error counter will be incremented when the returned status code is an `Server error (5xx)`.
 You can override this behaviour in the settings.
 
@@ -94,8 +96,6 @@ settings.withDefineError(_.status.isFailure)
 ```
 
 In this example, all responses with status >= 400 are considered as errors.
-
-Failure counter will be incremented when no response could be emitted by the server (connection failure, ...) 
 
 For HTTP2 you must use the `bind` or `bindSync` on the `ServerBuilder`. The `Route` will be converted to
 a `HttpRequest => HttpResponse` handler function. In this case the connection metrics won't be available.
@@ -179,18 +179,18 @@ Of course, you will also need to have the implicit marshaller for your registry 
 
 ### [Datadog]( https://docs.datadoghq.com/developers/dogstatsd/)
 
-| metric             | name                   |
-|--------------------|------------------------|
-| requests           | requests_count         |
-| requests active    | requests_active        |
-| requests size      | requests_bytes         |
-| responses          | responses_count        |
-| responses errors   | responses_errors_count |
-| responses duration | responses_duration     |
-| responses size     | responses_bytes        |
-| connections        | connections_count      |
-| connections active | connections_active     |
-| failures           | failures_count         |
+| metric             | name                    |
+|--------------------|-------------------------|
+| requests           | requests_count          |
+| requests active    | requests_active         |
+| requests failures  | requests_failures_count |
+| requests size      | requests_bytes          |
+| responses          | responses_count         |
+| responses errors   | responses_errors_count  |
+| responses duration | responses_duration      |
+| responses size     | responses_bytes         |
+| connections        | connections_count       |
+| connections active | connections_active      |
 
 The `DatadogRegistry` is just a facade to publish to your StatsD server. The registry itself not located in the JVM, 
 for this reason it is not possible to expose the metrics in your API.
@@ -222,6 +222,7 @@ See datadog's [documentation](https://github.com/dataDog/java-dogstatsd-client) 
 |--------------------|--------------------|
 | requests           | requests           |
 | requests active    | requests.active    |
+| requests failures  | requests.failures  |
 | requests size      | requests.bytes     |
 | responses          | responses          |
 | responses errors   | responses.errors   |
@@ -229,7 +230,6 @@ See datadog's [documentation](https://github.com/dataDog/java-dogstatsd-client) 
 | responses size     | responses.bytes    |
 | connections        | connections        |
 | connections active | connections.active |
-| failures           | failures           |
 
 **Important**: The `DropwizardRegistry` works with tags. This feature is only supported since dropwizard `v5`. 
 
@@ -285,6 +285,7 @@ val registry = DropwizardRegistry(dropwizard, settings)
 |--------------------|--------------------|
 | requests           | requests           |
 | requests active    | requests.active    |
+| requests failures  | requests.failures  |
 | requests size      | requests.bytes     |
 | responses          | responses          |
 | responses errors   | responses.errors   |
@@ -292,7 +293,6 @@ val registry = DropwizardRegistry(dropwizard, settings)
 | response size      | responses.bytes    |
 | connections        | connections        |
 | connections active | connections.active |
-| failures           | failures           |
 
 Add to your `build.sbt`:
 
@@ -317,6 +317,7 @@ val registry = GraphiteRegistry(carbonClient, settings) // or PrometheusRegistry
 |--------------------|----------------------------|
 | requests           | requests_total             |
 | requests active    | requests_active            |
+| requests failures  | requests_failures_total    |
 | requests size      | requests_size_bytes        |
 | responses          | responses_total            |
 | responses errors   | responses_errors_total     |
@@ -324,7 +325,6 @@ val registry = GraphiteRegistry(carbonClient, settings) // or PrometheusRegistry
 | responses size     | responses_size_bytes       |
 | connections        | connections_total          |
 | connections active | connections_active         |
-| failures           | failures_total             |
 
 Add to your `build.sbt`:
 

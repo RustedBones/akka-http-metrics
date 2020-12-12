@@ -68,13 +68,9 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
 
   def requestsActive: Gauge
 
+  def requestsFailures: Counter
+
   def requestsSize: Histogram
-
-  @deprecated("Use requestsActive", "1.2.0")
-  def active: Gauge = requestsActive
-
-  @deprecated("Use requestsSize", "1.2.0")
-  def receivedBytes: Histogram = requestsSize
 
   //--------------------------------------------------------------------------------------------------------------------
   // responses
@@ -87,26 +83,12 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
 
   def responsesSize: Histogram
 
-  @deprecated("Use responsesErrors", "1.2.0")
-  def errors: Counter = responsesErrors
-
-  @deprecated("Use responsesDuration", "1.2.0")
-  def duration: Timer = responsesDuration
-
-  @deprecated("Use responsesSize", "1.2.0")
-  def sentBytes: Histogram = responsesSize
-
   //--------------------------------------------------------------------------------------------------------------------
   // Connections
   //--------------------------------------------------------------------------------------------------------------------
   def connections: Counter
 
   def connectionsActive: Gauge
-
-  //--------------------------------------------------------------------------------------------------------------------
-  // Failures
-  //--------------------------------------------------------------------------------------------------------------------
-  def failures: Counter
 
   private def methodDimension(request: HttpRequest): Option[MethodDimension] = {
     if (settings.includeMethodDimension) Some(MethodDimension(request.method)) else None
@@ -167,7 +149,7 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
   override def onFailure(request: HttpRequest, cause: Throwable): Throwable = {
     val dimensions = settings.serverDimensions ++ methodDimension(request)
     requestsActive.dec(dimensions)
-    failures.inc(dimensions)
+    requestsFailures.inc(dimensions)
     cause
   }
 
