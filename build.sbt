@@ -18,11 +18,7 @@ ThisBuild / githubWorkflowBuild := Seq(
 ThisBuild / githubWorkflowTargetBranches := Seq("master")
 ThisBuild / githubWorkflowPublishTargetBranches := Seq.empty
 
-// Override it config so it extends test instead of runtime
-lazy val IntegrationTest = config("it").extend(Test)
-
-lazy val commonSettings =
-  inConfig(IntegrationTest)(Defaults.testSettings) ++
+lazy val commonSettings = Defaults.itSettings ++
     headerSettings(IntegrationTest) ++
     Seq(
       organization := "fr.davit",

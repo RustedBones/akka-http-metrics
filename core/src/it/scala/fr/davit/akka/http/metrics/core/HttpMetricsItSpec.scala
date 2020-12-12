@@ -32,7 +32,7 @@ import org.scalatest.time.{Millis, Seconds, Span}
 import scala.concurrent.duration._
 
 class HttpMetricsItSpec
-    extends TestKit(ActorSystem("HttpMetricsSpec"))
+    extends TestKit(ActorSystem("HttpMetricsItSpec"))
     with AnyFlatSpecLike
     with Matchers
     with ScalaFutures
@@ -76,6 +76,7 @@ class HttpMetricsItSpec
     registry.connections.value() shouldBe 1
     registry.requests.value() shouldBe 1
 
+    response.discardEntityBytes()
     binding.terminate(30.seconds).futureValue
   }
 
@@ -97,6 +98,7 @@ class HttpMetricsItSpec
     registry.connections.value() shouldBe 0 // No connection metrics with function handler
     registry.requests.value() shouldBe 1
 
+    response.discardEntityBytes()
     binding.terminate(30.seconds).futureValue
   }
 }
