@@ -1,7 +1,7 @@
 # akka-http-metrics
 
-[![Scala CI](https://github.com/RustedBones/akka-http-metrics/workflows/Scala%20CI/badge.svg)](https://github.com/RustedBones/akka-http-metrics/actions?query=branch%3Amaster+workflow%3A"Continuous+Integration")
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/fr.davit/akka-http-metrics-core_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/fr.davit/akka-http-metrics-core_2.12)
+[![Continuous Integration](https://github.com/RustedBones/akka-http-metrics/workflows/Continuous%20Integration/badge.svg?branch=master)](https://github.com/RustedBones/akka-http-metrics/actions?query=branch%3Amaster+workflow%3A"Continuous+Integration")
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/fr.davit/akka-http-metrics-core_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/fr.davit/akka-http-metrics-core_2.13)
 [![Software License](https://img.shields.io/badge/license-Apache%202-brightgreen.svg?style=flat)](LICENSE)
 
 Easily collect and expose metrics in your akka-http server.
@@ -53,13 +53,14 @@ For more details, see the akka-http 10.1.x [release notes](https://doc.akka.io/d
 The library enables you to easily record the following metrics from an akka-http server into a registry. The
 following labeled metrics are recorded:
 
-- requests (`counter`)
-- requests active (`gauge`)
-- requests size (`histogram`)
-- responses (`counter`) [status group | path]
-- responses errors [status group | path]
-- responses duration (`histogram`) [status group | path]
-- response size (`histogram`) [status group | path]
+- requests (`counter`) [method]
+- requests active (`gauge`) [method]
+- requests failures (`counter`) [method]
+- requests size (`histogram`) [method]
+- responses (`counter`) [method | path | status group]
+- responses errors [method | path | status group]
+- responses duration (`histogram`) [method | path | status group]
+- response size (`histogram`) [method | path | status group]
 - connections (`counter`)
 - connections active (`gauge`)
 
@@ -85,7 +86,9 @@ val route: Route = ... // your route
 Http().newMeteredServerAt("localhost", 8080, registry).bindFlow(route)
 ```
 
-By default, the errored request counter will be incremented when the served response is an `Server error (5xx)`.
+Requests failure counter is incremented when no response could be emitted by the server (network error, ...)
+
+By default, the response error counter will be incremented when the returned status code is an `Server error (5xx)`.
 You can override this behaviour in the settings.
 
 ```scala
@@ -176,17 +179,18 @@ Of course, you will also need to have the implicit marshaller for your registry 
 
 ### [Datadog]( https://docs.datadoghq.com/developers/dogstatsd/)
 
-| metric             | name                   |
-|--------------------|------------------------|
-| requests           | requests_count         |
-| requests active    | requests_active        |
-| requests size      | requests_bytes         |
-| responses          | responses_count        |
-| responses errors   | responses_errors_count |
-| responses duration | responses_duration     |
+| metric             | name                    |
+|--------------------|-------------------------|
+| requests           | requests_count          |
+| requests active    | requests_active         |
+| requests failures  | requests_failures_count |
+| requests size      | requests_bytes          |
+| responses          | responses_count         |
+| responses errors   | responses_errors_count  |
+| responses duration | responses_duration      |
 | responses size     | responses_bytes         |
-| connections        | connections_count      |
-| connections active | connections_active     |
+| connections        | connections_count       |
+| connections active | connections_active      |
 
 The `DatadogRegistry` is just a facade to publish to your StatsD server. The registry itself not located in the JVM, 
 for this reason it is not possible to expose the metrics in your API.
@@ -218,6 +222,7 @@ See datadog's [documentation](https://github.com/dataDog/java-dogstatsd-client) 
 |--------------------|--------------------|
 | requests           | requests           |
 | requests active    | requests.active    |
+| requests failures  | requests.failures  |
 | requests size      | requests.bytes     |
 | responses          | responses          |
 | responses errors   | responses.errors   |
@@ -280,6 +285,7 @@ val registry = DropwizardRegistry(dropwizard, settings)
 |--------------------|--------------------|
 | requests           | requests           |
 | requests active    | requests.active    |
+| requests failures  | requests.failures  |
 | requests size      | requests.bytes     |
 | responses          | responses          |
 | responses errors   | responses.errors   |
@@ -311,6 +317,7 @@ val registry = GraphiteRegistry(carbonClient, settings) // or PrometheusRegistry
 |--------------------|----------------------------|
 | requests           | requests_total             |
 | requests active    | requests_active            |
+| requests failures  | requests_failures_total    |
 | requests size      | requests_size_bytes        |
 | responses          | responses_total            |
 | responses errors   | responses_errors_total     |

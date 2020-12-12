@@ -26,6 +26,7 @@ object DatadogMetricsNames {
   val default: HttpMetricsNames = HttpMetricsNamesImpl(
     requests = "requests_count",
     requestsActive = "requests_active",
+    requestsFailures = "requests_failures_count",
     requestsSize = "requests_bytes",
     responses = "responses_count",
     responsesErrors = "responses_errors_count",

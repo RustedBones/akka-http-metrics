@@ -16,20 +16,18 @@
 
 package fr.davit.akka.http.metrics.core
 
-import akka.Done
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.stream.ClosedShape
 import akka.stream.scaladsl.{GraphDSL, RunnableGraph}
 import akka.stream.testkit.scaladsl.{TestSink, TestSource}
 import akka.testkit.TestKit
-import org.scalamock.matchers.ArgCapture.CaptureOne
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 
-import scala.concurrent.{ExecutionContext, Future}
+import java.util.UUID
 
 class MeterStageSpec
     extends TestKit(ActorSystem("HttpMetricsSpec"))
@@ -38,13 +36,15 @@ class MeterStageSpec
     with MockFactory
     with ScalaFutures {
 
-  trait Fixture {
-    val handler           = mock[HttpMetricsHandler]
-    val terminationFuture = CaptureOne[Future[Done]]()
+  val traceId        = UUID.fromString("00000000-0000-0000-0000-000000000000")
+  val tracedRequest  = HttpRequest().addAttribute(HttpMetrics.TraceId, traceId)
+  val tracedResponse = HttpResponse().addAttribute(HttpMetrics.TraceId, traceId)
 
-    (handler
-      .onConnection(_: Future[Done])(_: ExecutionContext))
-      .expects(capture(terminationFuture), *)
+  trait Fixture {
+    val handler = mock[HttpMetricsHandler]
+
+    (handler.onConnection _)
+      .expects()
       .returns((): Unit)
 
     val (requestIn, requestOut, responseIn, responseOut) = RunnableGraph
@@ -72,74 +72,62 @@ class MeterStageSpec
     requestOut.request(1)
   }
 
-  "MeterStage" should "call onConnection on materialization and complete the future once terminated" in new Fixture {
+  "MeterStage" should "call onConnection on materialization and onDisconnection once terminated" in new Fixture {
+    (handler.onDisconnection _)
+      .expects()
+      .returns((): Unit)
+
     requestIn.sendComplete()
     requestOut.expectComplete()
 
     responseIn.sendComplete()
     responseOut.expectComplete()
-
-    terminationFuture.value.futureValue shouldBe Done
   }
 
   it should "call onRequest wen request is offered" in new Fixture {
-    val request        = HttpRequest()
-    val responseFuture = CaptureOne[Future[HttpResponse]]()
+    (handler.onRequest _)
+      .expects(tracedRequest)
+      .returns(tracedRequest)
 
-    (handler
-      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
-      .expects(request, capture(responseFuture), *)
-      .returns((): Unit)
+    requestIn.sendNext(tracedRequest)
+    requestOut.expectNext() shouldBe tracedRequest
 
-    requestIn.sendNext(request)
-    requestOut.expectNext() shouldBe request
+    (handler.onResponse _)
+      .expects(tracedRequest, tracedResponse)
+      .returns(tracedResponse)
 
-    responseFuture.value.isCompleted shouldBe false
-
-    val response = HttpResponse()
-    responseIn.sendNext(response)
-    responseOut.expectNext() shouldBe response
-
-    responseFuture.value.futureValue shouldBe response
+    responseIn.sendNext(tracedResponse)
+    responseOut.expectNext() shouldBe tracedResponse
   }
 
   it should "flush the stream before stopping" in new Fixture {
-    val request = HttpRequest()
-    val actual  = CaptureOne[Future[HttpResponse]]()
+    (handler.onRequest _)
+      .expects(tracedRequest)
+      .returns(tracedRequest)
 
-    (handler
-      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
-      .expects(request, capture(actual), *)
-      .returns((): Unit)
-
-    requestIn.sendNext(request)
-    requestOut.expectNext() shouldBe request
-
-    actual.value.isCompleted shouldBe false
+    requestIn.sendNext(tracedRequest)
+    requestOut.expectNext() shouldBe tracedRequest
 
     // close request side
     requestIn.sendComplete()
     requestOut.expectComplete()
 
     // response should still be accepted
-    val response = HttpResponse()
-    responseIn.sendNext(response)
-    responseOut.expectNext() shouldBe response
+    (handler.onResponse _)
+      .expects(tracedRequest, tracedResponse)
+      .returns(tracedResponse)
 
-    actual.value.futureValue shouldBe response
+    responseIn.sendNext(tracedResponse)
+    responseOut.expectNext() shouldBe tracedResponse
   }
 
   it should "propagate error from request in" in new Fixture {
-    val request = HttpRequest()
-    val actual  = CaptureOne[Future[HttpResponse]]()
+    (handler.onRequest _)
+      .expects(tracedRequest)
+      .returns(tracedRequest)
 
-    (handler
-      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
-      .expects(request, capture(actual), *)
-      .returns((): Unit)
-
-    requestIn.sendNext(request)
-    requestOut.expectNext() shouldBe request
+    requestIn.sendNext(tracedRequest)
+    requestOut.expectNext() shouldBe tracedRequest
 
     val error = new Exception("BOOM!")
     requestIn.sendError(error)
@@ -147,57 +135,71 @@ class MeterStageSpec
   }
 
   it should "propagate error from request out" in new Fixture {
-    val request = HttpRequest()
-    val actual  = CaptureOne[Future[HttpResponse]]()
+    (handler.onRequest _)
+      .expects(tracedRequest)
+      .returns(tracedRequest)
 
-    (handler
-      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
-      .expects(request, capture(actual), *)
-      .returns((): Unit)
-
-    requestIn.sendNext(request)
-    requestOut.expectNext() shouldBe request
+    requestIn.sendNext(tracedRequest)
+    requestOut.expectNext() shouldBe tracedRequest
 
     val error = new Exception("BOOM!")
     requestOut.cancel(error)
     requestIn.expectCancellation()
   }
 
-  it should "propagate error from response in and complete pending" in new Fixture {
-    val request = HttpRequest()
-    val actual  = CaptureOne[Future[HttpResponse]]()
+  it should "terminate and fail pending" in new Fixture {
+    (handler.onRequest _)
+      .expects(tracedRequest)
+      .returns(tracedRequest)
 
-    (handler
-      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
-      .expects(request, capture(actual), *)
-      .returns((): Unit)
+    requestIn.sendNext(tracedRequest)
+    requestIn.sendComplete()
+    requestOut.expectNext() shouldBe tracedRequest
+    requestOut.expectComplete()
 
-    requestIn.sendNext(request)
-    requestOut.expectNext() shouldBe request
+    (handler.onFailure _)
+      .expects(tracedRequest, MeterStage.PrematureCloseException)
+      .returns(MeterStage.PrematureCloseException)
 
-    val error = new Exception("BOOM!")
-    responseIn.sendError(error)
-    responseOut.expectError(error)
-
-    actual.value.failed.futureValue shouldBe error
+    responseIn.sendComplete()
+    responseOut.expectComplete()
   }
 
-  it should "propagate error from response out and complete pending" in new Fixture {
-    val request = HttpRequest()
-    val actual  = CaptureOne[Future[HttpResponse]]()
+  it should "propagate error from response in and fail pending" in new Fixture {
+    (handler.onRequest _)
+      .expects(tracedRequest)
+      .returns(tracedRequest)
 
-    (handler
-      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
-      .expects(request, capture(actual), *)
-      .returns((): Unit)
-
-    requestIn.sendNext(request)
-    requestOut.expectNext() shouldBe request
+    requestIn.sendNext(tracedRequest)
+    requestIn.sendComplete()
+    requestOut.expectNext() shouldBe tracedRequest
+    requestOut.expectComplete()
 
     val error = new Exception("BOOM!")
+    (handler.onFailure _)
+      .expects(tracedRequest, error)
+      .returns(error)
+
+    responseIn.sendError(error)
+    responseOut.expectError(error)
+  }
+
+  it should "propagate error from response out and fail pending" in new Fixture {
+    (handler.onRequest _)
+      .expects(tracedRequest)
+      .returns(tracedRequest)
+
+    requestIn.sendNext(tracedRequest)
+    requestIn.sendComplete()
+    requestOut.expectNext() shouldBe tracedRequest
+    requestOut.expectComplete()
+
+    val error = new Exception("BOOM!")
+    (handler.onFailure _)
+      .expects(tracedRequest, error)
+      .returns(error)
+
     responseOut.cancel(error)
     responseIn.expectCancellation()
-
-    actual.value.failed.futureValue shouldBe error
   }
 }

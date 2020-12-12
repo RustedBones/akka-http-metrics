@@ -16,7 +16,6 @@
 
 package fr.davit.akka.http.metrics.core.scaladsl.server
 
-import akka.Done
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
@@ -24,9 +23,8 @@ import akka.http.scaladsl.server.{Directives, RequestContext, RouteResult}
 import akka.stream.scaladsl.Keep
 import akka.stream.testkit.scaladsl.{TestSink, TestSource}
 import akka.testkit.TestKit
-import fr.davit.akka.http.metrics.core.HttpMetricsHandler
-import fr.davit.akka.http.metrics.core.scaladsl.model.PathLabelHeader
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsRoute._
+import fr.davit.akka.http.metrics.core.{HttpMetrics, HttpMetricsHandler}
 import org.scalamock.matchers.ArgCapture.CaptureOne
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.BeforeAndAfterAll
@@ -34,7 +32,6 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
 class HttpMetricsRouteSpec
@@ -47,13 +44,18 @@ class HttpMetricsRouteSpec
 
   import Directives._
 
+  implicit val ec: ExecutionContext = system.dispatcher
+
   abstract class Fixture[T] {
     val metricsHandler = mock[HttpMetricsHandler]
     val server         = mockFunction[RequestContext, Future[RouteResult]]
 
-    (metricsHandler
-      .onConnection(_: Future[Done])(_: ExecutionContext))
-      .expects(*, *)
+    (metricsHandler.onConnection _)
+      .expects()
+      .returns((): Unit)
+
+    (metricsHandler.onDisconnection _)
+      .expects()
       .returns((): Unit)
 
     val (source, sink) = TestSource
@@ -72,9 +74,8 @@ class HttpMetricsRouteSpec
     val metricsHandler = mock[HttpMetricsHandler]
     val server         = mockFunction[RequestContext, Future[RouteResult]]
 
-    (metricsHandler
-      .onConnection(_: Future[Done])(_: ExecutionContext))
-      .expects(*, *)
+    (metricsHandler.onConnection _)
+      .expects()
       .returns((): Unit)
 
     val (source, sink) = TestSource
@@ -89,70 +90,110 @@ class HttpMetricsRouteSpec
   }
 
   it should "call the metrics handler on handled requests" in new Fixture {
-    val request  = HttpRequest()
-    val response = Marshal(StatusCodes.OK).to[HttpResponse].futureValue
-    val actual   = CaptureOne[Future[HttpResponse]]()
+    val request  = CaptureOne[HttpRequest]()
+    val response = CaptureOne[HttpResponse]()
+    (metricsHandler.onRequest _)
+      .expects(capture(request))
+      .onCall { req: HttpRequest =>
+        req
+      }
 
     server
       .expects(*)
       .onCall(complete(StatusCodes.OK))
-    (metricsHandler
-      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
-      .expects(request, capture(actual), *)
-      .returns((): Unit)
+
+    (metricsHandler.onResponse _)
+      .expects(*, capture(response))
+      .onCall { (_: HttpRequest, resp: HttpResponse) =>
+        resp
+      }
 
     sink.request(1)
-    source.sendNext(request)
+    source.sendNext(HttpRequest())
     sink.expectNext()
 
-    actual.value.futureValue shouldBe response
+    source.sendComplete()
+    sink.expectComplete()
+
+    val traceId = request.value.attribute(HttpMetrics.TraceId)
+    val traceTs = request.value.attribute(HttpMetrics.TraceTimestamp)
+    traceId shouldBe defined
+    traceTs shouldBe defined
+
+    val expected = Marshal(StatusCodes.OK)
+      .to[HttpResponse]
+      .futureValue
+      .addAttribute(HttpMetrics.TraceId, traceId.get)
+    response.value shouldBe expected
   }
 
   it should "call the metrics handler on rejected requests" in new Fixture {
-    val request = HttpRequest()
-
-    val response = Marshal(StatusCodes.NotFound -> "The requested resource could not be found.")
-      .to[HttpResponse]
-      .map(_.withHeaders(PathLabelHeader("unhandled")))
-      .futureValue
-    val actual = CaptureOne[Future[HttpResponse]]()
+    val request  = CaptureOne[HttpRequest]()
+    val response = CaptureOne[HttpResponse]()
+    (metricsHandler.onRequest _)
+      .expects(capture(request))
+      .onCall { req: HttpRequest =>
+        req
+      }
 
     server
       .expects(*)
       .onCall(reject)
-    (metricsHandler
-      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
-      .expects(request, capture(actual), *)
-      .returns((): Unit)
+
+    (metricsHandler.onResponse _)
+      .expects(*, capture(response))
+      .onCall { (_: HttpRequest, resp: HttpResponse) =>
+        resp
+      }
 
     sink.request(1)
-    source.sendNext(request)
+    source.sendNext(HttpRequest())
     sink.expectNext()
 
-    actual.value.futureValue shouldBe response
+    source.sendComplete()
+    sink.expectComplete()
+
+    val traceId = request.value.attribute(HttpMetrics.TraceId).get
+
+    val expected = Marshal(StatusCodes.NotFound -> "The requested resource could not be found.")
+      .to[HttpResponse]
+      .futureValue
+      .addAttribute(HttpMetrics.TraceId, traceId)
+      .addAttribute(HttpMetrics.PathLabel, "unhandled")
+    response.value shouldBe expected
   }
 
   it should "call the metrics handler on error requests" in new Fixture {
-    val request = HttpRequest()
-
-    val response = Marshal(StatusCodes.InternalServerError)
-      .to[HttpResponse]
-      .map(_.withHeaders(PathLabelHeader("unhandled")))
-      .futureValue
-    val actual = CaptureOne[Future[HttpResponse]]()
+    val request  = CaptureOne[HttpRequest]()
+    val response = CaptureOne[HttpResponse]()
+    (metricsHandler.onRequest _)
+      .expects(capture(request))
+      .onCall { req: HttpRequest =>
+        req
+      }
 
     server
       .expects(*)
       .onCall(failWith(new Exception("BOOM!")))
-    (metricsHandler
-      .onRequest(_: HttpRequest, _: Future[HttpResponse])(_: ExecutionContext))
-      .expects(request, capture(actual), *)
-      .returns((): Unit)
+
+    (metricsHandler.onResponse _)
+      .expects(*, capture(response))
+      .onCall { (_: HttpRequest, resp: HttpResponse) =>
+        resp
+      }
 
     sink.request(1)
-    source.sendNext(request)
+    source.sendNext(HttpRequest())
     sink.expectNext()
 
-    actual.value.futureValue shouldBe response
+    source.sendComplete()
+    sink.expectComplete()
+
+    val expected = Marshal(StatusCodes.InternalServerError)
+      .to[HttpResponse]
+      .futureValue
+      .addAttribute(HttpMetrics.TraceId, request.value.attribute(HttpMetrics.TraceId).get)
+      .addAttribute(HttpMetrics.PathLabel, "unhandled")
+    response.value shouldBe expected
   }
 }

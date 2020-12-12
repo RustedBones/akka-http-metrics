@@ -16,14 +16,17 @@
 
 package fr.davit.akka.http.metrics.core
 
-import akka.Done
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
-
-import scala.concurrent.{ExecutionContext, Future}
 
 trait HttpMetricsHandler {
 
-  def onRequest(request: HttpRequest, response: Future[HttpResponse])(implicit executionContext: ExecutionContext): Unit
+  def onRequest(request: HttpRequest): HttpRequest
 
-  def onConnection(completion: Future[Done])(implicit executionContext: ExecutionContext): Unit
+  def onResponse(request: HttpRequest, response: HttpResponse): HttpResponse
+
+  def onFailure(request: HttpRequest, cause: Throwable): Throwable
+
+  def onConnection(): Unit
+
+  def onDisconnection(): Unit
 }

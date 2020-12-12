@@ -25,7 +25,7 @@ import akka.stream.scaladsl.{Flow, Source}
 import akka.stream.{Materializer, SystemMaterializer}
 import fr.davit.akka.http.metrics.core.{HttpMetrics, HttpMetricsHandler}
 
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.Future
 
 /**
   * Metered server builder
@@ -83,12 +83,8 @@ final case class HttpMetricsServerBuilder(
       log
     )(materializer)
 
-  def bindSync(handler: HttpRequest => HttpResponse): Future[ServerBinding] = bind { req =>
-    val p = Promise[HttpResponse]()
-    metricsHandler.onRequest(req, p.future)(materializer.executionContext) // needs to be async
-    p.success(handler(req))
-    p.future
-  }
+  def bindSync(handler: HttpRequest => HttpResponse): Future[ServerBinding] =
+    bind(HttpMetrics.meterFunctionSync(handler, metricsHandler))
 }
 
 object HttpMetricsServerBuilder {

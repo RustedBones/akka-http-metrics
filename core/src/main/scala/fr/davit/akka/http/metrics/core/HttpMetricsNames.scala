@@ -19,6 +19,7 @@ package fr.davit.akka.http.metrics.core
 trait HttpMetricsNames {
   def requests: String
   def requestsActive: String
+  def requestsFailures: String
   def requestsSize: String
   def responses: String
   def responsesErrors: String
@@ -29,6 +30,7 @@ trait HttpMetricsNames {
 
   def withRequests(name: String): HttpMetricsNames
   def withRequestsActive(name: String): HttpMetricsNames
+  def withRequestsFailures(name: String): HttpMetricsNames
   def withRequestSize(name: String): HttpMetricsNames
   def withResponses(name: String): HttpMetricsNames
   def withResponsesErrors(name: String): HttpMetricsNames
@@ -44,6 +46,7 @@ object HttpMetricsNames {
   private[metrics] case class HttpMetricsNamesImpl(
       requests: String,
       requestsActive: String,
+      requestsFailures: String,
       requestsSize: String,
       responses: String,
       responsesErrors: String,
@@ -54,6 +57,7 @@ object HttpMetricsNames {
   ) extends HttpMetricsNames {
     def withRequests(name: String): HttpMetricsNamesImpl          = copy(requests = name)
     def withRequestsActive(name: String): HttpMetricsNamesImpl    = copy(requestsActive = name)
+    def withRequestsFailures(name: String): HttpMetricsNames      = copy(requestsFailures = name)
     def withRequestSize(name: String): HttpMetricsNamesImpl       = copy(requestsSize = name)
     def withResponses(name: String): HttpMetricsNamesImpl         = copy(responses = name)
     def withResponsesErrors(name: String): HttpMetricsNamesImpl   = copy(responsesErrors = name)

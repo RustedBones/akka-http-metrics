@@ -16,13 +16,11 @@
 
 package fr.davit.akka.http.metrics.core
 
-import akka.Done
 import akka.http.scaladsl.model._
-import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{MethodDimension, PathDimension, StatusGroupDimension}
-import fr.davit.akka.http.metrics.core.scaladsl.model.PathLabelHeader
+import akka.stream.scaladsl.{Flow, Sink}
+import akka.util.ByteString
 
 import scala.concurrent.duration.Deadline
-import scala.concurrent.{ExecutionContext, Future}
 
 object HttpMetricsRegistry {
 
@@ -61,6 +59,8 @@ object HttpMetricsRegistry {
 
 abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMetricsHandler {
 
+  import HttpMetricsRegistry._
+
   //--------------------------------------------------------------------------------------------------------------------
   // requests
   //--------------------------------------------------------------------------------------------------------------------
@@ -68,13 +68,9 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
 
   def requestsActive: Gauge
 
+  def requestsFailures: Counter
+
   def requestsSize: Histogram
-
-  @deprecated("Use requestsActive", "1.2.0")
-  def active: Gauge = requestsActive
-
-  @deprecated("Use requestsSize", "1.2.0")
-  def receivedBytes: Histogram = requestsSize
 
   //--------------------------------------------------------------------------------------------------------------------
   // responses
@@ -87,15 +83,6 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
 
   def responsesSize: Histogram
 
-  @deprecated("Use responsesErrors", "1.2.0")
-  def errors: Counter = responsesErrors
-
-  @deprecated("Use responsesDuration", "1.2.0")
-  def duration: Timer = responsesDuration
-
-  @deprecated("Use responsesSize", "1.2.0")
-  def sentBytes: Histogram = responsesSize
-
   //--------------------------------------------------------------------------------------------------------------------
   // Connections
   //--------------------------------------------------------------------------------------------------------------------
@@ -103,47 +90,75 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
 
   def connectionsActive: Gauge
 
-  @deprecated("Use connectionsActive", "1.2.0")
-  def connected: Gauge = connectionsActive
-
-  private def pathLabel(response: HttpResponse): String = {
-    response.header[PathLabelHeader].getOrElse(PathLabelHeader.UnLabelled).value
+  private def methodDimension(request: HttpRequest): Option[MethodDimension] = {
+    if (settings.includeMethodDimension) Some(MethodDimension(request.method)) else None
   }
 
-  override def onRequest(request: HttpRequest, response: Future[HttpResponse])(
-      implicit executionContext: ExecutionContext
-  ): Unit = {
-    val serverDimensions = settings.serverDimensions
+  private def pathDimension(response: HttpResponse): Option[PathDimension] = {
+    val pathLabel = response.attribute(HttpMetrics.PathLabel).getOrElse("unlabelled")
+    if (settings.includePathDimension) Some(PathDimension(pathLabel)) else None
+  }
 
-    requestsActive.inc(serverDimensions)
-    requests.inc(serverDimensions)
-    requestsSize.update(request.entity.contentLengthOption.getOrElse(0L), serverDimensions)
-    val start = Deadline.now
+  private def statusGroupDimension(response: HttpResponse): Option[StatusGroupDimension] = {
+    if (settings.includeStatusDimension) Some(StatusGroupDimension(response.status)) else None
+  }
 
-    response.foreach { r =>
-      // compute dimensions
-      // format: off
-      val methodDim = if (settings.includeMethodDimension) Some(MethodDimension(request.method)) else None
-      val pathDim = if (settings.includePathDimension) Some(PathDimension(pathLabel(r))) else None
-      val statusGroupDim = if (settings.includeStatusDimension) Some(StatusGroupDimension(r.status)) else None
+  private def onData(handler: Long => Unit): Flow[ByteString, ByteString, Any] = {
+    val collectSizeSink = Flow[ByteString]
+      .map(_.length)
+      .fold(0L)(_ + _)
+      .to(Sink.foreach(handler))
+    Flow[ByteString].alsoTo(collectSizeSink)
+  }
 
-      val dimensions = (methodDim ++ pathDim ++ statusGroupDim).toSeq ++ serverDimensions
-      // format: on
+  // Since Content-Length header can't be relied on, see [[HttpEntity.contentLengthOption]]:
+  // In many cases it's dangerous to rely on the (non-)existence of a content-length.
+  // Compute the entity size from the data itself
+  private def requestBytesTransformer(dimensions: Seq[Dimension]): Flow[ByteString, ByteString, Any] =
+    onData(requestsSize.update(_, dimensions))
 
-      requestsActive.dec(serverDimensions)
-      responses.inc(dimensions)
-      responsesDuration.observe(Deadline.now - start, dimensions)
-      if (settings.defineError(r)) {
-        responsesErrors.inc(dimensions)
-      }
-      r.entity.contentLengthOption.foreach(responsesSize.update(_, dimensions))
+  // Same for response, and also observe duration only when all bytes are sent
+  private def responseBytesTransformer(
+      request: HttpRequest,
+      dimension: Seq[Dimension]
+  ): Flow[ByteString, ByteString, Any] =
+    onData { size =>
+      val start    = request.attribute(HttpMetrics.TraceTimestamp).get
+      val duration = Deadline.now - start
+      responsesSize.update(size, dimension)
+      responsesDuration.observe(duration, dimension)
     }
+
+  override def onRequest(request: HttpRequest): HttpRequest = {
+    val dimensions = settings.serverDimensions ++ methodDimension(request)
+    requestsActive.inc(dimensions)
+    requests.inc(dimensions)
+    request.transformEntityDataBytes(requestBytesTransformer(dimensions))
   }
 
-  override def onConnection(completion: Future[Done])(implicit executionContext: ExecutionContext): Unit = {
-    val serverDimensions = settings.serverDimensions
-    connections.inc(serverDimensions)
-    connectionsActive.inc(serverDimensions)
-    completion.onComplete(_ => connectionsActive.dec(serverDimensions))
+  override def onResponse(request: HttpRequest, response: HttpResponse): HttpResponse = {
+    val requestDimensions  = settings.serverDimensions ++ methodDimension(request)
+    val responseDimensions = requestDimensions ++ pathDimension(response) ++ statusGroupDimension(response)
+
+    requestsActive.dec(requestDimensions)
+    responses.inc(responseDimensions)
+    if (settings.defineError(response)) responsesErrors.inc(responseDimensions)
+    response.transformEntityDataBytes(responseBytesTransformer(request, responseDimensions))
+  }
+
+  override def onFailure(request: HttpRequest, cause: Throwable): Throwable = {
+    val dimensions = settings.serverDimensions ++ methodDimension(request)
+    requestsActive.dec(dimensions)
+    requestsFailures.inc(dimensions)
+    cause
+  }
+
+  override def onConnection(): Unit = {
+    connections.inc(settings.serverDimensions)
+    connectionsActive.inc(settings.serverDimensions)
+  }
+
+  override def onDisconnection(): Unit = {
+    connectionsActive.dec(settings.serverDimensions)
   }
 }
