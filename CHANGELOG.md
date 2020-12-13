@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Fix regression due to automatic transformation of entity into streams
+- Fix regression in meterFunction APIs
+
 ## 1.4.0 (2020-12-12)
 
 - Split HttpMetricsHandler API with separated callbacks

@@ -94,35 +94,33 @@ object HttpMetrics {
 
   def meterFunction(handler: HttpRequest => Future[HttpResponse], metricsHandler: HttpMetricsHandler)(
       implicit executionContext: ExecutionContext
-  ): HttpRequest => Future[HttpResponse] = { request: HttpRequest =>
+  ): HttpRequest => Future[HttpResponse] =
     (traceRequest _)
       .andThen(metricsHandler.onRequest)
-      .andThen(handler)
-      .andThen(
-        _.transform(
-          metricsHandler.onResponse(request, _),
-          metricsHandler.onFailure(request, _)
-        )
-      )
-      .apply(request)
-  }
+      .andThen(r => (r, handler(r)))
+      .andThen {
+        case (req, resp) =>
+          resp.transform(
+            r => metricsHandler.onResponse(req, r),
+            e => metricsHandler.onFailure(req, e)
+          )
+      }
 
   def meterFunctionSync(
       handler: HttpRequest => HttpResponse,
       metricsHandler: HttpMetricsHandler
-  ): HttpRequest => Future[HttpResponse] = { request: HttpRequest =>
+  ): HttpRequest => Future[HttpResponse] =
     (traceRequest _)
       .andThen(metricsHandler.onRequest)
-      .andThen(r => Try(handler(r)))
-      .andThen(
-        _.transform(
-          response => Success(metricsHandler.onResponse(request, response)),
-          cause => Failure(metricsHandler.onFailure(request, cause))
-        )
-      )
+      .andThen(r => (r, Try(handler(r))))
+      .andThen {
+        case (req, resp) =>
+          resp.transform(
+            r => Success(metricsHandler.onResponse(req, r)),
+            e => Failure(metricsHandler.onFailure(req, e))
+          )
+      }
       .andThen(Future.fromTry)
-      .apply(request)
-  }
 
   def meterFlow(
       metricsHandler: HttpMetricsHandler
