@@ -103,47 +103,46 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
     if (settings.includeStatusDimension) Some(StatusGroupDimension(response.status)) else None
   }
 
-  private def onData(handler: Long => Unit): Flow[ByteString, ByteString, Any] = {
-    val collectSizeSink = Flow[ByteString]
-      .map(_.length)
-      .fold(0L)(_ + _)
-      .to(Sink.foreach(handler))
-    Flow[ByteString].alsoTo(collectSizeSink)
-  }
-
-  // Since Content-Length header can't be relied on, see [[HttpEntity.contentLengthOption]]:
-  // In many cases it's dangerous to rely on the (non-)existence of a content-length.
-  // Compute the entity size from the data itself
-  private def requestBytesTransformer(dimensions: Seq[Dimension]): Flow[ByteString, ByteString, Any] =
-    onData(requestsSize.update(_, dimensions))
-
-  // Same for response, and also observe duration only when all bytes are sent
-  private def responseBytesTransformer(
-      request: HttpRequest,
-      dimension: Seq[Dimension]
-  ): Flow[ByteString, ByteString, Any] =
-    onData { size =>
-      val start    = request.attribute(HttpMetrics.TraceTimestamp).get
-      val duration = Deadline.now - start
-      responsesSize.update(size, dimension)
-      responsesDuration.observe(duration, dimension)
-    }
-
   override def onRequest(request: HttpRequest): HttpRequest = {
     val dimensions = settings.serverDimensions ++ methodDimension(request)
     requestsActive.inc(dimensions)
     requests.inc(dimensions)
-    request.transformEntityDataBytes(requestBytesTransformer(dimensions))
+    request.entity match {
+      case data: HttpEntity.Strict =>
+        requestsSize.update(data.contentLength, dimensions)
+        request
+      case _ =>
+        val collectSizeSink = Flow[ByteString]
+          .map(_.length)
+          .fold(0L)(_ + _)
+          .to(Sink.foreach(size => requestsSize.update(size, dimensions)))
+        request.transformEntityDataBytes(Flow[ByteString].alsoTo(collectSizeSink))
+    }
   }
 
   override def onResponse(request: HttpRequest, response: HttpResponse): HttpResponse = {
+    val start              = request.attribute(HttpMetrics.TraceTimestamp).get
     val requestDimensions  = settings.serverDimensions ++ methodDimension(request)
     val responseDimensions = requestDimensions ++ pathDimension(response) ++ statusGroupDimension(response)
 
     requestsActive.dec(requestDimensions)
     responses.inc(responseDimensions)
     if (settings.defineError(response)) responsesErrors.inc(responseDimensions)
-    response.transformEntityDataBytes(responseBytesTransformer(request, responseDimensions))
+    response.entity match {
+      case data: HttpEntity.Strict =>
+        responsesSize.update(data.contentLength, responseDimensions)
+        responsesDuration.observe(Deadline.now - start, responseDimensions)
+        response
+      case _ =>
+        val collectSizeSink = Flow[ByteString]
+          .map(_.length)
+          .fold(0L)(_ + _)
+          .to(Sink.foreach { size =>
+            responsesSize.update(size, responseDimensions)
+            responsesDuration.observe(Deadline.now - start, responseDimensions)
+          })
+        response.transformEntityDataBytes(Flow[ByteString].alsoTo(collectSizeSink))
+    }
   }
 
   override def onFailure(request: HttpRequest, cause: Throwable): Throwable = {
