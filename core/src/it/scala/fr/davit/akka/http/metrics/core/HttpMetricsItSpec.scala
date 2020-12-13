@@ -21,6 +21,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, StatusCodes, Uri}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.testkit.TestKit
 import fr.davit.akka.http.metrics.core.HttpMetrics._
 import org.scalatest.BeforeAndAfterAll
@@ -73,10 +74,10 @@ class HttpMetricsItSpec
       .futureValue
 
     response.status shouldBe StatusCodes.OK
+    Unmarshal(response).to[String].futureValue shouldBe "Hello world"
     registry.connections.value() shouldBe 1
     registry.requests.value() shouldBe 1
 
-    response.discardEntityBytes()
     binding.terminate(30.seconds).futureValue
   }
 
@@ -95,10 +96,10 @@ class HttpMetricsItSpec
       .futureValue
 
     response.status shouldBe StatusCodes.OK
+    Unmarshal(response).to[String].futureValue shouldBe "Hello world"
     registry.connections.value() shouldBe 0 // No connection metrics with function handler
     registry.requests.value() shouldBe 1
 
-    response.discardEntityBytes()
     binding.terminate(30.seconds).futureValue
   }
 }
