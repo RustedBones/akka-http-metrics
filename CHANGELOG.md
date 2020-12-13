@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.4.1 (2020-12-14)
+
 - Fix regression due to automatic transformation of entity into streams
 - Fix regression in meterFunction APIs
 
