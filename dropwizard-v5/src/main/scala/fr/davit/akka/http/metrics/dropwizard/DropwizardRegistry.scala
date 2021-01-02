@@ -17,7 +17,7 @@
 package fr.davit.akka.http.metrics.dropwizard
 
 import fr.davit.akka.http.metrics.core.{HttpMetricsSettings, _}
-import com.codahale.metrics.MetricRegistry
+import io.dropwizard.metrics5.MetricRegistry
 
 object DropwizardRegistry {
 

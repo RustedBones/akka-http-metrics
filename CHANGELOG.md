@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Split dropwizard v4 and v5. v4 being the default.
+
 ## 1.4.1 (2020-12-14)
 
 - Fix regression due to automatic transformation of entity into streams

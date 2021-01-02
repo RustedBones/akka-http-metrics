@@ -233,18 +233,21 @@ See datadog's [documentation](https://github.com/dataDog/java-dogstatsd-client) 
 | connections        | connections        |
 | connections active | connections.active |
 
-**Important**: The `DropwizardRegistry` works with tags. This feature is only supported since dropwizard `v5`. 
+**Important**: The `DropwizardRegistry` does not support labels.
+This feature will be available with dropwizard `v5`, which development is paused at the moment.
 
 Add to your `build.sbt`:
 
 ```scala
 libraryDependencies += "fr.davit" %% "akka-http-metrics-dropwizard" % <version>
+// or for dropwizard v5
+libraryDependencies += "fr.davit" %% "akka-http-metrics-dropwizard-v5" % <version>
 ```
 
 Create your registry
 
 ```scala
-import io.dropwizard.metrics5.MetricRegistry
+import com.codahale.metrics.MetricRegistry
 import fr.davit.akka.http.metrics.core.HttpMetricsSettings
 import fr.davit.akka.http.metrics.dropwizard.{DropwizardRegistry, DropwizardSettings}
 
@@ -263,15 +266,15 @@ val route = (get & path("metrics"))(metrics(registry))
 ```
 
 All metrics from the dropwizard metrics registry will be exposed.
-You can find some external exporters [here](https://github.com/dropwizard/metrics/tree/5.0-development). For instance,
+You can find some external exporters [here](https://github.com/dropwizard/metrics/). For instance,
 to expose some JVM metrics, you have to add the dedicated dependency and register the metrics set into your collector registry:
 
 ```sbt
-libraryDependencies += "io.dropwizard.metrics5" % "metrics-jvm" % <version>
+libraryDependencies += "com.codahale.metrics" % "metrics-jvm" % <version>
 ```
 
 ```scala
-import io.dropwizard.metrics5.jvm._
+import com.codahale.metrics.jvm._
 
 val dropwizard: MetricRegistry = ... // your dropwizard registry
 dropwizard.register("jvm.gc", new GarbageCollectorMetricSet())
