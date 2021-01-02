@@ -22,15 +22,7 @@ import com.codahale.metrics.MetricRegistry
 import scala.concurrent.duration.FiniteDuration
 
 abstract class DropwizardMetrics(namespace: String, name: String) {
-  private val baseName: String = MetricRegistry.name(namespace, name)
-
-  def metricsNames(dimensions: Seq[Dimension]): Seq[String] = {
-    if (dimensions.isEmpty) {
-      Seq(baseName)
-    } else {
-      dimensions.map(d => MetricRegistry.name(baseName, s"${d.value}-${d.key}"))
-    }
-  }
+  protected lazy val metricName: String = MetricRegistry.name(namespace, name)
 }
 
 class DropwizardCounter(namespace: String, name: String)(implicit registry: MetricRegistry)
@@ -38,7 +30,7 @@ class DropwizardCounter(namespace: String, name: String)(implicit registry: Metr
     with Counter {
 
   override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
-    metricsNames(dimensions).map(registry.counter).foreach(_.inc())
+    registry.counter(metricName).inc()
   }
 }
 
@@ -47,11 +39,11 @@ class DropwizardGauge(namespace: String, name: String)(implicit registry: Metric
     with Gauge {
 
   override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
-    metricsNames(dimensions).map(registry.counter).foreach(_.inc())
+    registry.counter(metricName).inc()
   }
 
   override def dec(dimensions: Seq[Dimension] = Seq.empty): Unit = {
-    metricsNames(dimensions).map(registry.counter).foreach(_.dec())
+    registry.counter(metricName).dec()
   }
 }
 
@@ -60,7 +52,7 @@ class DropwizardTimer(namespace: String, name: String)(implicit registry: Metric
     with Timer {
 
   override def observe(duration: FiniteDuration, dimensions: Seq[Dimension] = Seq.empty): Unit = {
-    metricsNames(dimensions).map(registry.timer).foreach(_.update(duration.length, duration.unit))
+    registry.timer(metricName).update(duration.length, duration.unit)
   }
 }
 
@@ -69,6 +61,6 @@ class DropwizardHistogram(namespace: String, name: String)(implicit registry: Me
     with Histogram {
 
   override def update[T](value: T, dimensions: Seq[Dimension] = Seq.empty)(implicit numeric: Numeric[T]): Unit = {
-    metricsNames(dimensions).map(registry.histogram).foreach(_.update(numeric.toLong(value)))
+    registry.histogram(metricName).update(numeric.toLong(value))
   }
 }

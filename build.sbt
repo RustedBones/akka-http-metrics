@@ -102,6 +102,7 @@ lazy val `akka-http-metrics-dropwizard` = (project in file("dropwizard"))
     libraryDependencies ++= Seq(
       Dependencies.dropwizardCore,
       Dependencies.dropwizardJson,
+      Dependencies.scalaLogging,
       Dependencies.Provided.akkaStream,
       Dependencies.Test.akkaHttpJson,
       Dependencies.Test.akkaHttpTestkit,
