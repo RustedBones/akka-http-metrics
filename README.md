@@ -369,7 +369,7 @@ You can find some external exporters [here](https://github.com/prometheus/client
 metrics, you have to add the dedicated client dependency and initialize/register it to your collector registry:
 
 ```sbt
-libraryDependencies += "io.dropwizard.metrics5" % "metrics-jvm" % <version>
+libraryDependencies += "io.prometheus" % "simpleclient_hotspot" % <vesion>
 ```
 
 ```scala
