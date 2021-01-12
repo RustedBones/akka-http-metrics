@@ -17,8 +17,7 @@
 package fr.davit.akka.http.metrics.dropwizard
 
 import fr.davit.akka.http.metrics.core.{HttpMetricsSettings, _}
-import com.codahale.metrics.MetricRegistry
-import com.typesafe.scalalogging.LazyLogging
+import io.dropwizard.metrics5.MetricRegistry
 
 object DropwizardRegistry {
 
@@ -31,15 +30,7 @@ object DropwizardRegistry {
 }
 
 class DropwizardRegistry(settings: HttpMetricsSettings)(implicit val underlying: MetricRegistry)
-    extends HttpMetricsRegistry(settings)
-    with LazyLogging {
-
-  if (settings.serverDimensions.nonEmpty ||
-      settings.includeMethodDimension ||
-      settings.includePathDimension ||
-      settings.includeStatusDimension) {
-    logger.warn("Dropwizard metrics do not support label. All metrics dimensions will be ignored")
-  }
+    extends HttpMetricsRegistry(settings) {
 
   lazy val requests: Counter         = new DropwizardCounter(settings.namespace, settings.metricsNames.requests)
   lazy val requestsActive: Gauge     = new DropwizardGauge(settings.namespace, settings.metricsNames.requestsActive)

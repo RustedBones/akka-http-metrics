@@ -23,7 +23,7 @@ lazy val commonSettings = Defaults.itSettings ++
     Seq(
       organization := "fr.davit",
       organizationName := "Michel Davit",
-      version := "1.4.2-SNAPSHOT",
+      version := "1.5.0-SNAPSHOT",
       crossScalaVersions := (ThisBuild / crossScalaVersions).value,
       scalaVersion := crossScalaVersions.value.head,
       scalacOptions ~= filterScalacOptions,
@@ -102,6 +102,7 @@ lazy val `akka-http-metrics-dropwizard` = (project in file("dropwizard"))
     libraryDependencies ++= Seq(
       Dependencies.dropwizardCore,
       Dependencies.dropwizardJson,
+      Dependencies.scalaLogging,
       Dependencies.Provided.akkaStream,
       Dependencies.Test.akkaHttpJson,
       Dependencies.Test.akkaHttpTestkit,
@@ -109,6 +110,27 @@ lazy val `akka-http-metrics-dropwizard` = (project in file("dropwizard"))
       Dependencies.Test.akkaStreamTestkit,
       Dependencies.Test.akkaTestkit,
       Dependencies.Test.dropwizardJvm,
+      Dependencies.Test.logback,
+      Dependencies.Test.scalaCollectionCompat,
+      Dependencies.Test.scalaTest
+    )
+  )
+
+lazy val `akka-http-metrics-dropwizard-v5` = (project in file("dropwizard-v5"))
+  .configs(IntegrationTest)
+  .dependsOn(`akka-http-metrics-core`)
+  .settings(commonSettings: _*)
+  .settings(
+    libraryDependencies ++= Seq(
+      Dependencies.dropwizardV5Core,
+      Dependencies.dropwizardV5Json,
+      Dependencies.Provided.akkaStream,
+      Dependencies.Test.akkaHttpJson,
+      Dependencies.Test.akkaHttpTestkit,
+      Dependencies.Test.akkaSlf4j,
+      Dependencies.Test.akkaStreamTestkit,
+      Dependencies.Test.akkaTestkit,
+      Dependencies.Test.dropwizardV5Jvm,
       Dependencies.Test.logback,
       Dependencies.Test.scalaCollectionCompat,
       Dependencies.Test.scalaTest

@@ -29,8 +29,8 @@ import akka.testkit.TestKit
 import fr.davit.akka.http.metrics.core.HttpMetrics._
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives._
 import fr.davit.akka.http.metrics.dropwizard.marshalling.DropwizardMarshallers._
-import com.codahale.metrics.MetricRegistry
-import com.codahale.metrics.jvm.{CachedThreadStatesGaugeSet, GarbageCollectorMetricSet, MemoryUsageGaugeSet}
+import io.dropwizard.metrics5.MetricRegistry
+import io.dropwizard.metrics5.jvm.{CachedThreadStatesGaugeSet, GarbageCollectorMetricSet, MemoryUsageGaugeSet}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike

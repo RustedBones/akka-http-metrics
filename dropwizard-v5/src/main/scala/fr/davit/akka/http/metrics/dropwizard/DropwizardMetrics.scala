@@ -17,20 +17,32 @@
 package fr.davit.akka.http.metrics.dropwizard
 
 import fr.davit.akka.http.metrics.core.{Counter, Dimension, Gauge, Histogram, Timer}
-import com.codahale.metrics.MetricRegistry
+import io.dropwizard.metrics5.{MetricName, MetricRegistry}
 
 import scala.concurrent.duration.FiniteDuration
 
+object DropwizardMetrics {
+
+  implicit class RichMetricsName(val metricName: MetricName) extends AnyVal {
+
+    def tagged(dimensions: Seq[Dimension]): MetricName =
+      metricName.tagged(dimensions.flatMap(d => Seq(d.key, d.value)): _*)
+
+  }
+}
+
 abstract class DropwizardMetrics(namespace: String, name: String) {
-  protected lazy val metricName: String = MetricRegistry.name(namespace, name)
+  protected lazy val metricName: MetricName = MetricName.build(namespace, name)
 }
 
 class DropwizardCounter(namespace: String, name: String)(implicit registry: MetricRegistry)
     extends DropwizardMetrics(namespace, name)
     with Counter {
 
+  import DropwizardMetrics._
+
   override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
-    registry.counter(metricName).inc()
+    registry.counter(metricName.tagged(dimensions)).inc()
   }
 }
 
@@ -38,12 +50,14 @@ class DropwizardGauge(namespace: String, name: String)(implicit registry: Metric
     extends DropwizardMetrics(namespace, name)
     with Gauge {
 
+  import DropwizardMetrics._
+
   override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
-    registry.counter(metricName).inc()
+    registry.counter(metricName.tagged(dimensions)).inc()
   }
 
   override def dec(dimensions: Seq[Dimension] = Seq.empty): Unit = {
-    registry.counter(metricName).dec()
+    registry.counter(metricName.tagged(dimensions)).dec()
   }
 }
 
@@ -51,8 +65,10 @@ class DropwizardTimer(namespace: String, name: String)(implicit registry: Metric
     extends DropwizardMetrics(namespace, name)
     with Timer {
 
+  import DropwizardMetrics._
+
   override def observe(duration: FiniteDuration, dimensions: Seq[Dimension] = Seq.empty): Unit = {
-    registry.timer(metricName).update(duration.length, duration.unit)
+    registry.timer(metricName.tagged(dimensions)).update(duration.length, duration.unit)
   }
 }
 
@@ -60,7 +76,9 @@ class DropwizardHistogram(namespace: String, name: String)(implicit registry: Me
     extends DropwizardMetrics(namespace, name)
     with Histogram {
 
+  import DropwizardMetrics._
+
   override def update[T](value: T, dimensions: Seq[Dimension] = Seq.empty)(implicit numeric: Numeric[T]): Unit = {
-    registry.histogram(metricName).update(numeric.toLong(value))
+    registry.histogram(metricName.tagged(dimensions)).update(numeric.toLong(value))
   }
 }

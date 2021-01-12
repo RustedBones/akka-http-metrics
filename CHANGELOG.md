@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Split dropwizard v4 and v5. v4 being the default.
 - Fix bug when HttpEntity.Default is used with HTTP/1.0 protocol
 
 ## 1.4.1 (2020-12-14)

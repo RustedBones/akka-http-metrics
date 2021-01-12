@@ -17,11 +17,14 @@
 package fr.davit.akka.http.metrics.dropwizard
 
 import akka.http.scaladsl.model.StatusCodes
+import fr.davit.akka.http.metrics.core.Dimension
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{PathDimension, StatusGroupDimension}
+import io.dropwizard.metrics5.MetricName
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
+
 import scala.jdk.CollectionConverters._
 
 class DropwizardRegistrySpec extends AnyFlatSpec with Matchers {
@@ -31,18 +34,21 @@ class DropwizardRegistrySpec extends AnyFlatSpec with Matchers {
   trait Fixture {
     val registry = DropwizardRegistry()
 
-    def underlyingCounter(name: String): Long = {
-      registry.underlying.getCounters.asScala(name).getCount
+    def underlyingCounter(name: String, dims: Seq[Dimension] = Seq.empty): Long = {
+      registry.underlying.getCounters.asScala(metricName(name, dims)).getCount
     }
 
-    def underlyingHistogram(name: String): Long = {
-      registry.underlying.getHistograms.asScala(name).getSnapshot.getValues.sum
+    def underlyingHistogram(name: String, dims: Seq[Dimension] = Seq.empty): Long = {
+      registry.underlying.getHistograms.asScala(metricName(name, dims)).getSum
     }
 
-    def underlyingTimer(name: String): Long = {
-      registry.underlying.getTimers.asScala(name).getSnapshot.getValues.sum
+    def underlyingTimer(name: String, dims: Seq[Dimension] = Seq.empty): Long = {
+      registry.underlying.getTimers.asScala(metricName(name, dims)).getSum
     }
 
+    private def metricName(name: String, dims: Seq[Dimension]): MetricName = {
+      MetricName.build(name).tagged(dims.map(d => d.key -> d.value).toMap.asJava)
+    }
   }
 
   "DropwizardRegistry" should "set requestsActive metrics in the underlying registry" in new Fixture {
@@ -65,7 +71,7 @@ class DropwizardRegistrySpec extends AnyFlatSpec with Matchers {
     underlyingCounter("akka.http.responses") shouldBe 1L
 
     registry.responses.inc(dimensions)
-    underlyingCounter("akka.http.responses") shouldBe 2L
+    underlyingCounter("akka.http.responses", dimensions) shouldBe 1L
   }
 
   it should "set responsesErrors metrics in the underlying registry" in new Fixture {
@@ -73,7 +79,7 @@ class DropwizardRegistrySpec extends AnyFlatSpec with Matchers {
     underlyingCounter("akka.http.responses.errors") shouldBe 1L
 
     registry.responsesErrors.inc(dimensions)
-    underlyingCounter("akka.http.responses.errors") shouldBe 2L
+    underlyingCounter("akka.http.responses.errors", dimensions) shouldBe 1L
   }
 
   it should "set responsesDuration metrics in the underlying registry" in new Fixture {
@@ -81,7 +87,7 @@ class DropwizardRegistrySpec extends AnyFlatSpec with Matchers {
     underlyingTimer("akka.http.responses.duration") shouldBe 3000000000L
 
     registry.responsesDuration.observe(3.seconds, dimensions)
-    underlyingTimer("akka.http.responses.duration") shouldBe 6000000000L
+    underlyingTimer("akka.http.responses.duration", dimensions) shouldBe 3000000000L
   }
 
   it should "set responsesSize metrics in the underlying registry" in new Fixture {
@@ -89,7 +95,7 @@ class DropwizardRegistrySpec extends AnyFlatSpec with Matchers {
     underlyingHistogram("akka.http.responses.bytes") shouldBe 3L
 
     registry.responsesSize.update(3, dimensions)
-    underlyingHistogram("akka.http.responses.bytes") shouldBe 6L
+    underlyingHistogram("akka.http.responses.bytes", dimensions) shouldBe 3L
   }
 
   it should "set connectionsActive metrics in the underlying registry" in new Fixture {
