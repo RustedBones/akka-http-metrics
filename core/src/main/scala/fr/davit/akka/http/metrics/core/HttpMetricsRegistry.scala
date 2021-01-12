@@ -111,7 +111,10 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
       case data: HttpEntity.Strict =>
         requestsSize.update(data.contentLength, dimensions)
         request
-      case _ =>
+      case data: HttpEntity.Default =>
+        requestsSize.update(data.contentLength, dimensions)
+        request
+      case _: HttpEntity.Chunked =>
         val collectSizeSink = Flow[ByteString]
           .map(_.length)
           .fold(0L)(_ + _)
@@ -133,7 +136,11 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
         responsesSize.update(data.contentLength, responseDimensions)
         responsesDuration.observe(Deadline.now - start, responseDimensions)
         response
-      case _ =>
+      case data: HttpEntity.Default =>
+        responsesSize.update(data.contentLength, responseDimensions)
+        responsesDuration.observe(Deadline.now - start, responseDimensions)
+        response
+      case _: HttpEntity.Chunked | _: HttpEntity.CloseDelimited =>
         val collectSizeSink = Flow[ByteString]
           .map(_.length)
           .fold(0L)(_ + _)
