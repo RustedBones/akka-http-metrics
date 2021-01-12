@@ -23,7 +23,7 @@ lazy val commonSettings = Defaults.itSettings ++
     Seq(
       organization := "fr.davit",
       organizationName := "Michel Davit",
-      version := "1.5.0-SNAPSHOT",
+      version := "1.5.1-SNAPSHOT",
       crossScalaVersions := (ThisBuild / crossScalaVersions).value,
       scalaVersion := crossScalaVersions.value.head,
       scalacOptions ~= filterScalacOptions,
@@ -54,6 +54,7 @@ lazy val `akka-http-metrics` = (project in file("."))
     `akka-http-metrics-datadog`,
     `akka-http-metrics-graphite`,
     `akka-http-metrics-dropwizard`,
+    `akka-http-metrics-dropwizard-v5`,
     `akka-http-metrics-prometheus`
   )
   .settings(commonSettings: _*)
