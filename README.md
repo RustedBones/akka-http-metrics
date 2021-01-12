@@ -17,13 +17,11 @@ The following implementations are supported:
 
 | Version | Release date | Akka Http version | Scala versions      |
 | ------- | ------------ | ----------------- | ------------------- |
+| `1.5.0` | 2021-01-12   | `10.2.2`          | `2.13.4`, `2.12.12` |
 | `1.4.1` | 2020-12-14   | `10.2.2`          | `2.13.4`, `2.12.12` |
 | `1.4.0` | 2020-12-12   | `10.2.2`          | `2.13.4`, `2.12.12` |
 | `1.3.0` | 2020-11-09   | `10.2.1`          | `2.13.3`, `2.12.12` |
 | `1.2.0` | 2020-08-29   | `10.2.0`          | `2.13.3`, `2.12.12` |
-| `1.1.1` | 2020-06-10   | `10.1.12`         | `2.13.2`, `2.12.11` |
-| `1.1.0` | 2020-04-18   | `10.1.11`         | `2.13.1`, `2.12.10` |
-| `1.0.0` | 2020-03-14   | `10.1.11`         | `2.13.1`, `2.12.10` |
 
 
 The complete list can be found in the [CHANGELOG](CHANGELOG.md) file.
@@ -35,20 +33,6 @@ Libraries are published to Maven Central. Add to your `build.sbt`:
 ```scala
 libraryDependencies += "fr.davit" %% "akka-http-metrics-<backend>" % <version>
 ```
-
-**Important**: Since akka-http 10.1.0, akka-stream transitive dependency is marked as provided. You should now explicitly
-include it in your build.
-
-> [...] we changed the policy not to depend on akka-stream explicitly anymore but mark it as a provided dependency in our build. 
-That means that you will always have to add a manual dependency to akka-stream. Please make sure you have chosen and 
-added a dependency to akka-stream when updating to the new version
-
-```scala
-libraryDependencies += "com.typesafe.akka" %% "akka-stream" % <version> // Only Akka 2.5 supported
-```
-
-For more details, see the akka-http 10.1.x [release notes](https://doc.akka.io/docs/akka-http/current/release-notes/10.1.x.html)
-
 
 ### Server metrics
 
