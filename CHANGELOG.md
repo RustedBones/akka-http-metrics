@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix bug when HttpEntity.Default is used with HTTP/1.0 protocol
+
 ## 1.4.1 (2020-12-14)
 
 - Fix regression due to automatic transformation of entity into streams

@@ -134,6 +134,17 @@ class HttpMetricsRegistrySpec
     registry.onResponse(testRequest, testResponse.withEntity("strict data")).entity.isStrict() shouldBe true
   }
 
+  it should "not transform default responses" in new Fixture() {
+    val data   = Source(List("a", "b", "c")).map(ByteString.apply)
+    val length = "abc".getBytes.length.toLong
+
+    val response = testResponse
+      .withProtocol(HttpProtocols.`HTTP/1.0`) // HTTP/1.0 does not support Chucking. stream MUST not be transformed
+      .withEntity(HttpEntity.Default(ContentTypes.`application/octet-stream`, length, data))
+
+    registry.onResponse(testRequest, response).entity shouldBe a[HttpEntity.Default]
+  }
+
   it should "compute the number of connections" in new Fixture() {
     registry.connections.value() shouldBe 0
     registry.onConnection()
