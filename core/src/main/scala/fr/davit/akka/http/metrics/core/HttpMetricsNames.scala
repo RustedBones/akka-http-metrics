@@ -44,17 +44,17 @@ trait HttpMetricsNames {
 object HttpMetricsNames {
 
   def apply(
-             requests: String,
-             requestsActive: String,
-             requestsFailures: String,
-             requestsSize: String,
-             responses: String,
-             responsesErrors: String,
-             responsesDuration: String,
-             responsesSize: String,
-             connections: String,
-             connectionsActive: String
-           ): HttpMetricsNames = HttpMetricsNamesImpl(
+      requests: String,
+      requestsActive: String,
+      requestsFailures: String,
+      requestsSize: String,
+      responses: String,
+      responsesErrors: String,
+      responsesDuration: String,
+      responsesSize: String,
+      connections: String,
+      connectionsActive: String
+  ): HttpMetricsNames = HttpMetricsNamesImpl(
     requests,
     requestsActive,
     requestsFailures,
