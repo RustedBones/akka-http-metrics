@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Update dependencies
+
 ## v1.5.0 (2021-01-12)
 
 - Update dependencies

@@ -3,15 +3,15 @@ import sbt._
 object Dependencies {
 
   object Versions {
-    val akka                  = "2.6.10"
-    val akkaHttp              = "10.2.2"
+    val akka                  = "2.6.12"
+    val akkaHttp              = "10.2.3"
     val datadog               = "2.11.0"
     val dropwizard            = "4.1.17"
     val dropwizardV5          = "5.0.0"
     val enumeratum            = "1.6.1"
     val logback               = "1.2.3"
-    val prometheus            = "0.9.0"
-    val scalaCollectionCompat = "2.3.2"
+    val prometheus            = "0.10.0"
+    val scalaCollectionCompat = "2.4.1"
     val scalaLogging          = "3.9.2"
     val scalaMock             = "5.1.0"
     val scalaTest             = "3.2.3"

@@ -73,20 +73,28 @@ class PrometheusMarshallersSpec extends AnyFlatSpec with Matchers with Scalatest
       metrics should contain theSameElementsAs Seq(
         "akka_http_requests_total",
         "akka_http_requests_active",
+        "akka_http_requests_created",
         "akka_http_requests_size_bytes_bucket",
         "akka_http_requests_size_bytes_count",
         "akka_http_requests_size_bytes_sum",
+        "akka_http_requests_size_bytes_created",
         "akka_http_responses_total",
+        "akka_http_responses_created",
         "akka_http_responses_errors_total",
+        "akka_http_responses_errors_created",
         "akka_http_responses_duration_seconds_bucket",
         "akka_http_responses_duration_seconds_count",
         "akka_http_responses_duration_seconds_sum",
+        "akka_http_responses_duration_seconds_created",
         "akka_http_responses_size_bytes_bucket",
         "akka_http_responses_size_bytes_count",
         "akka_http_responses_size_bytes_sum",
+        "akka_http_responses_size_bytes_created",
         "akka_http_connections_total",
         "akka_http_connections_active",
-        "other_metric"
+        "akka_http_connections_created",
+        "other_metric_total",
+        "other_metric_created"
       )
     }
   }
