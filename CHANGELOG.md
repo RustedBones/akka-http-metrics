@@ -2,7 +2,10 @@
 
 ## Unreleased
 
+## v1.5.1 (2021-02-16)
+
 - Update dependencies
+- Add API to create HttpMetricsSettings
 
 ## v1.5.0 (2021-01-12)
 
