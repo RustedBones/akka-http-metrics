@@ -32,6 +32,7 @@ abstract class StatsDMetrics(namespace: String, name: String) {
 class StatsDCounter(namespace: String, name: String)(implicit client: StatsDClient)
     extends StatsDMetrics(namespace: String, name: String)
     with Counter {
+
   override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
     client.increment(metricName, dimensions.map(StatsDMetrics.dimensionToTag): _*)
   }
@@ -40,6 +41,7 @@ class StatsDCounter(namespace: String, name: String)(implicit client: StatsDClie
 class StatsDGauge(namespace: String, name: String)(implicit client: StatsDClient)
     extends StatsDMetrics(namespace: String, name: String)
     with Gauge {
+
   override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
     client.increment(metricName, dimensions.map(StatsDMetrics.dimensionToTag): _*)
   }
@@ -52,6 +54,7 @@ class StatsDGauge(namespace: String, name: String)(implicit client: StatsDClient
 class StatsDTimer(namespace: String, name: String)(implicit client: StatsDClient)
     extends StatsDMetrics(namespace: String, name: String)
     with Timer {
+
   override def observe(duration: FiniteDuration, dimensions: Seq[Dimension] = Seq.empty): Unit = {
     client.distribution(metricName, duration.toMillis, dimensions.map(StatsDMetrics.dimensionToTag): _*)
   }
@@ -60,6 +63,7 @@ class StatsDTimer(namespace: String, name: String)(implicit client: StatsDClient
 class StatsDHistogram(namespace: String, name: String)(implicit client: StatsDClient)
     extends StatsDMetrics(namespace: String, name: String)
     with Histogram {
+
   override def update[T](value: T, dimensions: Seq[Dimension] = Seq.empty)(implicit numeric: Numeric[T]): Unit = {
     client.distribution(metricName, numeric.toDouble(value), dimensions.map(StatsDMetrics.dimensionToTag): _*)
   }

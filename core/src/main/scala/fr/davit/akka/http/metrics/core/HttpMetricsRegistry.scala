@@ -47,6 +47,7 @@ object HttpMetricsRegistry {
 
   final case class StatusGroupDimension(code: StatusCode) extends Dimension {
     override def key: String = StatusGroupDimension.Key
+
     override def value: String = code match {
       case _: StatusCodes.Success     => "2xx"
       case _: StatusCodes.Redirection => "3xx"

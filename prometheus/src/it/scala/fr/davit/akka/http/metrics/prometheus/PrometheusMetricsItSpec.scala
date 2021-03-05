@@ -50,8 +50,7 @@ class PrometheusMetricsItSpec
   }
 
   "PrometheusMetrics" should "expose external metrics" in {
-    val settings = PrometheusSettings
-      .default
+    val settings = PrometheusSettings.default
       .withIncludeMethodDimension(true)
       .withIncludePathDimension(true)
       .withIncludeStatusDimension(true)

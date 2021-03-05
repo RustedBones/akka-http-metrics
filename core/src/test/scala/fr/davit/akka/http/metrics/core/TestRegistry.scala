@@ -54,6 +54,7 @@ object TestRegistry {
   }
 
   class TestGauge extends TestCounter with Gauge {
+
     override def dec(dimensions: Seq[Dimension] = Seq.empty): Unit = {
       val key = keyer(dimensions)
       acc.get(key) match {

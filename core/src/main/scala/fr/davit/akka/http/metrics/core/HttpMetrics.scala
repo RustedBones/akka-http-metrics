@@ -58,8 +58,7 @@ object HttpMetrics {
     response.addAttribute(PathLabel, "unhandled")
   }
 
-  /**
-    * This will take precedence over the RouteResult.routeToFlow
+  /** This will take precedence over the RouteResult.routeToFlow
     * to seal the route with proper handler for metrics labeling
     */
   implicit def metricsRouteToFlow(
@@ -67,8 +66,7 @@ object HttpMetrics {
   )(implicit system: ClassicActorSystemProvider): Flow[HttpRequest, HttpResponse, NotUsed] =
     Flow[HttpRequest].mapAsync(1)(metricsRouteToFunction(route))
 
-  /**
-    * This will take precedence over the RouteResult.routeToFunction
+  /** This will take precedence over the RouteResult.routeToFunction
     * to seal the route with proper handler for metrics labeling
     */
   implicit def metricsRouteToFunction(
@@ -92,18 +90,17 @@ object HttpMetrics {
     }
   }
 
-  def meterFunction(handler: HttpRequest => Future[HttpResponse], metricsHandler: HttpMetricsHandler)(
-      implicit executionContext: ExecutionContext
+  def meterFunction(handler: HttpRequest => Future[HttpResponse], metricsHandler: HttpMetricsHandler)(implicit
+      executionContext: ExecutionContext
   ): HttpRequest => Future[HttpResponse] =
     (traceRequest _)
       .andThen(metricsHandler.onRequest)
       .andThen(r => (r, handler(r)))
-      .andThen {
-        case (req, resp) =>
-          resp.transform(
-            r => metricsHandler.onResponse(req, r),
-            e => metricsHandler.onFailure(req, e)
-          )
+      .andThen { case (req, resp) =>
+        resp.transform(
+          r => metricsHandler.onResponse(req, r),
+          e => metricsHandler.onFailure(req, e)
+        )
       }
 
   def meterFunctionSync(
@@ -113,12 +110,11 @@ object HttpMetrics {
     (traceRequest _)
       .andThen(metricsHandler.onRequest)
       .andThen(r => (r, Try(handler(r))))
-      .andThen {
-        case (req, resp) =>
-          resp.transform(
-            r => Success(metricsHandler.onResponse(req, r)),
-            e => Failure(metricsHandler.onFailure(req, e))
-          )
+      .andThen { case (req, resp) =>
+        resp.transform(
+          r => Success(metricsHandler.onResponse(req, r)),
+          e => Failure(metricsHandler.onFailure(req, e))
+        )
       }
       .andThen(Future.fromTry)
 

@@ -47,6 +47,7 @@ class HttpMetricsItSpec
   }
 
   trait Fixture {
+
     val settings: HttpMetricsSettings = TestRegistry.settings
       .withNamespace("com.example.service")
 
@@ -59,12 +60,13 @@ class HttpMetricsItSpec
   }
 
   "HttpMetrics" should "record metrics on flow handler" in new Fixture {
+
     val binding = Http()
       .newMeteredServerAt("localhost", 0, registry)
       .bindFlow(route)
       .futureValue
 
-    val uri     = Uri()
+    val uri = Uri()
       .withScheme("http")
       .withAuthority(binding.localAddress.getHostString, binding.localAddress.getPort)
     val request = HttpRequest().withUri(uri)
@@ -82,15 +84,17 @@ class HttpMetricsItSpec
   }
 
   it should "record metrics on function handler" in new Fixture {
+
     val binding = Http()
       .newMeteredServerAt("localhost", 0, registry)
       .bind(route)
       .futureValue
 
-    val uri     = Uri()
+    val uri = Uri()
       .withScheme("http")
       .withAuthority(binding.localAddress.getHostString, binding.localAddress.getPort)
     val request = HttpRequest().withUri(uri)
+
     val response = Http()
       .singleRequest(request)
       .futureValue

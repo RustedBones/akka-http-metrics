@@ -27,6 +27,7 @@ abstract class CarbonMetrics(namespace: String, name: String) {
 class CarbonCounter(namespace: String, name: String)(implicit client: CarbonClient)
     extends CarbonMetrics(namespace, name)
     with Counter {
+
   override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
     client.publish(metricName, 1, dimensions)
   }
@@ -35,6 +36,7 @@ class CarbonCounter(namespace: String, name: String)(implicit client: CarbonClie
 class CarbonGauge(namespace: String, name: String)(implicit client: CarbonClient)
     extends CarbonMetrics(namespace, name)
     with Gauge {
+
   override def inc(dimensions: Seq[Dimension] = Seq.empty): Unit = {
     client.publish(metricName, 1, dimensions)
   }
@@ -47,6 +49,7 @@ class CarbonGauge(namespace: String, name: String)(implicit client: CarbonClient
 class CarbonTimer(namespace: String, name: String)(implicit client: CarbonClient)
     extends CarbonMetrics(namespace, name)
     with Timer {
+
   override def observe(duration: FiniteDuration, dimensions: Seq[Dimension] = Seq.empty): Unit = {
     client.publish(metricName, duration.toMillis, dimensions)
   }
@@ -55,6 +58,7 @@ class CarbonTimer(namespace: String, name: String)(implicit client: CarbonClient
 class CarbonHistogram(namespace: String, name: String)(implicit client: CarbonClient)
     extends CarbonMetrics(namespace, name)
     with Histogram {
+
   override def update[T: Numeric](value: T, dimensions: Seq[Dimension] = Seq.empty): Unit = {
     client.publish(metricName, value, dimensions)
   }
