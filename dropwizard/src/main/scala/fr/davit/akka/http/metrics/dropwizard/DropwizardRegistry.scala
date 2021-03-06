@@ -34,10 +34,12 @@ class DropwizardRegistry(settings: HttpMetricsSettings)(implicit val underlying:
     extends HttpMetricsRegistry(settings)
     with LazyLogging {
 
-  if (settings.serverDimensions.nonEmpty ||
-      settings.includeMethodDimension ||
-      settings.includePathDimension ||
-      settings.includeStatusDimension) {
+  if (
+    settings.serverDimensions.nonEmpty ||
+    settings.includeMethodDimension ||
+    settings.includePathDimension ||
+    settings.includeStatusDimension
+  ) {
     logger.warn("Dropwizard metrics do not support label. All metrics dimensions will be ignored")
   }
 

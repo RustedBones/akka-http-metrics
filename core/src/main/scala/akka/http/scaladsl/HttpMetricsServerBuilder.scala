@@ -27,8 +27,7 @@ import fr.davit.akka.http.metrics.core.{HttpMetrics, HttpMetricsHandler}
 
 import scala.concurrent.Future
 
-/**
-  * Metered server builder
+/** Metered server builder
   * Defined in the akka.http.scaladsl package to get access to the HttpExt
   * to avoid deprecation warnings.
   *

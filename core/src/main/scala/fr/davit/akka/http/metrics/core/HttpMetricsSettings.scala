@@ -21,39 +21,32 @@ import scala.collection.immutable
 
 trait HttpMetricsSettings {
 
-  /**
-    * Metrics namespace
+  /** Metrics namespace
     */
   def namespace: String
 
-  /**
-    * Name of the individual metrics
+  /** Name of the individual metrics
     */
   def metricsNames: HttpMetricsNames
 
-  /**
-    * Function that defines if the http response should be
+  /** Function that defines if the http response should be
     * counted as an error
     */
   def defineError: HttpResponse => Boolean
 
-  /**
-    * Include the method dimension on metrics
+  /** Include the method dimension on metrics
     */
   def includeMethodDimension: Boolean
 
-  /**
-    * Include the path dimension on metrics
+  /** Include the path dimension on metrics
     */
   def includePathDimension: Boolean
 
-  /**
-    * Include the status group dimension on metrics
+  /** Include the status group dimension on metrics
     */
   def includeStatusDimension: Boolean
 
-  /**
-    * Include custom labels, using the Dimension object
+  /** Include custom labels, using the Dimension object
     */
   def serverDimensions: immutable.Seq[Dimension]
 
