@@ -94,9 +94,7 @@ class HttpMetricsRouteSpec
     val response = CaptureOne[HttpResponse]()
     (metricsHandler.onRequest _)
       .expects(capture(request))
-      .onCall { req: HttpRequest =>
-        req
-      }
+      .onCall { req: HttpRequest => req }
 
     server
       .expects(*)
@@ -104,9 +102,7 @@ class HttpMetricsRouteSpec
 
     (metricsHandler.onResponse _)
       .expects(*, capture(response))
-      .onCall { (_: HttpRequest, resp: HttpResponse) =>
-        resp
-      }
+      .onCall { (_: HttpRequest, resp: HttpResponse) => resp }
 
     sink.request(1)
     source.sendNext(HttpRequest())
@@ -132,9 +128,7 @@ class HttpMetricsRouteSpec
     val response = CaptureOne[HttpResponse]()
     (metricsHandler.onRequest _)
       .expects(capture(request))
-      .onCall { req: HttpRequest =>
-        req
-      }
+      .onCall { req: HttpRequest => req }
 
     server
       .expects(*)
@@ -142,9 +136,7 @@ class HttpMetricsRouteSpec
 
     (metricsHandler.onResponse _)
       .expects(*, capture(response))
-      .onCall { (_: HttpRequest, resp: HttpResponse) =>
-        resp
-      }
+      .onCall { (_: HttpRequest, resp: HttpResponse) => resp }
 
     sink.request(1)
     source.sendNext(HttpRequest())
@@ -168,9 +160,7 @@ class HttpMetricsRouteSpec
     val response = CaptureOne[HttpResponse]()
     (metricsHandler.onRequest _)
       .expects(capture(request))
-      .onCall { req: HttpRequest =>
-        req
-      }
+      .onCall { req: HttpRequest => req }
 
     server
       .expects(*)
@@ -178,9 +168,7 @@ class HttpMetricsRouteSpec
 
     (metricsHandler.onResponse _)
       .expects(*, capture(response))
-      .onCall { (_: HttpRequest, resp: HttpResponse) =>
-        resp
-      }
+      .onCall { (_: HttpRequest, resp: HttpResponse) => resp }
 
     sink.request(1)
     source.sendNext(HttpRequest())

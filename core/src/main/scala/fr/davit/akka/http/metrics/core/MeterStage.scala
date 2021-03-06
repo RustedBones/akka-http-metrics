@@ -57,6 +57,7 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
     }
 
     val requestHandler = new InHandler with OutHandler {
+
       override def onPush(): Unit = {
         val request = grab(requestIn)
         val id      = request.getAttribute(HttpMetrics.TraceId).get
@@ -71,6 +72,7 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
     }
 
     val responseHandler = new InHandler with OutHandler {
+
       override def onPush(): Unit = {
         val response = grab(responseIn)
         val id       = response.getAttribute(HttpMetrics.TraceId).get
@@ -82,10 +84,12 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
       override def onUpstreamFinish(): Unit = {
         complete(responseOut)
       }
+
       override def onUpstreamFailure(ex: Throwable): Unit = {
         failure = Some(ex)
         fail(responseOut, ex)
       }
+
       override def onDownstreamFinish(cause: Throwable): Unit = {
         failure = Some(cause)
         cancel(responseIn)

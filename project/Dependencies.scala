@@ -32,18 +32,20 @@ object Dependencies {
   }
 
   object Test {
-    val akkaHttpJson          = "com.typesafe.akka"      %% "akka-http-spray-json"    % Versions.akkaHttp              % "it,test"
-    val akkaHttpTestkit       = "com.typesafe.akka"      %% "akka-http-testkit"       % Versions.akkaHttp              % "it,test"
-    val akkaSlf4j             = "com.typesafe.akka"      %% "akka-slf4j"              % Versions.akka                  % "it,test"
-    val akkaStreamTestkit     = "com.typesafe.akka"      %% "akka-stream-testkit"     % Versions.akka                  % "it,test"
-    val akkaTestkit           = "com.typesafe.akka"      %% "akka-testkit"            % Versions.akka                  % "it,test"
-    val dropwizardJvm         = "io.dropwizard.metrics"  % "metrics-jvm"              % Versions.dropwizard            % "it,test"
-    val dropwizardV5Jvm       = "io.dropwizard.metrics5" % "metrics-jvm"              % Versions.dropwizardV5          % "it,test"
-    val logback               = "ch.qos.logback"         % "logback-classic"          % Versions.logback               % "it,test"
-    val prometheusHotspot     = "io.prometheus"          % "simpleclient_hotspot"     % Versions.prometheus            % "it,test"
-    val scalaCollectionCompat = "org.scala-lang.modules" %% "scala-collection-compat" % Versions.scalaCollectionCompat % "it,test"
-    val scalaMock             = "org.scalamock"          %% "scalamock"               % Versions.scalaMock             % "it,test"
-    val scalaTest             = "org.scalatest"          %% "scalatest"               % Versions.scalaTest             % "it,test"
+    val akkaHttpJson      = "com.typesafe.akka"      %% "akka-http-spray-json" % Versions.akkaHttp     % "it,test"
+    val akkaHttpTestkit   = "com.typesafe.akka"      %% "akka-http-testkit"    % Versions.akkaHttp     % "it,test"
+    val akkaSlf4j         = "com.typesafe.akka"      %% "akka-slf4j"           % Versions.akka         % "it,test"
+    val akkaStreamTestkit = "com.typesafe.akka"      %% "akka-stream-testkit"  % Versions.akka         % "it,test"
+    val akkaTestkit       = "com.typesafe.akka"      %% "akka-testkit"         % Versions.akka         % "it,test"
+    val dropwizardJvm     = "io.dropwizard.metrics"  % "metrics-jvm"           % Versions.dropwizard   % "it,test"
+    val dropwizardV5Jvm   = "io.dropwizard.metrics5" % "metrics-jvm"           % Versions.dropwizardV5 % "it,test"
+    val logback           = "ch.qos.logback"         % "logback-classic"       % Versions.logback      % "it,test"
+    val prometheusHotspot = "io.prometheus"          % "simpleclient_hotspot"  % Versions.prometheus   % "it,test"
+
+    val scalaCollectionCompat =
+      "org.scala-lang.modules" %% "scala-collection-compat" % Versions.scalaCollectionCompat % "it,test"
+    val scalaMock = "org.scalamock" %% "scalamock" % Versions.scalaMock % "it,test"
+    val scalaTest = "org.scalatest" %% "scalatest" % Versions.scalaTest % "it,test"
   }
 
 }
