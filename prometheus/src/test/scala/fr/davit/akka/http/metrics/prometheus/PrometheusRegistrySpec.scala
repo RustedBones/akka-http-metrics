@@ -53,6 +53,7 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
   }
 
   trait DimensionFixture extends Fixture {
+
     override val registry = PrometheusRegistry(
       new CollectorRegistry(),
       PrometheusSettings.default
@@ -64,6 +65,7 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
   }
 
   trait MetricsNamesFixture extends Fixture {
+
     override val registry = PrometheusRegistry(
       new CollectorRegistry(),
       PrometheusSettings.default

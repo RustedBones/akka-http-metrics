@@ -25,9 +25,7 @@ import fr.davit.akka.http.metrics.core.{HttpMetrics, HttpMetricsHandler}
 
 import scala.concurrent.Future
 
-/**
-  * Typeclass to add the metrics capabilities to a route
-  *
+/** Typeclass to add the metrics capabilities to a route
   */
 final class HttpMetricsRoute private (route: Route) extends HttpMetricsDirectives {
 

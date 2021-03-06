@@ -26,8 +26,8 @@ object PrometheusRegistry {
   implicit private class RichSummaryBuilder(val builder: io.prometheus.client.Summary.Builder) extends AnyVal {
 
     def quantiles(qs: Quantile*): io.prometheus.client.Summary.Builder = {
-      qs.foldLeft(builder) {
-        case (b, q) => b.quantile(q.percentile, q.error)
+      qs.foldLeft(builder) { case (b, q) =>
+        b.quantile(q.percentile, q.error)
       }
     }
 
@@ -41,8 +41,7 @@ object PrometheusRegistry {
   }
 }
 
-/**
-  * Prometheus registry
+/** Prometheus registry
   * For metrics naming see [https://prometheus.io/docs/practices/naming/]
   */
 class PrometheusRegistry(settings: PrometheusSettings, val underlying: CollectorRegistry)

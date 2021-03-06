@@ -26,8 +26,7 @@ object DatadogRegistry {
   }
 }
 
-/**
-  * see [https://docs.datadoghq.com/developers/faq/what-best-practices-are-recommended-for-naming-metrics-and-tags/]
+/** see [https://docs.datadoghq.com/developers/faq/what-best-practices-are-recommended-for-naming-metrics-and-tags/]
   * @param client
   */
 class DatadogRegistry(settings: HttpMetricsSettings)(implicit client: StatsDClient)
