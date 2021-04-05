@@ -45,13 +45,14 @@ class GraphiteRegistrySpec
     carbon.send(IO(Tcp), Tcp.Bind(carbon.ref, new InetSocketAddress(0)))
     val port   = carbon.expectMsgType[Tcp.Bound].localAddress.getPort
     val socket = carbon.sender()
-    carbon.setAutoPilot(
-      (sender: ActorRef, msg: Any) =>
-        msg match {
-          case _: Tcp.Connected =>
-            sender ! Tcp.Register(handler.ref)
-            TestActor.KeepRunning
-        }
+    carbon.setAutoPilot((sender: ActorRef, msg: Any) =>
+      msg match {
+        case _: Tcp.Connected =>
+          sender ! Tcp.Register(handler.ref)
+          TestActor.KeepRunning
+        case _ =>
+          throw new Exception(s"Unexpected message $msg")
+      }
     )
 
     val client = new CarbonClient("localhost", port) {
