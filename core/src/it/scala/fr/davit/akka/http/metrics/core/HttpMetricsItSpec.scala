@@ -18,10 +18,12 @@ package fr.davit.akka.http.metrics.core
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.ws.{BinaryMessage, Message, TextMessage, WebSocketRequest}
 import akka.http.scaladsl.model.{HttpRequest, StatusCodes, Uri}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import akka.testkit.TestKit
 import fr.davit.akka.http.metrics.core.HttpMetrics._
 import org.scalatest.BeforeAndAfterAll
@@ -47,24 +49,43 @@ class HttpMetricsItSpec
   }
 
   trait Fixture {
+
     val settings: HttpMetricsSettings = TestRegistry.settings
       .withNamespace("com.example.service")
 
     val registry = new TestRegistry(settings)
 
-    val route: Route =
-      get {
-        complete("Hello world")
+    val greeter: Flow[Message, Message, Any] =
+      Flow[Message].mapConcat {
+        case tm: TextMessage =>
+          TextMessage(Source.single("Hello ") ++ tm.textStream ++ Source.single("!")) :: Nil
+        case bm: BinaryMessage =>
+          // ignore binary messages but drain content to avoid the stream being clogged
+          bm.dataStream.runWith(Sink.ignore)
+          Nil
       }
+
+    val route: Route = {
+      pathEndOrSingleSlash {
+        get {
+          complete("Hello world")
+        }
+      } ~ path("greeter") {
+        get {
+          handleWebSocketMessages(greeter)
+        }
+      }
+    }
   }
 
   "HttpMetrics" should "record metrics on flow handler" in new Fixture {
+
     val binding = Http()
       .newMeteredServerAt("localhost", 0, registry)
       .bindFlow(route)
       .futureValue
 
-    val uri     = Uri()
+    val uri = Uri()
       .withScheme("http")
       .withAuthority(binding.localAddress.getHostString, binding.localAddress.getPort)
     val request = HttpRequest().withUri(uri)
@@ -82,15 +103,17 @@ class HttpMetricsItSpec
   }
 
   it should "record metrics on function handler" in new Fixture {
+
     val binding = Http()
       .newMeteredServerAt("localhost", 0, registry)
       .bind(route)
       .futureValue
 
-    val uri     = Uri()
+    val uri = Uri()
       .withScheme("http")
       .withAuthority(binding.localAddress.getHostString, binding.localAddress.getPort)
     val request = HttpRequest().withUri(uri)
+
     val response = Http()
       .singleRequest(request)
       .futureValue
@@ -98,6 +121,30 @@ class HttpMetricsItSpec
     response.status shouldBe StatusCodes.OK
     Unmarshal(response).to[String].futureValue shouldBe "Hello world"
     registry.connections.value() shouldBe 0 // No connection metrics with function handler
+    registry.requests.value() shouldBe 1
+
+    binding.terminate(30.seconds).futureValue
+  }
+
+  it should "support web socket" in new Fixture {
+
+    val binding = Http()
+      .newMeteredServerAt("localhost", 0, registry)
+      .bindFlow(route)
+      .futureValue
+
+    val uri = Uri()
+      .withScheme("ws")
+      .withAuthority(binding.localAddress.getHostString, binding.localAddress.getPort)
+      .withPath(Uri.Path("/greeter"))
+    val request = WebSocketRequest(uri)
+    val flow    = Flow.fromSinkAndSourceMat(Sink.ignore, Source.single(TextMessage("test")))(Keep.left)
+
+    val (response, _) = Http()
+      .singleWebSocketRequest(request, flow)
+
+    response.futureValue.response.status shouldBe StatusCodes.SwitchingProtocols
+    registry.connections.value() shouldBe 1
     registry.requests.value() shouldBe 1
 
     binding.terminate(30.seconds).futureValue
