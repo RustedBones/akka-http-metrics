@@ -27,9 +27,9 @@ object MeterStage {
   val PrematureCloseException = new IllegalStateException("Stream completed prematurely")
 
   private[core] val MissingTraceIdException = new NoSuchElementException(
-    s"Request is missing '${HttpMetrics.TraceId.name}' attribute. This could be possibly caused by implicit conversion" +
-      "conflict during HTTP server creation. Try to use explicit conversion:" +
-      "replace Http().newMeteredServerAt(...).bindFlow(routes)" +
+    s"Request is missing '${HttpMetrics.TraceId.name}' attribute. This could be possibly caused by implicit conversion " +
+      "conflict during HTTP server creation. Try to use explicit conversion: " +
+      "replace Http().newMeteredServerAt(...).bindFlow(routes) " +
       "with Http().newMeteredServerAt(...).bindFlow(HttpMetrics.metricsRouteToFlow(routes))"
   )
 }
