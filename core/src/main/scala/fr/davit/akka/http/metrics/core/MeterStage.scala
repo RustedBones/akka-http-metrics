@@ -25,6 +25,12 @@ import scala.collection.mutable
 
 object MeterStage {
   val PrematureCloseException = new IllegalStateException("Stream completed prematurely")
+  private[core] val MissingTraceIdException = new NoSuchElementException(
+    s"Request is missing '${HttpMetrics.TraceId.name}' attribute. This could be possibly caused by implicit conversion" +
+      "conflict during HTTP server creation. Try to use explicit conversion:" +
+      "replace Http().newMeteredServerAt(...).bindFlow(routes)" +
+      "with Http().newMeteredServerAt(...).bindFlow(HttpMetrics.metricsRouteToFlow(routes))"
+  )
 }
 
 private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
@@ -60,7 +66,10 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
 
       override def onPush(): Unit = {
         val request = grab(requestIn)
-        val id      = request.getAttribute(HttpMetrics.TraceId).get
+        val id      = request.attribute(HttpMetrics.TraceId) match {
+          case Some(id) => id
+          case _        => throw MissingTraceIdException
+        }
         pending += id -> request
         push(requestOut, metricsHandler.onRequest(request))
       }
