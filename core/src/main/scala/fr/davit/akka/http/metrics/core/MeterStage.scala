@@ -67,12 +67,13 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
 
       override def onPush(): Unit = {
         val request = grab(requestIn)
-        val id = request.attribute(HttpMetrics.TraceId) match {
-          case Some(id) => id
-          case _        => throw MissingTraceIdException
+        request.attribute(HttpMetrics.TraceId) match {
+          case Some(id) =>
+            pending += id -> request
+            push(requestOut, metricsHandler.onRequest(request))
+          case _ =>
+            failStage(MissingTraceIdException)
         }
-        pending += id -> request
-        push(requestOut, metricsHandler.onRequest(request))
       }
       override def onPull(): Unit = pull(requestIn)
 
