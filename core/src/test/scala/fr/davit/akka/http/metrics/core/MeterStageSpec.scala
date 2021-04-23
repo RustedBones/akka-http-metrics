@@ -22,6 +22,7 @@ import akka.stream.ClosedShape
 import akka.stream.scaladsl.{GraphDSL, RunnableGraph}
 import akka.stream.testkit.scaladsl.{TestSink, TestSource}
 import akka.testkit.TestKit
+import fr.davit.akka.http.metrics.core.MeterStage.MissingTraceIdException
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
@@ -119,6 +120,16 @@ class MeterStageSpec
 
     responseIn.sendNext(tracedResponse)
     responseOut.expectNext() shouldBe tracedResponse
+  }
+
+  it should "throw a MissingTraceIdException if trace-id attribute is missing" in new Fixture {
+    val requestWithoutTraceId = HttpRequest()
+
+    requestIn.sendNext(requestWithoutTraceId)
+    requestIn.expectCancellationWithCause(MissingTraceIdException)
+    requestOut.expectError(MissingTraceIdException)
+    responseIn.expectCancellationWithCause(MissingTraceIdException)
+    responseOut.expectError(MissingTraceIdException)
   }
 
   it should "propagate error from request in" in new Fixture {
