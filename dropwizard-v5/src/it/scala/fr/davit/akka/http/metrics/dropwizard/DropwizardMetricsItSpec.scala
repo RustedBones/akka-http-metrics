@@ -17,7 +17,6 @@
 package fr.davit.akka.http.metrics.dropwizard
 
 import java.util.concurrent.TimeUnit
-
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
@@ -26,6 +25,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.testkit.TestKit
+import fr.davit.akka.http.metrics.core.HttpMetrics
 import fr.davit.akka.http.metrics.core.HttpMetrics._
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives._
 import fr.davit.akka.http.metrics.dropwizard.marshalling.DropwizardMarshallers._
@@ -72,7 +72,7 @@ class DropwizardMetricsItSpec
 
     val binding = Http()
       .newMeteredServerAt("localhost", 0, registry)
-      .bindFlow(route)
+      .bindFlow(HttpMetrics.metricsRouteToFlow(route))
       .futureValue
 
     val uri = Uri("/metrics")

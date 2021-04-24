@@ -23,6 +23,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.testkit.TestKit
+import fr.davit.akka.http.metrics.core.HttpMetrics
 import fr.davit.akka.http.metrics.core.HttpMetrics._
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives._
 import fr.davit.akka.http.metrics.prometheus.marshalling.PrometheusMarshallers._
@@ -62,7 +63,7 @@ class PrometheusMetricsItSpec
 
     val binding = Http()
       .newMeteredServerAt("localhost", 0, registry)
-      .bindFlow(route)
+      .bindFlow(HttpMetrics.metricsRouteToFlow(route))
       .futureValue
 
     val uri = Uri("/metrics")

@@ -53,7 +53,7 @@ following labeled metrics are recorded:
 - connections active (`gauge`)
 
 Record metrics from your akka server by importing the implicits from `HttpMetricsRoute`. Convert your route to the
-flow that will handle requests with `recordMetrics` and bind your server to the desired port.
+flow that will handle requests with `metricsRouteToFlow` and bind your server to the desired port.
 
 ```scala
 import akka.actor.ActorSystem
@@ -71,7 +71,9 @@ val registry: HttpMetricsRegistry = ... // concrete registry implementation
 
 val route: Route = ... // your route
 
-Http().newMeteredServerAt("localhost", 8080, registry).bindFlow(route)
+Http()
+  .newMeteredServerAt("localhost", 8080, registry)
+  .bindFlow(HttpMetrics.metricsRouteToFlow(route))
 ```
 
 Requests failure counter is incremented when no response could be emitted by the server (network error, ...)
@@ -86,10 +88,13 @@ settings.withDefineError(_.status.isFailure)
 In this example, all responses with status >= 400 are considered as errors.
 
 For HTTP2 you must use the `bind` or `bindSync` on the `ServerBuilder`. The `Route` will be converted to
-a `HttpRequest => HttpResponse` handler function. In this case the connection metrics won't be available.
+a `HttpRequest => HttpResponse` handler function by `metricsRouteToFuction`.
+In this case the connection metrics won't be available.
 
 ```scala
-Http().newMeteredServerAt("localhost", 8080).bind(route)
+Http()
+  .newMeteredServerAt("localhost", 8080)
+  .bind(HttpMetrics.metricsRouteToFuction(route))
 ```
 
 #### Labels

@@ -18,12 +18,13 @@ package fr.davit.akka.http.metrics.core
 
 import akka.NotUsed
 import akka.actor.ClassicActorSystemProvider
+import akka.http.scaladsl.HttpExt
 import akka.http.scaladsl.model.{AttributeKey, HttpRequest, HttpResponse}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{Directives, ExceptionHandler, RejectionHandler, Route}
 import akka.http.scaladsl.settings.RoutingSettings
-import akka.http.scaladsl.{HttpExt, HttpMetricsServerBuilder}
 import akka.stream.scaladsl.{BidiFlow, Flow}
+import fr.davit.akka.http.metrics.core.scaladsl.HttpMetricsServerBuilder
 
 import java.util.UUID
 import scala.concurrent.duration.Deadline
@@ -61,7 +62,7 @@ object HttpMetrics {
   /** This will take precedence over the RouteResult.routeToFlow
     * to seal the route with proper handler for metrics labeling
     */
-  implicit def metricsRouteToFlow(
+  def metricsRouteToFlow(
       route: Route
   )(implicit system: ClassicActorSystemProvider): Flow[HttpRequest, HttpResponse, NotUsed] =
     Flow[HttpRequest].mapAsync(1)(metricsRouteToFunction(route))
@@ -69,7 +70,7 @@ object HttpMetrics {
   /** This will take precedence over the RouteResult.routeToFunction
     * to seal the route with proper handler for metrics labeling
     */
-  implicit def metricsRouteToFunction(
+  def metricsRouteToFunction(
       route: Route
   )(implicit system: ClassicActorSystemProvider): HttpRequest => Future[HttpResponse] = {
     val routingSettings  = RoutingSettings(system)
@@ -89,6 +90,18 @@ object HttpMetrics {
       }
     }
   }
+
+  @deprecated("Use HttpMetrics.metricsRouteToFlow(...) to seal and meter your route.", since = "1.6.0")
+  implicit def metricsRouteToFlowImplicit(route: Route)(implicit
+      system: ClassicActorSystemProvider
+  ): Flow[HttpRequest, HttpResponse, NotUsed] =
+    metricsRouteToFlow(route)
+
+  @deprecated("Use HttpMetrics.metricsRouteToFunction(...) to seal and meter your route.", since = "1.6.0")
+  implicit def metricsRouteToFunctionImplicit(route: Route)(implicit
+      system: ClassicActorSystemProvider
+  ): HttpRequest => Future[HttpResponse] =
+    metricsRouteToFunction(route)
 
   def meterFunction(handler: HttpRequest => Future[HttpResponse], metricsHandler: HttpMetricsHandler)(implicit
       executionContext: ExecutionContext

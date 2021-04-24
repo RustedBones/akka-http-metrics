@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-package akka.http.scaladsl
+package fr.davit.akka.http.metrics.core.scaladsl
 
 import akka.actor.ClassicActorSystemProvider
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.Http.ServerBinding
+import akka.http.scaladsl._
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.http.scaladsl.settings.ServerSettings
 import akka.stream.scaladsl.{Flow, Source}
 import akka.stream.{Materializer, SystemMaterializer}
 import fr.davit.akka.http.metrics.core.{HttpMetrics, HttpMetricsHandler}
 
+import scala.annotation.nowarn
 import scala.concurrent.Future
 
 /** Metered server builder
-  * Defined in the akka.http.scaladsl package to get access to the HttpExt
-  * to avoid deprecation warnings.
   *
   * Use HttpExt.newMeteredServerAt() to create a builder, use methods to customize settings,
   * and then call one of the bind* methods to bind a server.
@@ -56,13 +56,15 @@ final case class HttpMetricsServerBuilder(
   def enableHttps(newContext: HttpsConnectionContext): ServerBuilder        = copy(context = newContext)
   def withMaterializer(newMaterializer: Materializer): ServerBuilder        = copy(materializer = newMaterializer)
 
+  @nowarn("msg=deprecated")
   def connectionSource(): Source[Http.IncomingConnection, Future[ServerBinding]] =
     http
-      .bindImpl(interface, port, context, settings, log)
+      .bind(interface, port, context, settings, log)
       .map(c => c.copy(_flow = c._flow.join(HttpMetrics.meterFlow(metricsHandler))))
 
+  @nowarn("msg=deprecated")
   def bindFlow(handlerFlow: Flow[HttpRequest, HttpResponse, _]): Future[ServerBinding] =
-    http.bindAndHandleImpl(
+    http.bindAndHandle(
       HttpMetrics.meterFlow(metricsHandler).join(handlerFlow),
       interface,
       port,
@@ -71,8 +73,9 @@ final case class HttpMetricsServerBuilder(
       log
     )(materializer)
 
+  @nowarn("msg=deprecated")
   def bind(handler: HttpRequest => Future[HttpResponse]): Future[ServerBinding] =
-    http.bindAndHandleAsyncImpl(
+    http.bindAndHandleAsync(
       HttpMetrics.meterFunction(handler, metricsHandler)(materializer.executionContext),
       interface,
       port,
