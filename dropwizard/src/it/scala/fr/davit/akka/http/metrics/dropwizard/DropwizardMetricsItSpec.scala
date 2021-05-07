@@ -17,7 +17,6 @@
 package fr.davit.akka.http.metrics.dropwizard
 
 import java.util.concurrent.TimeUnit
-
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport

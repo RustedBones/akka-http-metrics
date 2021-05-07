@@ -3,6 +3,10 @@
 ## Unreleased
 
 - Update dependencies
+- Throw explicit exception when trace-id not found in by the MereStage
+- Seal and convert routes internally
+- Move HttpMetricsServerBuilder to http.metrics.core package
+- Remove deprecated HttpMetricsRoute
 
 ## v1.5.1 (2021-02-16)
 

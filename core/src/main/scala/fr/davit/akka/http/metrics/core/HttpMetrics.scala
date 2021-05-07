@@ -18,12 +18,13 @@ package fr.davit.akka.http.metrics.core
 
 import akka.NotUsed
 import akka.actor.ClassicActorSystemProvider
+import akka.http.scaladsl.HttpExt
 import akka.http.scaladsl.model.{AttributeKey, HttpRequest, HttpResponse}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{Directives, ExceptionHandler, RejectionHandler, Route}
 import akka.http.scaladsl.settings.RoutingSettings
-import akka.http.scaladsl.{HttpExt, HttpMetricsServerBuilder}
 import akka.stream.scaladsl.{BidiFlow, Flow}
+import fr.davit.akka.http.metrics.core.scaladsl.HttpMetricsServerBuilder
 
 import java.util.UUID
 import scala.concurrent.duration.Deadline
@@ -61,7 +62,7 @@ object HttpMetrics {
   /** This will take precedence over the RouteResult.routeToFlow
     * to seal the route with proper handler for metrics labeling
     */
-  implicit def metricsRouteToFlow(
+  def metricsRouteToFlow(
       route: Route
   )(implicit system: ClassicActorSystemProvider): Flow[HttpRequest, HttpResponse, NotUsed] =
     Flow[HttpRequest].mapAsync(1)(metricsRouteToFunction(route))
@@ -69,7 +70,7 @@ object HttpMetrics {
   /** This will take precedence over the RouteResult.routeToFunction
     * to seal the route with proper handler for metrics labeling
     */
-  implicit def metricsRouteToFunction(
+  def metricsRouteToFunction(
       route: Route
   )(implicit system: ClassicActorSystemProvider): HttpRequest => Future[HttpResponse] = {
     val routingSettings  = RoutingSettings(system)
@@ -106,17 +107,17 @@ object HttpMetrics {
   def meterFunctionSync(
       handler: HttpRequest => HttpResponse,
       metricsHandler: HttpMetricsHandler
-  ): HttpRequest => Future[HttpResponse] =
+  ): HttpRequest => HttpResponse =
     (traceRequest _)
       .andThen(metricsHandler.onRequest)
       .andThen(r => (r, Try(handler(r))))
-      .andThen { case (req, resp) =>
-        resp.transform(
-          r => Success(metricsHandler.onResponse(req, r)),
-          e => Failure(metricsHandler.onFailure(req, e))
-        )
+      .andThen {
+        case (req, Success(resp)) =>
+          metricsHandler.onResponse(req, resp)
+        case (req, Failure(e)) =>
+          metricsHandler.onFailure(req, e)
+          throw e
       }
-      .andThen(Future.fromTry)
 
   def meterFlow(
       metricsHandler: HttpMetricsHandler
