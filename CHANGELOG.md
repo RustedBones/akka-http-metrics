@@ -4,7 +4,7 @@
 
 - Update dependencies
 - Throw explicit exception when trace-id not found in by the MereStage
-- Deprecate implicit Route conversions
+- Seal and convert routes internally
 - Move HttpMetricsServerBuilder to http.metrics.core package
 - Remove deprecated HttpMetricsRoute
 
