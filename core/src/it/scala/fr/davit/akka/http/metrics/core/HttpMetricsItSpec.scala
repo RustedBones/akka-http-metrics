@@ -26,6 +26,7 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import akka.testkit.TestKit
 import fr.davit.akka.http.metrics.core.HttpMetrics._
+import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives._
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
@@ -58,7 +59,7 @@ class HttpMetricsItSpec
     val greeter: Flow[Message, Message, Any] =
       Flow[Message].mapConcat {
         case tm: TextMessage =>
-          TextMessage(Source.single("Hello ") ++ tm.textStream ++ Source.single("!")) :: Nil
+          TextMessage(Source.single("Hello ") ++ tm.textStream) :: Nil
         case bm: BinaryMessage =>
           // ignore binary messages but drain content to avoid the stream being clogged
           bm.dataStream.runWith(Sink.ignore)
@@ -73,6 +74,15 @@ class HttpMetricsItSpec
       } ~ path("greeter") {
         get {
           handleWebSocketMessages(greeter)
+        }
+      } ~ path("private") {
+        ignoreMetrics {
+          get {
+            extractRequest { req =>
+              println(req)
+              complete("Hi")
+            }
+          }
         }
       }
     }
@@ -112,6 +122,7 @@ class HttpMetricsItSpec
     val uri = Uri()
       .withScheme("http")
       .withAuthority(binding.localAddress.getHostString, binding.localAddress.getPort)
+      .withPath(Uri.Path("/"))
     val request = HttpRequest().withUri(uri)
 
     val response = Http()
@@ -138,7 +149,7 @@ class HttpMetricsItSpec
       .withAuthority(binding.localAddress.getHostString, binding.localAddress.getPort)
       .withPath(Uri.Path("/greeter"))
     val request = WebSocketRequest(uri)
-    val flow    = Flow.fromSinkAndSourceMat(Sink.ignore, Source.single(TextMessage("test")))(Keep.left)
+    val flow    = Flow.fromSinkAndSourceMat(Sink.ignore, Source.single(TextMessage("you")))(Keep.left)
 
     val (response, _) = Http()
       .singleWebSocketRequest(request, flow)
@@ -146,6 +157,30 @@ class HttpMetricsItSpec
     response.futureValue.response.status shouldBe StatusCodes.SwitchingProtocols
     registry.connections.value() shouldBe 1
     registry.requests.value() shouldBe 1
+
+    binding.terminate(30.seconds).futureValue
+  }
+
+  it should "skip ignored routes" in new Fixture {
+    val binding = Http()
+      .newMeteredServerAt("localhost", 0, registry)
+      .bindFlow(route)
+      .futureValue
+
+    val uri = Uri()
+      .withScheme("http")
+      .withAuthority(binding.localAddress.getHostString, binding.localAddress.getPort)
+      .withPath(Uri.Path("/private"))
+    val request = HttpRequest().withUri(uri)
+
+    val response = Http()
+      .singleRequest(request)
+      .futureValue
+
+    response.status shouldBe StatusCodes.OK
+    Unmarshal(response).to[String].futureValue shouldBe "Hi"
+    registry.connections.value() shouldBe 1 // Even if ignored, the connection will be counted
+    registry.requests.value() shouldBe 0
 
     binding.terminate(30.seconds).futureValue
   }

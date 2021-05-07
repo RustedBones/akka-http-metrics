@@ -42,6 +42,7 @@ object HttpMetrics {
 
   val TraceId: AttributeKey[UUID]            = AttributeKey("trace-id", classOf[UUID])
   val TraceTimestamp: AttributeKey[Deadline] = AttributeKey("trace-time", classOf[Deadline])
+  val Ignored: AttributeKey[NotUsed]         = AttributeKey("ignored", classOf[NotUsed])
   val PathLabel: AttributeKey[String]        = AttributeKey("path-label", classOf[String])
 
   implicit def enrichHttp(http: HttpExt): HttpMetrics = new HttpMetrics(http)

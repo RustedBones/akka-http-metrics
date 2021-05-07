@@ -16,6 +16,7 @@
 
 package fr.davit.akka.http.metrics.core
 
+import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
 import akka.stream.Materializer
@@ -49,13 +50,24 @@ class HttpMetricsRegistrySpec
     val registry = new TestRegistry(settings)
   }
 
-  "HttpMetricsRegistry" should "compute the number of requests" in new Fixture() {
+  "HttpMetricsRegistry" should "not record ignored requests / response / failures" in new Fixture() {
+    val ignoredRequest = testRequest.addAttribute(HttpMetrics.Ignored, NotUsed)
+    registry.onRequest(ignoredRequest)
+    registry.requests.value() shouldBe 0
+    registry.onResponse(ignoredRequest, testResponse)
+    registry.responses.value() shouldBe 0
+    registry.onFailure(ignoredRequest, new Exception("BOOM!"))
+    registry.requestsFailures.value() shouldBe 0
+  }
+
+  it should "compute the number of requests" in new Fixture() {
     registry.requests.value() shouldBe 0
     registry.onRequest(testRequest)
     registry.requests.value() shouldBe 1
     registry.onRequest(testRequest)
     registry.requests.value() shouldBe 2
   }
+
   it should "compute the number of failures" in new Fixture() {
     registry.requestsFailures.value() shouldBe 0
     registry.onFailure(testRequest, new Exception("BOOM!"))

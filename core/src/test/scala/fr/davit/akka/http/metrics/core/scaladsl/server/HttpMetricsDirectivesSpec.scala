@@ -42,6 +42,20 @@ class HttpMetricsDirectivesSpec extends AnyFlatSpec with Matchers with Scalatest
     }
   }
 
+  it should "put ignored attribute" in {
+    val route = ignoreMetrics {
+      path("private") {
+        attribute(HttpMetrics.Ignored) { _ =>
+          complete(StatusCodes.OK)
+        }
+      }
+    }
+
+    Get("/private") ~> route ~> check {
+      status shouldBe StatusCodes.OK
+    }
+  }
+
   it should "put label on path" in {
     val route = pathPrefixLabeled("api") {
       pathPrefix("user" / LongNumber) { _ =>
