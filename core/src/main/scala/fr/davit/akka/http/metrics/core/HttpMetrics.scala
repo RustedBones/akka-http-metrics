@@ -91,18 +91,6 @@ object HttpMetrics {
     }
   }
 
-  @deprecated("Use HttpMetrics.metricsRouteToFlow(...) to seal and meter your route.", since = "1.6.0")
-  implicit def metricsRouteToFlowImplicit(route: Route)(implicit
-      system: ClassicActorSystemProvider
-  ): Flow[HttpRequest, HttpResponse, NotUsed] =
-    metricsRouteToFlow(route)
-
-  @deprecated("Use HttpMetrics.metricsRouteToFunction(...) to seal and meter your route.", since = "1.6.0")
-  implicit def metricsRouteToFunctionImplicit(route: Route)(implicit
-      system: ClassicActorSystemProvider
-  ): HttpRequest => Future[HttpResponse] =
-    metricsRouteToFunction(route)
-
   def meterFunction(handler: HttpRequest => Future[HttpResponse], metricsHandler: HttpMetricsHandler)(implicit
       executionContext: ExecutionContext
   ): HttpRequest => Future[HttpResponse] =
@@ -119,17 +107,17 @@ object HttpMetrics {
   def meterFunctionSync(
       handler: HttpRequest => HttpResponse,
       metricsHandler: HttpMetricsHandler
-  ): HttpRequest => Future[HttpResponse] =
+  ): HttpRequest => HttpResponse =
     (traceRequest _)
       .andThen(metricsHandler.onRequest)
       .andThen(r => (r, Try(handler(r))))
-      .andThen { case (req, resp) =>
-        resp.transform(
-          r => Success(metricsHandler.onResponse(req, r)),
-          e => Failure(metricsHandler.onFailure(req, e))
-        )
+      .andThen {
+        case (req, Success(resp)) =>
+          metricsHandler.onResponse(req, resp)
+        case (req, Failure(e)) =>
+          metricsHandler.onFailure(req, e)
+          throw e
       }
-      .andThen(Future.fromTry)
 
   def meterFlow(
       metricsHandler: HttpMetricsHandler

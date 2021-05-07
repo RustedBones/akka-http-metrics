@@ -82,7 +82,7 @@ class HttpMetricsItSpec
 
     val binding = Http()
       .newMeteredServerAt("localhost", 0, registry)
-      .bindFlow(HttpMetrics.metricsRouteToFlow(route))
+      .bindFlow(route)
       .futureValue
 
     val uri = Uri()
@@ -106,7 +106,7 @@ class HttpMetricsItSpec
 
     val binding = Http()
       .newMeteredServerAt("localhost", 0, registry)
-      .bind(HttpMetrics.metricsRouteToFunction(route))
+      .bind(route)
       .futureValue
 
     val uri = Uri()
@@ -130,7 +130,7 @@ class HttpMetricsItSpec
 
     val binding = Http()
       .newMeteredServerAt("localhost", 0, registry)
-      .bindFlow(HttpMetrics.metricsRouteToFlow(route))
+      .bindFlow(route)
       .futureValue
 
     val uri = Uri()

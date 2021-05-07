@@ -21,8 +21,9 @@ import akka.event.LoggingAdapter
 import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl._
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
+import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.settings.ServerSettings
-import akka.stream.scaladsl.{Flow, Source}
+import akka.stream.scaladsl.Source
 import akka.stream.{Materializer, SystemMaterializer}
 import fr.davit.akka.http.metrics.core.{HttpMetrics, HttpMetricsHandler}
 
@@ -33,6 +34,9 @@ import scala.concurrent.Future
   *
   * Use HttpExt.newMeteredServerAt() to create a builder, use methods to customize settings,
   * and then call one of the bind* methods to bind a server.
+  *
+  * Does not extend akka.http.scaladsl.ServerBuilder to seal routes internally in order to ensure
+  * proper metrics instrumentations
   */
 final case class HttpMetricsServerBuilder(
     interface: String,
@@ -43,18 +47,18 @@ final case class HttpMetricsServerBuilder(
     settings: ServerSettings,
     system: ClassicActorSystemProvider,
     materializer: Materializer
-) extends ServerBuilder {
+) {
 
   private lazy val http: HttpExt = Http(system)
 
-  def onInterface(newInterface: String): ServerBuilder                      = copy(interface = newInterface)
-  def onPort(newPort: Int): ServerBuilder                                   = copy(port = newPort)
-  def meterTo(metricsHandler: HttpMetricsHandler): HttpMetricsServerBuilder = copy(metricsHandler = metricsHandler)
-  def logTo(newLog: LoggingAdapter): ServerBuilder                          = copy(log = newLog)
-  def withSettings(newSettings: ServerSettings): ServerBuilder              = copy(settings = newSettings)
-  def adaptSettings(f: ServerSettings => ServerSettings): ServerBuilder     = copy(settings = f(settings))
-  def enableHttps(newContext: HttpsConnectionContext): ServerBuilder        = copy(context = newContext)
-  def withMaterializer(newMaterializer: Materializer): ServerBuilder        = copy(materializer = newMaterializer)
+  def onInterface(newInterface: String): HttpMetricsServerBuilder                  = copy(interface = newInterface)
+  def onPort(newPort: Int): HttpMetricsServerBuilder                               = copy(port = newPort)
+  def meterTo(metricsHandler: HttpMetricsHandler): HttpMetricsServerBuilder        = copy(metricsHandler = metricsHandler)
+  def logTo(newLog: LoggingAdapter): HttpMetricsServerBuilder                      = copy(log = newLog)
+  def withSettings(newSettings: ServerSettings): HttpMetricsServerBuilder          = copy(settings = newSettings)
+  def adaptSettings(f: ServerSettings => ServerSettings): HttpMetricsServerBuilder = copy(settings = f(settings))
+  def enableHttps(newContext: HttpsConnectionContext): HttpMetricsServerBuilder    = copy(context = newContext)
+  def withMaterializer(newMaterializer: Materializer): HttpMetricsServerBuilder    = copy(materializer = newMaterializer)
 
   @nowarn("msg=deprecated")
   def connectionSource(): Source[Http.IncomingConnection, Future[ServerBinding]] =
@@ -63,20 +67,25 @@ final case class HttpMetricsServerBuilder(
       .map(c => c.copy(_flow = c._flow.join(HttpMetrics.meterFlow(metricsHandler))))
 
   @nowarn("msg=deprecated")
-  def bindFlow(handlerFlow: Flow[HttpRequest, HttpResponse, _]): Future[ServerBinding] =
+  def bindFlow(route: Route): Future[ServerBinding] = {
+    val flow        = HttpMetrics.metricsRouteToFlow(route)(system)
+    val meteredFlow = HttpMetrics.meterFlow(metricsHandler).join(flow)
     http.bindAndHandle(
-      HttpMetrics.meterFlow(metricsHandler).join(handlerFlow),
+      meteredFlow,
       interface,
       port,
       context,
       settings,
       log
     )(materializer)
+  }
 
   @nowarn("msg=deprecated")
-  def bind(handler: HttpRequest => Future[HttpResponse]): Future[ServerBinding] =
+  def bind(route: Route): Future[ServerBinding] = {
+    val handler        = HttpMetrics.metricsRouteToFunction(route)(system)
+    val meteredHandler = HttpMetrics.meterFunction(handler, metricsHandler)(materializer.executionContext)
     http.bindAndHandleAsync(
-      HttpMetrics.meterFunction(handler, metricsHandler)(materializer.executionContext),
+      meteredHandler,
       interface,
       port,
       context,
@@ -84,9 +93,20 @@ final case class HttpMetricsServerBuilder(
       parallelism = 0,
       log
     )(materializer)
+  }
 
-  def bindSync(handler: HttpRequest => HttpResponse): Future[ServerBinding] =
-    bind(HttpMetrics.meterFunctionSync(handler, metricsHandler))
+  @nowarn("msg=deprecated")
+  def bindSync(handler: HttpRequest => HttpResponse): Future[ServerBinding] = {
+    val meteredHandler = HttpMetrics.meterFunctionSync(handler, metricsHandler)
+    http.bindAndHandleSync(
+      meteredHandler,
+      interface,
+      port,
+      context,
+      settings,
+      log
+    )(materializer)
+  }
 }
 
 object HttpMetricsServerBuilder {

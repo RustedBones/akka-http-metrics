@@ -25,7 +25,6 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.testkit.TestKit
-import fr.davit.akka.http.metrics.core.HttpMetrics
 import fr.davit.akka.http.metrics.core.HttpMetrics._
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives._
 import fr.davit.akka.http.metrics.dropwizard.marshalling.DropwizardMarshallers._
@@ -72,7 +71,7 @@ class DropwizardMetricsItSpec
 
     val binding = Http()
       .newMeteredServerAt("localhost", 0, registry)
-      .bindFlow(HttpMetrics.metricsRouteToFlow(route))
+      .bindFlow(route)
       .futureValue
 
     val uri = Uri("/metrics")
