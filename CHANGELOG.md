@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+
+## v1.6.0 (2021-05-07)
+
 - Update dependencies
 - Throw explicit exception when trace-id not found in by the MereStage
 - Seal and convert routes internally
