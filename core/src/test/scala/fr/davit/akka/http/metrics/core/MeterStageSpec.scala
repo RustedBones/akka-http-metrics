@@ -22,7 +22,6 @@ import akka.stream.ClosedShape
 import akka.stream.scaladsl.{GraphDSL, RunnableGraph}
 import akka.stream.testkit.scaladsl.{TestSink, TestSource}
 import akka.testkit.TestKit
-import fr.davit.akka.http.metrics.core.MeterStage.MissingTraceIdException
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
@@ -122,14 +121,36 @@ class MeterStageSpec
     responseOut.expectNext() shouldBe tracedResponse
   }
 
-  it should "throw a MissingTraceIdException if trace-id attribute is missing" in new Fixture {
+  it should "throw a NoSuchElementException if trace-id attribute is missing in request" in new Fixture {
     val requestWithoutTraceId = HttpRequest()
 
     requestIn.sendNext(requestWithoutTraceId)
-    requestIn.expectCancellationWithCause(MissingTraceIdException)
-    requestOut.expectError(MissingTraceIdException)
-    responseIn.expectCancellationWithCause(MissingTraceIdException)
-    responseOut.expectError(MissingTraceIdException)
+
+    val error = requestIn.expectCancellationWithCause[NoSuchElementException]()
+    requestOut.expectError(error)
+    responseIn.expectCancellationWithCause[NoSuchElementException]()
+    responseOut.expectError(error)
+  }
+
+  it should "throw a NoSuchElementException if trace-id attribute is missing in response" in new Fixture {
+    val responseWithoutTraceId = HttpResponse()
+
+    responseIn.sendNext(responseWithoutTraceId)
+
+    val error = requestIn.expectCancellationWithCause[NoSuchElementException]()
+    requestOut.expectError(error)
+    responseIn.expectCancellationWithCause[NoSuchElementException]()
+    responseOut.expectError(error)
+  }
+
+  it should "throw a NoSuchElementException if trace-id is unknown on response" in new Fixture {
+    responseIn.sendNext(tracedResponse)
+
+    val error = requestIn.expectCancellationWithCause[NoSuchElementException]()
+    error.getMessage should include(traceId.toString)
+    requestOut.expectError(error)
+    responseIn.expectCancellationWithCause[NoSuchElementException]()
+    responseOut.expectError(error)
   }
 
   it should "propagate error from request in" in new Fixture {

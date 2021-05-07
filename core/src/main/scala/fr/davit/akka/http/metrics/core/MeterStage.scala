@@ -25,13 +25,6 @@ import scala.collection.mutable
 
 object MeterStage {
   val PrematureCloseException = new IllegalStateException("Stream completed prematurely")
-
-  private[core] val MissingTraceIdException = new NoSuchElementException(
-    s"Request is missing '${HttpMetrics.TraceId.name}' attribute. This could be possibly caused by implicit conversion " +
-      "conflict during HTTP server creation. Try to use explicit conversion: " +
-      "replace Http().newMeteredServerAt(...).bindFlow(routes) " +
-      "with Http().newMeteredServerAt(...).bindFlow(HttpMetrics.metricsRouteToFlow(routes))"
-  )
 }
 
 private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
@@ -67,12 +60,13 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
 
       override def onPush(): Unit = {
         val request = grab(requestIn)
-        request.attribute(HttpMetrics.TraceId) match {
+        val traceId = request.attribute(HttpMetrics.TraceId)
+        traceId match {
           case Some(id) =>
             pending += id -> request
             push(requestOut, metricsHandler.onRequest(request))
           case _ =>
-            failStage(MissingTraceIdException)
+            failStage(new NoSuchElementException(s"Request is missing '${HttpMetrics.TraceId.name}' attribute"))
         }
       }
       override def onPull(): Unit = pull(requestIn)
@@ -86,9 +80,19 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
 
       override def onPush(): Unit = {
         val response = grab(responseIn)
-        val id       = response.getAttribute(HttpMetrics.TraceId).get
-        val request  = pending.remove(id).get
-        push(responseOut, metricsHandler.onResponse(request, response))
+        val traceId  = response.attribute(HttpMetrics.TraceId)
+        val request = for {
+          id  <- traceId
+          req <- pending.remove(id)
+        } yield req
+        (request, traceId) match {
+          case (Some(req), _) =>
+            push(responseOut, metricsHandler.onResponse(req, response))
+          case (None, Some(id)) =>
+            failStage(new NoSuchElementException(s"Could not find request for '$id'"))
+          case (None, None) =>
+            failStage(new NoSuchElementException(s"Response is missing '${HttpMetrics.TraceId.name}' attribute"))
+        }
       }
       override def onPull(): Unit = pull(responseIn)
 
