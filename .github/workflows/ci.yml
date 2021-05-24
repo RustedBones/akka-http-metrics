@@ -49,10 +49,10 @@ jobs:
           key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
       - name: Check that workflows are up to date
-        run: sbt ++${{ matrix.scala }} githubWorkflowCheck
+        run: sbt --client '++${{ matrix.scala }}; githubWorkflowCheck'
 
       - name: Check project
-        run: sbt ++${{ matrix.scala }} scalafmtCheckAll headerCheckAll
+        run: sbt --client '++${{ matrix.scala }}; scalafmtCheckAll; headerCheckAll'
 
       - name: Build project
-        run: 'sbt ++${{ matrix.scala }} test it:test'
+        run: 'sbt --client ''++${{ matrix.scala }}; test; it:test'''
