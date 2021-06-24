@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Update dependencies
 
 ## v1.6.0 (2021-05-07)
 
