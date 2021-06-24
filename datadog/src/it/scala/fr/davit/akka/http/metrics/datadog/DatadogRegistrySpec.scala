@@ -63,66 +63,66 @@ class DatadogRegistrySpec
 
   "DatadogRegistry" should "send requestsActive datagrams to the statsd server" in withFixture { (statsd, registry) =>
     registry.requestsActive.inc()
-    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.requests_active:1|c"
+    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.requests_active:1|c\n"
   }
 
   it should "send requests datagrams to the statsd server" in withFixture { (statsd, registry) =>
     registry.requests.inc()
-    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.requests_count:1|c"
+    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.requests_count:1|c\n"
   }
 
   it should "send requestsSize datagrams to the statsd server" in withFixture { (statsd, registry) =>
     registry.requestsSize.update(3)
-    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.requests_bytes:3|d"
+    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.requests_bytes:3|d\n"
 
     registry.requestsSize.update(3, dimensions)
-    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.requests_bytes:3|d|#path:/api,status:2xx"
+    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.requests_bytes:3|d|#path:/api,status:2xx\n"
   }
 
   it should "send responses datagrams to the statsd server" in withFixture { (statsd, registry) =>
     registry.responses.inc()
-    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.responses_count:1|c"
+    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.responses_count:1|c\n"
 
     registry.responses.inc(dimensions)
-    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.responses_count:1|c|#path:/api,status:2xx"
+    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.responses_count:1|c|#path:/api,status:2xx\n"
   }
 
   it should "send responsesErrors datagrams to the statsd server" in withFixture { (statsd, registry) =>
     registry.responsesErrors.inc()
-    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.responses_errors_count:1|c"
+    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.responses_errors_count:1|c\n"
 
     registry.responsesErrors.inc(dimensions)
     statsd
       .expectMsgType[Udp.Received]
       .data
-      .utf8String shouldBe "akka.http.responses_errors_count:1|c|#path:/api,status:2xx"
+      .utf8String shouldBe "akka.http.responses_errors_count:1|c|#path:/api,status:2xx\n"
   }
 
   it should "send responsesDuration datagrams to the statsd server" in withFixture { (statsd, registry) =>
     registry.responsesDuration.observe(3.seconds)
-    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.responses_duration:3000|d"
+    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.responses_duration:3000|d\n"
 
     registry.responsesDuration.observe(3.seconds, dimensions)
     statsd
       .expectMsgType[Udp.Received]
       .data
-      .utf8String shouldBe "akka.http.responses_duration:3000|d|#path:/api,status:2xx"
+      .utf8String shouldBe "akka.http.responses_duration:3000|d|#path:/api,status:2xx\n"
   }
 
   it should "send responsesSize datagrams to the statsd server" in withFixture { (statsd, registry) =>
     registry.responsesSize.update(3)
-    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.responses_bytes:3|d"
+    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.responses_bytes:3|d\n"
 
     registry.responsesSize.update(3, dimensions)
-    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.responses_bytes:3|d|#path:/api,status:2xx"
+    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.responses_bytes:3|d|#path:/api,status:2xx\n"
   }
 
   it should "send connectionsActive datagrams to the statsd server" in withFixture { (statsd, registry) =>
     registry.connectionsActive.inc()
-    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.connections_active:1|c"
+    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.connections_active:1|c\n"
   }
   it should "send connections datagrams to the statsd server" in withFixture { (statsd, registry) =>
     registry.connections.inc()
-    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.connections_count:1|c"
+    statsd.expectMsgType[Udp.Received].data.utf8String shouldBe "akka.http.connections_count:1|c\n"
   }
 }
