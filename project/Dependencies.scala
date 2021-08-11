@@ -4,14 +4,14 @@ object Dependencies {
 
   object Versions {
     val akka                  = "2.6.15"
-    val akkaHttp              = "10.2.4"
+    val akkaHttp              = "10.2.6"
     val datadog               = "2.13.0"
-    val dropwizard            = "4.2.2"
+    val dropwizard            = "4.2.3"
     val dropwizardV5          = "5.0.0"
     val enumeratum            = "1.7.0"
-    val logback               = "1.2.3"
+    val logback               = "1.2.5"
     val prometheus            = "0.11.0"
-    val scalaCollectionCompat = "2.4.4"
+    val scalaCollectionCompat = "2.5.0"
     val scalaLogging          = "3.9.4"
     val scalaMock             = "5.1.0"
     val scalaTest             = "3.2.9"
