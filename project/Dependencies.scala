@@ -14,7 +14,7 @@ object Dependencies {
     val scalaCollectionCompat = "2.5.0"
     val scalaLogging          = "3.9.4"
     val scalaMock             = "5.1.0"
-    val scalaTest             = "3.2.9"
+    val scalaTest             = "3.2.10"
   }
 
   val akkaHttp         = "com.typesafe.akka"          %% "akka-http"             % Versions.akkaHttp
