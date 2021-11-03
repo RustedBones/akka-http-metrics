@@ -22,7 +22,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [2.13.7, 2.12.14]
+        scala: [2.13.7, 2.12.15]
         java: [adopt@1.8]
     runs-on: ${{ matrix.os }}
     steps:
@@ -32,7 +32,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v12
+        uses: olafurpg/setup-scala@v13
         with:
           java-version: ${{ matrix.java }}
 
@@ -49,10 +49,10 @@ jobs:
           key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
       - name: Check that workflows are up to date
-        run: sbt --client '++${{ matrix.scala }}; githubWorkflowCheck'
+        run: sbt ++${{ matrix.scala }} githubWorkflowCheck
 
       - name: Check project
-        run: sbt --client '++${{ matrix.scala }}; scalafmtCheckAll; headerCheckAll'
+        run: sbt ++${{ matrix.scala }} scalafmtCheckAll headerCheckAll
 
       - name: Build project
-        run: 'sbt --client ''++${{ matrix.scala }}; test; it:test'''
+        run: 'sbt ++${{ matrix.scala }} test it:test'
