@@ -29,8 +29,7 @@ trait HttpMetricsSettings {
     */
   def metricsNames: HttpMetricsNames
 
-  /** Function that defines if the http response should be
-    * counted as an error
+  /** Function that defines if the http response should be counted as an error
     */
   def defineError: HttpResponse => Boolean
 
@@ -89,12 +88,12 @@ object HttpMetricsSettings {
       serverDimensions: immutable.Seq[Dimension] = immutable.Seq.empty[Dimension]
   ) extends HttpMetricsSettings {
 
-    def withNamespace(namespace: String): HttpMetricsSettings                       = copy(namespace = namespace)
-    def withMetricsNames(metricsNames: HttpMetricsNames): HttpMetricsSettings       = copy(metricsNames = metricsNames)
-    def withDefineError(fn: HttpResponse => Boolean): HttpMetricsSettings           = copy(defineError = fn)
-    def withIncludeMethodDimension(include: Boolean): HttpMetricsSettings           = copy(includeMethodDimension = include)
-    def withIncludePathDimension(include: Boolean): HttpMetricsSettings             = copy(includePathDimension = include)
-    def withIncludeStatusDimension(include: Boolean): HttpMetricsSettings           = copy(includeStatusDimension = include)
+    def withNamespace(namespace: String): HttpMetricsSettings                 = copy(namespace = namespace)
+    def withMetricsNames(metricsNames: HttpMetricsNames): HttpMetricsSettings = copy(metricsNames = metricsNames)
+    def withDefineError(fn: HttpResponse => Boolean): HttpMetricsSettings     = copy(defineError = fn)
+    def withIncludeMethodDimension(include: Boolean): HttpMetricsSettings     = copy(includeMethodDimension = include)
+    def withIncludePathDimension(include: Boolean): HttpMetricsSettings       = copy(includePathDimension = include)
+    def withIncludeStatusDimension(include: Boolean): HttpMetricsSettings     = copy(includeStatusDimension = include)
     def withServerDimensions(labels: immutable.Seq[Dimension]): HttpMetricsSettings = copy(serverDimensions = labels)
   }
 }

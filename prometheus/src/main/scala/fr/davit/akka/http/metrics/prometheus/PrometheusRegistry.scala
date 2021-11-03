@@ -41,8 +41,7 @@ object PrometheusRegistry {
   }
 }
 
-/** Prometheus registry
-  * For metrics naming see [https://prometheus.io/docs/practices/naming/]
+/** Prometheus registry For metrics naming see [https://prometheus.io/docs/practices/naming/]
   */
 class PrometheusRegistry(settings: PrometheusSettings, val underlying: CollectorRegistry)
     extends HttpMetricsRegistry(settings) {
