@@ -59,16 +59,16 @@ object HttpMetrics {
     response.addAttribute(PathLabel, "unhandled")
   }
 
-  /** This will take precedence over the RouteResult.routeToFlow
-    * to seal the route with proper handler for metrics labeling
+  /** This will take precedence over the RouteResult.routeToFlow to seal the route with proper handler for metrics
+    * labeling
     */
   def metricsRouteToFlow(
       route: Route
   )(implicit system: ClassicActorSystemProvider): Flow[HttpRequest, HttpResponse, NotUsed] =
     Flow[HttpRequest].mapAsync(1)(metricsRouteToFunction(route))
 
-  /** This will take precedence over the RouteResult.routeToFunction
-    * to seal the route with proper handler for metrics labeling
+  /** This will take precedence over the RouteResult.routeToFunction to seal the route with proper handler for metrics
+    * labeling
     */
   def metricsRouteToFunction(
       route: Route

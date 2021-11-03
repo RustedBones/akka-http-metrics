@@ -32,11 +32,11 @@ import scala.concurrent.Future
 
 /** Metered server builder
   *
-  * Use HttpExt.newMeteredServerAt() to create a builder, use methods to customize settings,
-  * and then call one of the bind* methods to bind a server.
+  * Use HttpExt.newMeteredServerAt() to create a builder, use methods to customize settings, and then call one of the
+  * bind* methods to bind a server.
   *
-  * Does not extend akka.http.scaladsl.ServerBuilder to seal routes internally in order to ensure
-  * proper metrics instrumentations
+  * Does not extend akka.http.scaladsl.ServerBuilder to seal routes internally in order to ensure proper metrics
+  * instrumentations
   */
 final case class HttpMetricsServerBuilder(
     interface: String,
@@ -51,14 +51,14 @@ final case class HttpMetricsServerBuilder(
 
   private lazy val http: HttpExt = Http(system)
 
-  def onInterface(newInterface: String): HttpMetricsServerBuilder                  = copy(interface = newInterface)
-  def onPort(newPort: Int): HttpMetricsServerBuilder                               = copy(port = newPort)
-  def meterTo(metricsHandler: HttpMetricsHandler): HttpMetricsServerBuilder        = copy(metricsHandler = metricsHandler)
-  def logTo(newLog: LoggingAdapter): HttpMetricsServerBuilder                      = copy(log = newLog)
-  def withSettings(newSettings: ServerSettings): HttpMetricsServerBuilder          = copy(settings = newSettings)
+  def onInterface(newInterface: String): HttpMetricsServerBuilder           = copy(interface = newInterface)
+  def onPort(newPort: Int): HttpMetricsServerBuilder                        = copy(port = newPort)
+  def meterTo(metricsHandler: HttpMetricsHandler): HttpMetricsServerBuilder = copy(metricsHandler = metricsHandler)
+  def logTo(newLog: LoggingAdapter): HttpMetricsServerBuilder               = copy(log = newLog)
+  def withSettings(newSettings: ServerSettings): HttpMetricsServerBuilder   = copy(settings = newSettings)
   def adaptSettings(f: ServerSettings => ServerSettings): HttpMetricsServerBuilder = copy(settings = f(settings))
   def enableHttps(newContext: HttpsConnectionContext): HttpMetricsServerBuilder    = copy(context = newContext)
-  def withMaterializer(newMaterializer: Materializer): HttpMetricsServerBuilder    = copy(materializer = newMaterializer)
+  def withMaterializer(newMaterializer: Materializer): HttpMetricsServerBuilder = copy(materializer = newMaterializer)
 
   @nowarn("msg=deprecated")
   def connectionSource(): Source[Http.IncomingConnection, Future[ServerBinding]] =
