@@ -10,7 +10,7 @@ lazy val filterScalacOptions = { options: Seq[String] =>
 }
 
 // for sbt-github-actions
-ThisBuild / crossScalaVersions := Seq("2.13.6", "2.12.14")
+ThisBuild / crossScalaVersions := Seq("2.13.6", "2.12.15")
 ThisBuild / githubWorkflowBuild := Seq(
   WorkflowStep.Sbt(name = Some("Check project"), commands = List("scalafmtCheckAll", "headerCheckAll")),
   WorkflowStep.Sbt(name = Some("Build project"), commands = List("test", "it:test"))
