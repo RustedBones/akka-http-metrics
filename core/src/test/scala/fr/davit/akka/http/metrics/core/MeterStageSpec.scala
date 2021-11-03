@@ -49,7 +49,7 @@ class MeterStageSpec
 
     val (requestIn, requestOut, responseIn, responseOut) = RunnableGraph
       .fromGraph(
-        GraphDSL.create(
+        GraphDSL.createGraph(
           TestSource.probe[HttpRequest],
           TestSink.probe[HttpRequest],
           TestSource.probe[HttpResponse],

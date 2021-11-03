@@ -50,8 +50,7 @@ class PrometheusMetricsItSpec
   }
 
   "PrometheusMetrics" should "expose external metrics" in {
-    val settings = PrometheusSettings
-      .default
+    val settings = PrometheusSettings.default
       .withIncludeMethodDimension(true)
       .withIncludePathDimension(true)
       .withIncludeStatusDimension(true)
@@ -80,30 +79,50 @@ class PrometheusMetricsItSpec
     body
       .split('\n')
       .filter(_.startsWith("# TYPE ")) should contain allElementsOf Seq(
-      "# TYPE jvm_classes_loaded gauge",
-      "# TYPE jvm_classes_loaded_total counter",
-      "# TYPE jvm_classes_unloaded_total counter",
-      "# TYPE jvm_memory_pool_allocated_bytes_total counter",
-      "# TYPE jvm_buffer_pool_used_bytes gauge",
+      "# TYPE akka_http_connections_active gauge",
+      "# TYPE akka_http_connections_created gauge",
+      "# TYPE akka_http_connections_total counter",
+      "# TYPE akka_http_requests_active gauge",
+      "# TYPE akka_http_requests_created gauge",
+      "# TYPE akka_http_requests_size_bytes histogram",
+      "# TYPE akka_http_requests_size_bytes_created gauge",
+      "# TYPE akka_http_requests_total counter",
       "# TYPE jvm_buffer_pool_capacity_bytes gauge",
       "# TYPE jvm_buffer_pool_used_buffers gauge",
-      "# TYPE jvm_memory_bytes_used gauge",
-      "# TYPE jvm_memory_bytes_committed gauge",
-      "# TYPE jvm_memory_bytes_max gauge",
-      "# TYPE jvm_memory_bytes_init gauge",
-      "# TYPE jvm_memory_pool_bytes_used gauge",
-      "# TYPE jvm_memory_pool_bytes_committed gauge",
-      "# TYPE jvm_memory_pool_bytes_max gauge",
-      "# TYPE jvm_memory_pool_bytes_init gauge",
+      "# TYPE jvm_buffer_pool_used_bytes gauge",
+      "# TYPE jvm_classes_currently_loaded gauge",
+      "# TYPE jvm_classes_loaded_total counter",
+      "# TYPE jvm_classes_unloaded_total counter",
+      "# TYPE jvm_gc_collection_seconds summary",
       "# TYPE jvm_info gauge",
+      "# TYPE jvm_memory_bytes_committed gauge",
+      "# TYPE jvm_memory_bytes_init gauge",
+      "# TYPE jvm_memory_bytes_max gauge",
+      "# TYPE jvm_memory_bytes_used gauge",
+      "# TYPE jvm_memory_objects_pending_finalization gauge",
+      "# TYPE jvm_memory_pool_allocated_bytes_created gauge",
+      "# TYPE jvm_memory_pool_allocated_bytes_total counter",
+      "# TYPE jvm_memory_pool_bytes_committed gauge",
+      "# TYPE jvm_memory_pool_bytes_init gauge",
+      "# TYPE jvm_memory_pool_bytes_max gauge",
+      "# TYPE jvm_memory_pool_bytes_used gauge",
+      "# TYPE jvm_memory_pool_collection_committed_bytes gauge",
+      "# TYPE jvm_memory_pool_collection_init_bytes gauge",
+      "# TYPE jvm_memory_pool_collection_max_bytes gauge",
+      "# TYPE jvm_memory_pool_collection_used_bytes gauge",
       "# TYPE jvm_threads_current gauge",
       "# TYPE jvm_threads_daemon gauge",
-      "# TYPE jvm_threads_peak gauge",
-      "# TYPE jvm_threads_started_total counter",
       "# TYPE jvm_threads_deadlocked gauge",
       "# TYPE jvm_threads_deadlocked_monitor gauge",
+      "# TYPE jvm_threads_peak gauge",
+      "# TYPE jvm_threads_started_total counter",
       "# TYPE jvm_threads_state gauge",
-      "# TYPE jvm_gc_collection_seconds summary"
+      "# TYPE process_cpu_seconds_total counter",
+      "# TYPE process_max_fds gauge",
+      "# TYPE process_open_fds gauge",
+      "# TYPE process_resident_memory_bytes gauge",
+      "# TYPE process_start_time_seconds gauge",
+      "# TYPE process_virtual_memory_bytes gauge"
     )
 
     binding.terminate(30.seconds).futureValue
