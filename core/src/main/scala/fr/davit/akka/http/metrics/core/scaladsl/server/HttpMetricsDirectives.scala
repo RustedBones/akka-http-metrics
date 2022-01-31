@@ -23,6 +23,7 @@ import akka.http.scaladsl.server.directives.BasicDirectives.{mapRequestContext, 
 import akka.http.scaladsl.server.directives.RouteDirectives.reject
 import akka.http.scaladsl.server.util.Tuple
 import akka.http.scaladsl.server.{Directive, PathMatcher, StandardRoute}
+import fr.davit.akka.http.metrics.core.HttpMetrics.RequestPath
 import fr.davit.akka.http.metrics.core.{HttpMetrics, HttpMetricsRegistry}
 
 trait HttpMetricsDirectives {
@@ -54,12 +55,12 @@ trait HttpMetricsDirectives {
       pm(ctx.unmatchedPath) match {
         case Matched(rest, values) =>
           tprovide(values) & mapRequestContext(_ withUnmatchedPath rest) & mapResponse { response =>
-            val suffix = response.attribute(HttpMetrics.PathLabel).getOrElse("")
+            val suffix = response.attribute(HttpMetrics.RequestPath.Key).map(_.label).getOrElse("")
             val pathLabel = label match {
               case Some(l) => "/" + l + suffix // pm matches additional slash prefix
               case None    => pathCandidate.substring(0, pathCandidate.length - rest.charCount) + suffix
             }
-            response.addAttribute(HttpMetrics.PathLabel, pathLabel)
+            response.addAttribute(HttpMetrics.RequestPath.Key, RequestPath(pathLabel))
           }
         case Unmatched =>
           reject

@@ -73,14 +73,6 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
     .labelNames(requestsLabels: _*)
     .register(underlying)
 
-  lazy val requestsFailures: Counter = io.prometheus.client.Counter
-    .build()
-    .namespace(settings.namespace)
-    .name(settings.metricsNames.requestsFailures)
-    .help("Total unserved requests")
-    .labelNames(requestsLabels: _*)
-    .register(underlying)
-
   lazy val requestsSize: Histogram = {
     val help = "HTTP request size"
     settings.receivedBytesConfig match {
@@ -113,14 +105,6 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
     .namespace(settings.namespace)
     .name(settings.metricsNames.responses)
     .help("HTTP responses")
-    .labelNames(responsesLabels: _*)
-    .register(underlying)
-
-  lazy val responsesErrors: Counter = io.prometheus.client.Counter
-    .build()
-    .namespace(settings.namespace)
-    .name(settings.metricsNames.responsesErrors)
-    .help("Total HTTP errors")
     .labelNames(responsesLabels: _*)
     .register(underlying)
 

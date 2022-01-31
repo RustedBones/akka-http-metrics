@@ -74,14 +74,6 @@ class DropwizardRegistrySpec extends AnyFlatSpec with Matchers {
     underlyingCounter("akka.http.responses", dimensions) shouldBe 1L
   }
 
-  it should "set responsesErrors metrics in the underlying registry" in new Fixture {
-    registry.responsesErrors.inc()
-    underlyingCounter("akka.http.responses.errors") shouldBe 1L
-
-    registry.responsesErrors.inc(dimensions)
-    underlyingCounter("akka.http.responses.errors", dimensions) shouldBe 1L
-  }
-
   it should "set responsesDuration metrics in the underlying registry" in new Fixture {
     registry.responsesDuration.observe(3.seconds)
     underlyingTimer("akka.http.responses.duration") shouldBe 3000000000L

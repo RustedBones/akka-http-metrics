@@ -25,7 +25,6 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import akka.testkit.TestKit
-import fr.davit.akka.http.metrics.core.HttpMetrics._
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
@@ -79,7 +78,6 @@ class HttpMetricsItSpec
   }
 
   "HttpMetrics" should "record metrics on flow handler" in new Fixture {
-
     val binding = Http()
       .newMeteredServerAt("localhost", 0, registry)
       .bindFlow(route)

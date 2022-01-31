@@ -55,7 +55,6 @@ class PrometheusMarshallersSpec extends AnyFlatSpec with Matchers with Scalatest
     registry.requestsActive.inc()
     registry.requestsSize.update(10)
     registry.responses.inc(dimensions)
-    registry.responsesErrors.inc(dimensions)
     registry.responsesDuration.observe(1.second, dimensions)
     registry.responsesSize.update(10, dimensions)
     registry.connections.inc()
@@ -80,8 +79,6 @@ class PrometheusMarshallersSpec extends AnyFlatSpec with Matchers with Scalatest
         "akka_http_requests_size_bytes_created",
         "akka_http_responses_total",
         "akka_http_responses_created",
-        "akka_http_responses_errors_total",
-        "akka_http_responses_errors_created",
         "akka_http_responses_duration_seconds_bucket",
         "akka_http_responses_duration_seconds_count",
         "akka_http_responses_duration_seconds_sum",

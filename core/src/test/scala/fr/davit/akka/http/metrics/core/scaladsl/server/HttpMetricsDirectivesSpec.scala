@@ -20,6 +20,7 @@ import akka.http.scaladsl.marshalling.PredefinedToEntityMarshallers._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
+import fr.davit.akka.http.metrics.core.HttpMetrics.RequestPath
 import fr.davit.akka.http.metrics.core.{HttpMetrics, TestRegistry}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -52,7 +53,7 @@ class HttpMetricsDirectivesSpec extends AnyFlatSpec with Matchers with Scalatest
     }
 
     Get("/api/user/1234/address") ~> route ~> check {
-      response.attribute(HttpMetrics.PathLabel) shouldBe Some("/api")
+      response.attribute(HttpMetrics.RequestPath.Key) shouldBe Some(RequestPath("/api"))
     }
   }
 
@@ -66,7 +67,7 @@ class HttpMetricsDirectivesSpec extends AnyFlatSpec with Matchers with Scalatest
     }
 
     Get("/api/user/1234/address") ~> route ~> check {
-      response.attribute(HttpMetrics.PathLabel) shouldBe Some("/api/user/:userId/address")
+      response.attribute(HttpMetrics.RequestPath.Key) shouldBe Some(RequestPath("/api/user/:userId/address"))
     }
   }
 
@@ -80,7 +81,7 @@ class HttpMetricsDirectivesSpec extends AnyFlatSpec with Matchers with Scalatest
     }
 
     Get("/api/user/1234/address") ~> route ~> check {
-      response.attribute(HttpMetrics.PathLabel) shouldBe empty
+      response.attribute(HttpMetrics.RequestPath.Key) shouldBe empty
     }
   }
 }

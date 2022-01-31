@@ -76,7 +76,6 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
             .withRequestsActive("test_requests_active")
             .withConnections("test_connections_total")
             .withResponsesDuration("test_responses_duration_seconds")
-            .withResponsesErrors("test_responses_errors_total")
             .withRequests("test_requests_total")
             .withRequestSize("test_requests_size_bytes")
             .withResponses("test_responses_total")
@@ -143,21 +142,6 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
   it should "set responses metrics in the underlying registry with dimensions" in new DimensionFixture {
     registry.responses.inc(responsesDimensions)
     underlyingCounterValue("akka_http_responses_total", responsesDimensions) shouldBe 1L
-  }
-
-  it should "set responsesErrors metrics in the underlying registry" in new Fixture {
-    registry.responsesErrors.inc()
-    underlyingCounterValue("akka_http_responses_errors_total") shouldBe 1L
-  }
-
-  it should "set responsesErrors metrics in the underlying registry using updated name" in new MetricsNamesFixture {
-    registry.responsesErrors.inc()
-    underlyingCounterValue("test_server_test_responses_errors_total") shouldBe 1L
-  }
-
-  it should "set responsesErrors metrics in the underlying registry with dimensions" in new DimensionFixture {
-    registry.responsesErrors.inc(responsesDimensions)
-    underlyingCounterValue("akka_http_responses_errors_total", responsesDimensions) shouldBe 1L
   }
 
   it should "set responsesDuration metrics in the underlying registry" in new Fixture {

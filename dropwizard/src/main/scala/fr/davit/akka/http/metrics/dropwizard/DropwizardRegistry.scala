@@ -43,14 +43,12 @@ class DropwizardRegistry(settings: HttpMetricsSettings)(implicit val underlying:
     logger.warn("Dropwizard metrics do not support label. All metrics dimensions will be ignored")
   }
 
-  lazy val requests: Counter         = new DropwizardCounter(settings.namespace, settings.metricsNames.requests)
-  lazy val requestsActive: Gauge     = new DropwizardGauge(settings.namespace, settings.metricsNames.requestsActive)
-  lazy val requestsFailures: Counter = new DropwizardCounter(settings.namespace, settings.metricsNames.requestsFailures)
-  lazy val requestsSize: Histogram   = new DropwizardHistogram(settings.namespace, settings.metricsNames.requestsSize)
-  lazy val responses: Counter        = new DropwizardCounter(settings.namespace, settings.metricsNames.responses)
-  lazy val responsesErrors: Counter  = new DropwizardCounter(settings.namespace, settings.metricsNames.responsesErrors)
-  lazy val responsesDuration: Timer  = new DropwizardTimer(settings.namespace, settings.metricsNames.responsesDuration)
-  lazy val responsesSize: Histogram  = new DropwizardHistogram(settings.namespace, settings.metricsNames.responsesSize)
-  lazy val connections: Counter      = new DropwizardCounter(settings.namespace, settings.metricsNames.connections)
-  lazy val connectionsActive: Gauge  = new DropwizardGauge(settings.namespace, settings.metricsNames.connectionsActive)
+  lazy val requests: Counter        = new DropwizardCounter(settings.namespace, settings.metricsNames.requests)
+  lazy val requestsActive: Gauge    = new DropwizardGauge(settings.namespace, settings.metricsNames.requestsActive)
+  lazy val requestsSize: Histogram  = new DropwizardHistogram(settings.namespace, settings.metricsNames.requestsSize)
+  lazy val responses: Counter       = new DropwizardCounter(settings.namespace, settings.metricsNames.responses)
+  lazy val responsesDuration: Timer = new DropwizardTimer(settings.namespace, settings.metricsNames.responsesDuration)
+  lazy val responsesSize: Histogram = new DropwizardHistogram(settings.namespace, settings.metricsNames.responsesSize)
+  lazy val connections: Counter     = new DropwizardCounter(settings.namespace, settings.metricsNames.connections)
+  lazy val connectionsActive: Gauge = new DropwizardGauge(settings.namespace, settings.metricsNames.connectionsActive)
 }

@@ -100,10 +100,8 @@ final class TestRegistry(settings: HttpMetricsSettings = TestRegistry.settings) 
 
   override val requests          = new TestCounter
   override val requestsActive    = new TestGauge
-  override val requestsFailures  = new TestCounter
   override val requestsSize      = new TestHistogram
   override val responses         = new TestCounter
-  override val responsesErrors   = new TestCounter
   override val responsesDuration = new TestTimer
   override val responsesSize     = new TestHistogram
   override val connections       = new TestCounter

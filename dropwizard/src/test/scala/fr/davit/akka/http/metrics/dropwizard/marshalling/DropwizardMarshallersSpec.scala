@@ -52,7 +52,6 @@ class DropwizardMarshallersSpec extends AnyFlatSpec with Matchers with Scalatest
     registry.requestsActive.inc()
     registry.requestsSize.update(10)
     registry.responses.inc(dimensions)
-    registry.responsesErrors.inc()
     registry.responsesDuration.observe(1.second, dimensions)
     registry.responsesSize.update(10)
     registry.connections.inc()
@@ -66,7 +65,6 @@ class DropwizardMarshallersSpec extends AnyFlatSpec with Matchers with Scalatest
         "akka.http.requests.active",
         "akka.http.requests.bytes",
         "akka.http.responses",
-        "akka.http.responses.errors",
         "akka.http.responses.duration",
         "akka.http.responses.bytes",
         "akka.http.connections",

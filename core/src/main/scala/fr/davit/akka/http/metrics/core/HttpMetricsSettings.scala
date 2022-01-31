@@ -29,10 +29,6 @@ trait HttpMetricsSettings {
     */
   def metricsNames: HttpMetricsNames
 
-  /** Function that defines if the http response should be counted as an error
-    */
-  def defineError: HttpResponse => Boolean
-
   /** Include the method dimension on metrics
     */
   def includeMethodDimension: Boolean
