@@ -11,7 +11,7 @@ object Dependencies {
     val enumeratum            = "1.7.0"
     val logback               = "1.2.6"
     val prometheus            = "0.12.0"
-    val scalaCollectionCompat = "2.5.0"
+    val scalaCollectionCompat = "2.6.0"
     val scalaLogging          = "3.9.4"
     val scalaMock             = "5.1.0"
     val scalaTest             = "3.2.10"
