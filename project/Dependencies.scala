@@ -9,7 +9,7 @@ object Dependencies {
     val dropwizard            = "4.2.7"
     val dropwizardV5          = "5.0.0"
     val enumeratum            = "1.7.0"
-    val logback               = "1.2.10"
+    val logback               = "1.2.11"
     val prometheus            = "0.14.1"
     val scalaCollectionCompat = "2.6.0"
     val scalaLogging          = "3.9.4"
