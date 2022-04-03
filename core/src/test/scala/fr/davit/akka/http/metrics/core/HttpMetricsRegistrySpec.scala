@@ -22,7 +22,12 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.testkit.TestKit
 import akka.util.ByteString
-import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{MethodDimension, PathDimension, StatusGroupDimension}
+import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{
+  MethodDimension,
+  PathDimension,
+  StatusGroupDimension,
+  TraceTimestamp
+}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
@@ -37,25 +42,30 @@ class HttpMetricsRegistrySpec
 
   implicit val materializer: Materializer = Materializer(system)
 
-  final case object TestDimension extends Dimension {
+  object TestDimension extends Dimension {
     override def key: String   = "env"
     override def value: String = "test"
   }
 
-  val testRequest  = HttpRequest().addAttribute(HttpMetrics.TraceTimestamp, Deadline.now)
+  val testRequest  = HttpRequest().addAttribute(TraceTimestamp, Deadline.now)
   val testResponse = HttpResponse()
 
   abstract class Fixture(settings: HttpMetricsSettings = TestRegistry.settings) {
     val registry = new TestRegistry(settings)
   }
 
-  "HttpMetricsRegistry" should "compute the number of requests" in new Fixture() {
+  "HttpMetricsRegistry" should "set the request timestamp" in new Fixture() {
+    registry.onRequest(HttpRequest()).attribute(TraceTimestamp) shouldBe defined
+  }
+
+  it should "compute the number of requests" in new Fixture() {
     registry.requests.value() shouldBe 0
     registry.onRequest(testRequest)
     registry.requests.value() shouldBe 1
     registry.onRequest(testRequest)
     registry.requests.value() shouldBe 2
   }
+
   it should "compute the number of failures" in new Fixture() {
     registry.requestsFailures.value() shouldBe 0
     registry.onFailure(testRequest, new Exception("BOOM!"))
@@ -123,7 +133,7 @@ class HttpMetricsRegistrySpec
   it should "compute the response time" in new Fixture() {
     val duration = 500.millis
     val start    = Deadline.now - duration
-    val request  = testRequest.addAttribute(HttpMetrics.TraceTimestamp, start)
+    val request  = testRequest.addAttribute(TraceTimestamp, start)
     registry.responsesDuration.values() shouldBe empty
     registry.onResponse(request, testResponse).discardEntityBytes().future().futureValue
     registry.responsesDuration.values().head should be > duration
