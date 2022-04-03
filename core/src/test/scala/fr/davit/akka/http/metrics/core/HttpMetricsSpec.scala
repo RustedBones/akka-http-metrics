@@ -31,7 +31,6 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 
-import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
 class HttpMetricsSpec
@@ -67,9 +66,6 @@ class HttpMetricsSpec
     TestKit.shutdownActorSystem(system)
   }
 
-  val traceId       = UUID.fromString("00000000-0000-0000-0000-000000000000")
-  val tracedRequest = HttpRequest().addAttribute(HttpMetrics.TraceId, traceId)
-
   "HttpMetrics" should "provide newMeteredServerAt extension" in {
     """
       |import akka.http.scaladsl.Http
@@ -80,22 +76,16 @@ class HttpMetricsSpec
     """.stripMargin should compile
   }
 
-  it should "not accept non traced requests" in {
-    val handler = HttpMetrics.metricsRouteToFunction(complete(StatusCodes.OK))
-    handler(tracedRequest).futureValue.status shouldBe StatusCodes.OK
-    handler(HttpRequest()).futureValue.status shouldBe StatusCodes.InternalServerError
-  }
-
   it should "seal route mark unhandled requests" in {
     {
       val handler  = HttpMetrics.metricsRouteToFunction(reject)
-      val response = handler(tracedRequest).futureValue
+      val response = handler(HttpRequest()).futureValue
       response.attributes(HttpMetrics.PathLabel) shouldBe "unhandled"
     }
 
     {
       val handler  = HttpMetrics.metricsRouteToFunction(failWith(new Exception("BOOM!")))
-      val response = handler(tracedRequest).futureValue
+      val response = handler(HttpRequest()).futureValue
       response.attributes(HttpMetrics.PathLabel) shouldBe "unhandled"
     }
   }
@@ -128,15 +118,10 @@ class HttpMetricsSpec
     source.sendComplete()
     sink.expectComplete()
 
-    val traceId = request.value.attribute(HttpMetrics.TraceId)
-    val traceTs = request.value.attribute(HttpMetrics.TraceTimestamp)
-    traceId shouldBe defined
-    traceTs shouldBe defined
-
     val expected = Marshal(StatusCodes.OK)
       .to[HttpResponse]
       .futureValue
-      .addAttribute(HttpMetrics.TraceId, traceId.get)
+
     response.value shouldBe expected
   }
 
@@ -162,12 +147,9 @@ class HttpMetricsSpec
     source.sendComplete()
     sink.expectComplete()
 
-    val traceId = request.value.attribute(HttpMetrics.TraceId).get
-
     val expected = Marshal(StatusCodes.NotFound -> "The requested resource could not be found.")
       .to[HttpResponse]
       .futureValue
-      .addAttribute(HttpMetrics.TraceId, traceId)
       .addAttribute(HttpMetrics.PathLabel, "unhandled")
     response.value shouldBe expected
   }
@@ -197,7 +179,6 @@ class HttpMetricsSpec
     val expected = Marshal(StatusCodes.InternalServerError)
       .to[HttpResponse]
       .futureValue
-      .addAttribute(HttpMetrics.TraceId, request.value.attribute(HttpMetrics.TraceId).get)
       .addAttribute(HttpMetrics.PathLabel, "unhandled")
     response.value shouldBe expected
   }

@@ -20,7 +20,6 @@ import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
 import akka.stream.{Attributes, BidiShape, Inlet, Outlet}
 
-import java.util.UUID
 import scala.collection.mutable
 
 object MeterStage {
@@ -42,8 +41,10 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
   val shape = new BidiShape(requestIn, requestOut, responseIn, responseOut)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
-
-    private val pending = mutable.Map.empty[UUID, HttpRequest]
+    // using a FIFO stack is OK because HTTP/1 connection must respect ordering
+    // see: https://doc.akka.io/docs/akka-http/current/server-side/low-level-api.html#request-response-cycle
+    // HTTP/2 is defined with function only
+    private val pending = mutable.Stack[HttpRequest]()
     private var failure = Option.empty[Throwable]
 
     override def preStart(): Unit = {
@@ -52,22 +53,16 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
 
     override def postStop(): Unit = {
       val cause = failure.getOrElse(PrematureCloseException)
-      pending.values.foreach(metricsHandler.onFailure(_, cause))
+      pending.foreach(metricsHandler.onFailure(_, cause))
       metricsHandler.onDisconnection()
     }
 
     val requestHandler = new InHandler with OutHandler {
 
       override def onPush(): Unit = {
-        val request = grab(requestIn)
-        val traceId = request.attribute(HttpMetrics.TraceId)
-        traceId match {
-          case Some(id) =>
-            pending += id -> request
-            push(requestOut, metricsHandler.onRequest(request))
-          case _ =>
-            failStage(new NoSuchElementException(s"Request is missing '${HttpMetrics.TraceId.name}' attribute"))
-        }
+        val request = metricsHandler.onRequest(grab(requestIn))
+        pending.push(request)
+        push(requestOut, request)
       }
       override def onPull(): Unit = pull(requestIn)
 
@@ -80,19 +75,8 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
 
       override def onPush(): Unit = {
         val response = grab(responseIn)
-        val traceId  = response.attribute(HttpMetrics.TraceId)
-        val request = for {
-          id  <- traceId
-          req <- pending.remove(id)
-        } yield req
-        (request, traceId) match {
-          case (Some(req), _) =>
-            push(responseOut, metricsHandler.onResponse(req, response))
-          case (None, Some(id)) =>
-            failStage(new NoSuchElementException(s"Could not find request for '$id'"))
-          case (None, None) =>
-            failStage(new NoSuchElementException(s"Response is missing '${HttpMetrics.TraceId.name}' attribute"))
-        }
+        val request  = pending.pop()
+        push(responseOut, metricsHandler.onResponse(request, response))
       }
       override def onPull(): Unit = pull(responseIn)
 

@@ -24,6 +24,8 @@ import scala.concurrent.duration.Deadline
 
 object HttpMetricsRegistry {
 
+  val TraceTimestamp: AttributeKey[Deadline] = AttributeKey("trace-time")
+
   object MethodDimension {
     val Key: String = "method"
   }
@@ -38,7 +40,7 @@ object HttpMetricsRegistry {
   }
 
   final case class PathDimension(value: String) extends Dimension {
-    override def key = PathDimension.Key
+    override def key: String = PathDimension.Key
   }
 
   object StatusGroupDimension {
@@ -105,27 +107,34 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
   }
 
   override def onRequest(request: HttpRequest): HttpRequest = {
+    val start      = Deadline.now
     val dimensions = settings.serverDimensions ++ methodDimension(request)
     requestsActive.inc(dimensions)
     requests.inc(dimensions)
-    request.entity match {
+
+    val entity = request.entity match {
       case data: HttpEntity.Strict =>
         requestsSize.update(data.contentLength, dimensions)
-        request
+        data
       case data: HttpEntity.Default =>
         requestsSize.update(data.contentLength, dimensions)
-        request
-      case _: HttpEntity.Chunked =>
+        data
+      case data: HttpEntity.Chunked =>
         val collectSizeSink = Flow[ByteString]
           .map(_.length)
           .fold(0L)(_ + _)
           .to(Sink.foreach(size => requestsSize.update(size, dimensions)))
-        request.transformEntityDataBytes(Flow[ByteString].alsoTo(collectSizeSink))
+        data.transformDataBytes(Flow[ByteString].alsoTo(collectSizeSink))
     }
+
+    // modify the request
+    request
+      .addAttribute(TraceTimestamp, start)
+      .withEntity(entity)
   }
 
   override def onResponse(request: HttpRequest, response: HttpResponse): HttpResponse = {
-    val start              = request.attribute(HttpMetrics.TraceTimestamp).get
+    val start              = request.attribute(TraceTimestamp).get
     val requestDimensions  = settings.serverDimensions ++ methodDimension(request)
     val responseDimensions = requestDimensions ++ pathDimension(response) ++ statusGroupDimension(response)
 

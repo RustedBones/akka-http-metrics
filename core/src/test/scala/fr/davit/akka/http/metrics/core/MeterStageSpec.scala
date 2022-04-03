@@ -27,8 +27,6 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 
-import java.util.UUID
-
 class MeterStageSpec
     extends TestKit(ActorSystem("MeterStageSpec"))
     with AnyFlatSpecLike
@@ -36,9 +34,8 @@ class MeterStageSpec
     with MockFactory
     with ScalaFutures {
 
-  val traceId        = UUID.fromString("00000000-0000-0000-0000-000000000000")
-  val tracedRequest  = HttpRequest().addAttribute(HttpMetrics.TraceId, traceId)
-  val tracedResponse = HttpResponse().addAttribute(HttpMetrics.TraceId, traceId)
+  val request  = HttpRequest()
+  val response = HttpResponse()
 
   trait Fixture {
     val handler = mock[HttpMetricsHandler]
@@ -86,27 +83,27 @@ class MeterStageSpec
 
   it should "call onRequest wen request is offered" in new Fixture {
     (handler.onRequest _)
-      .expects(tracedRequest)
-      .returns(tracedRequest)
+      .expects(request)
+      .returns(request)
 
-    requestIn.sendNext(tracedRequest)
-    requestOut.expectNext() shouldBe tracedRequest
+    requestIn.sendNext(request)
+    requestOut.expectNext() shouldBe request
 
     (handler.onResponse _)
-      .expects(tracedRequest, tracedResponse)
-      .returns(tracedResponse)
+      .expects(request, response)
+      .returns(response)
 
-    responseIn.sendNext(tracedResponse)
-    responseOut.expectNext() shouldBe tracedResponse
+    responseIn.sendNext(response)
+    responseOut.expectNext() shouldBe response
   }
 
   it should "flush the stream before stopping" in new Fixture {
     (handler.onRequest _)
-      .expects(tracedRequest)
-      .returns(tracedRequest)
+      .expects(request)
+      .returns(request)
 
-    requestIn.sendNext(tracedRequest)
-    requestOut.expectNext() shouldBe tracedRequest
+    requestIn.sendNext(request)
+    requestOut.expectNext() shouldBe request
 
     // close request side
     requestIn.sendComplete()
@@ -114,52 +111,20 @@ class MeterStageSpec
 
     // response should still be accepted
     (handler.onResponse _)
-      .expects(tracedRequest, tracedResponse)
-      .returns(tracedResponse)
+      .expects(request, response)
+      .returns(response)
 
-    responseIn.sendNext(tracedResponse)
-    responseOut.expectNext() shouldBe tracedResponse
-  }
-
-  it should "throw a NoSuchElementException if trace-id attribute is missing in request" in new Fixture {
-    val requestWithoutTraceId = HttpRequest()
-
-    requestIn.sendNext(requestWithoutTraceId)
-
-    val error = requestIn.expectCancellationWithCause[NoSuchElementException]()
-    requestOut.expectError(error)
-    responseIn.expectCancellationWithCause[NoSuchElementException]()
-    responseOut.expectError(error)
-  }
-
-  it should "throw a NoSuchElementException if trace-id attribute is missing in response" in new Fixture {
-    val responseWithoutTraceId = HttpResponse()
-
-    responseIn.sendNext(responseWithoutTraceId)
-
-    val error = requestIn.expectCancellationWithCause[NoSuchElementException]()
-    requestOut.expectError(error)
-    responseIn.expectCancellationWithCause[NoSuchElementException]()
-    responseOut.expectError(error)
-  }
-
-  it should "throw a NoSuchElementException if trace-id is unknown on response" in new Fixture {
-    responseIn.sendNext(tracedResponse)
-
-    val error = requestIn.expectCancellationWithCause[NoSuchElementException]()
-    error.getMessage should include(traceId.toString)
-    requestOut.expectError(error)
-    responseIn.expectCancellationWithCause[NoSuchElementException]()
-    responseOut.expectError(error)
+    responseIn.sendNext(response)
+    responseOut.expectNext() shouldBe response
   }
 
   it should "propagate error from request in" in new Fixture {
     (handler.onRequest _)
-      .expects(tracedRequest)
-      .returns(tracedRequest)
+      .expects(request)
+      .returns(request)
 
-    requestIn.sendNext(tracedRequest)
-    requestOut.expectNext() shouldBe tracedRequest
+    requestIn.sendNext(request)
+    requestOut.expectNext() shouldBe request
 
     val error = new Exception("BOOM!")
     requestIn.sendError(error)
@@ -168,11 +133,11 @@ class MeterStageSpec
 
   it should "propagate error from request out" in new Fixture {
     (handler.onRequest _)
-      .expects(tracedRequest)
-      .returns(tracedRequest)
+      .expects(request)
+      .returns(request)
 
-    requestIn.sendNext(tracedRequest)
-    requestOut.expectNext() shouldBe tracedRequest
+    requestIn.sendNext(request)
+    requestOut.expectNext() shouldBe request
 
     val error = new Exception("BOOM!")
     requestOut.cancel(error)
@@ -181,16 +146,16 @@ class MeterStageSpec
 
   it should "terminate and fail pending" in new Fixture {
     (handler.onRequest _)
-      .expects(tracedRequest)
-      .returns(tracedRequest)
+      .expects(request)
+      .returns(request)
 
-    requestIn.sendNext(tracedRequest)
+    requestIn.sendNext(request)
     requestIn.sendComplete()
-    requestOut.expectNext() shouldBe tracedRequest
+    requestOut.expectNext() shouldBe request
     requestOut.expectComplete()
 
     (handler.onFailure _)
-      .expects(tracedRequest, MeterStage.PrematureCloseException)
+      .expects(request, MeterStage.PrematureCloseException)
       .returns(MeterStage.PrematureCloseException)
 
     responseIn.sendComplete()
@@ -199,17 +164,17 @@ class MeterStageSpec
 
   it should "propagate error from response in and fail pending" in new Fixture {
     (handler.onRequest _)
-      .expects(tracedRequest)
-      .returns(tracedRequest)
+      .expects(request)
+      .returns(request)
 
-    requestIn.sendNext(tracedRequest)
+    requestIn.sendNext(request)
     requestIn.sendComplete()
-    requestOut.expectNext() shouldBe tracedRequest
+    requestOut.expectNext() shouldBe request
     requestOut.expectComplete()
 
     val error = new Exception("BOOM!")
     (handler.onFailure _)
-      .expects(tracedRequest, error)
+      .expects(request, error)
       .returns(error)
 
     responseIn.sendError(error)
@@ -218,17 +183,17 @@ class MeterStageSpec
 
   it should "propagate error from response out and fail pending" in new Fixture {
     (handler.onRequest _)
-      .expects(tracedRequest)
-      .returns(tracedRequest)
+      .expects(request)
+      .returns(request)
 
-    requestIn.sendNext(tracedRequest)
+    requestIn.sendNext(request)
     requestIn.sendComplete()
-    requestOut.expectNext() shouldBe tracedRequest
+    requestOut.expectNext() shouldBe request
     requestOut.expectComplete()
 
     val error = new Exception("BOOM!")
     (handler.onFailure _)
-      .expects(tracedRequest, error)
+      .expects(request, error)
       .returns(error)
 
     responseOut.cancel(error)
