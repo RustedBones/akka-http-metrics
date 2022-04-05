@@ -16,9 +16,8 @@
 
 package fr.davit.akka.http.metrics.prometheus.marshalling
 
-import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.StatusGroupDimension
+import fr.davit.akka.http.metrics.core.{Dimension, StatusGroupLabeler}
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives.metrics
 import fr.davit.akka.http.metrics.prometheus.{PrometheusRegistry, PrometheusSettings}
 import io.prometheus.client.CollectorRegistry
@@ -50,7 +49,7 @@ class PrometheusMarshallersSpec extends AnyFlatSpec with Matchers with Scalatest
   "PrometheusMarshallers" should "expose metrics as prometheus format" in new Fixture {
     // register labeled metrics so they appear at least once
     // use metrics so they appear in the report
-    val dimensions = Seq(StatusGroupDimension(StatusCodes.OK))
+    val dimensions = Seq(Dimension(StatusGroupLabeler.name, "2xx"))
     registry.requests.inc()
     registry.requestsActive.inc()
     registry.requestsSize.update(10)

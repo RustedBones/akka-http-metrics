@@ -23,46 +23,27 @@ import akka.util.ByteString
 import scala.concurrent.duration.Deadline
 
 object HttpMetricsRegistry {
-
-  val TraceTimestamp: AttributeKey[Deadline] = AttributeKey("trace-time")
-
-  object MethodDimension {
-    val Key: String = "method"
-  }
-
-  final case class MethodDimension(method: HttpMethod) extends Dimension {
-    override def key: String   = MethodDimension.Key
-    override def value: String = method.value
-  }
-
-  object PathDimension {
-    val Key: String = "path"
-  }
-
-  final case class PathDimension(value: String) extends Dimension {
-    override def key: String = PathDimension.Key
-  }
-
-  object StatusGroupDimension {
-    val Key: String = "status"
-  }
-
-  final case class StatusGroupDimension(code: StatusCode) extends Dimension {
-    override def key: String = StatusGroupDimension.Key
-
-    override def value: String = code match {
-      case _: StatusCodes.Success     => "2xx"
-      case _: StatusCodes.Redirection => "3xx"
-      case _: StatusCodes.ClientError => "4xx"
-      case _: StatusCodes.ServerError => "5xx"
-      case _                          => "other"
-    }
-  }
+  private[metrics] val TraceTimestampKey: AttributeKey[Deadline] = AttributeKey("trace-time")
 }
 
 abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMetricsHandler {
 
   import HttpMetricsRegistry._
+
+  private val requestLabelers: Seq[HttpRequestLabeler] = {
+    val builder = Seq.newBuilder[HttpRequestLabeler]
+    if (settings.includeMethodDimension) builder += MethodLabeler
+    builder ++= settings.customDimensions.collect { case l: HttpRequestLabeler => l }
+    builder.result()
+  }
+
+  private val responseLabelers: Seq[HttpResponseLabeler] = {
+    val builder = Seq.newBuilder[HttpResponseLabeler]
+    if (settings.includeStatusDimension) builder += StatusGroupLabeler
+    if (settings.includePathDimension) builder += PathLabeler
+    builder ++= settings.customDimensions.collect { case l: HttpResponseLabeler => l }
+    builder.result()
+  }
 
   // --------------------------------------------------------------------------------------------------------------------
   // requests
@@ -93,88 +74,85 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
 
   def connectionsActive: Gauge
 
-  private def methodDimension(request: HttpRequest): Option[MethodDimension] = {
-    if (settings.includeMethodDimension) Some(MethodDimension(request.method)) else None
+  private def requestDimensions(request: HttpRequest): Seq[Dimension] = {
+    requestLabelers.map(_.dimension(request))
   }
 
-  private def pathDimension(response: HttpResponse): Option[PathDimension] = {
-    val pathLabel = response.attribute(HttpMetrics.PathLabel).getOrElse("unlabelled")
-    if (settings.includePathDimension) Some(PathDimension(pathLabel)) else None
-  }
-
-  private def statusGroupDimension(response: HttpResponse): Option[StatusGroupDimension] = {
-    if (settings.includeStatusDimension) Some(StatusGroupDimension(response.status)) else None
+  private def responseDimensions(response: HttpResponse): Seq[Dimension] = {
+    responseLabelers.map(_.dimension(response))
   }
 
   override def onRequest(request: HttpRequest): HttpRequest = {
-    val start      = Deadline.now
-    val dimensions = settings.serverDimensions ++ methodDimension(request)
-    requestsActive.inc(dimensions)
-    requests.inc(dimensions)
+    val start = Deadline.now
+    val dims  = settings.serverDimensions ++ requestDimensions(request)
+    requestsActive.inc(dims)
+    requests.inc(dims)
 
     val entity = request.entity match {
       case data: HttpEntity.Strict =>
-        requestsSize.update(data.contentLength, dimensions)
+        requestsSize.update(data.contentLength, dims)
         data
       case data: HttpEntity.Default =>
-        requestsSize.update(data.contentLength, dimensions)
+        requestsSize.update(data.contentLength, dims)
         data
       case data: HttpEntity.Chunked =>
         val collectSizeSink = Flow[ByteString]
           .map(_.length)
           .fold(0L)(_ + _)
-          .to(Sink.foreach(size => requestsSize.update(size, dimensions)))
+          .to(Sink.foreach(size => requestsSize.update(size, dims)))
         data.transformDataBytes(Flow[ByteString].alsoTo(collectSizeSink))
     }
 
     // modify the request
     request
-      .addAttribute(TraceTimestamp, start)
+      .addAttribute(TraceTimestampKey, start)
       .withEntity(entity)
   }
 
   override def onResponse(request: HttpRequest, response: HttpResponse): HttpResponse = {
-    val start              = request.attribute(TraceTimestamp).get
-    val requestDimensions  = settings.serverDimensions ++ methodDimension(request)
-    val responseDimensions = requestDimensions ++ pathDimension(response) ++ statusGroupDimension(response)
+    val start    = request.attribute(TraceTimestampKey).get
+    val reqDims  = settings.serverDimensions ++ requestDimensions(request)
+    val respDims = reqDims ++ responseDimensions(response)
 
-    requestsActive.dec(requestDimensions)
-    responses.inc(responseDimensions)
-    if (settings.defineError(response)) responsesErrors.inc(responseDimensions)
+    requestsActive.dec(reqDims)
+    responses.inc(respDims)
+    if (settings.defineError(response)) responsesErrors.inc(respDims)
     response.entity match {
       case data: HttpEntity.Strict =>
-        responsesSize.update(data.contentLength, responseDimensions)
-        responsesDuration.observe(Deadline.now - start, responseDimensions)
+        responsesSize.update(data.contentLength, respDims)
+        responsesDuration.observe(Deadline.now - start, respDims)
         response
       case data: HttpEntity.Default =>
-        responsesSize.update(data.contentLength, responseDimensions)
-        responsesDuration.observe(Deadline.now - start, responseDimensions)
+        responsesSize.update(data.contentLength, respDims)
+        responsesDuration.observe(Deadline.now - start, respDims)
         response
       case _: HttpEntity.Chunked | _: HttpEntity.CloseDelimited =>
         val collectSizeSink = Flow[ByteString]
           .map(_.length)
           .fold(0L)(_ + _)
           .to(Sink.foreach { size =>
-            responsesSize.update(size, responseDimensions)
-            responsesDuration.observe(Deadline.now - start, responseDimensions)
+            responsesSize.update(size, respDims)
+            responsesDuration.observe(Deadline.now - start, respDims)
           })
         response.transformEntityDataBytes(Flow[ByteString].alsoTo(collectSizeSink))
     }
   }
 
   override def onFailure(request: HttpRequest, cause: Throwable): Throwable = {
-    val dimensions = settings.serverDimensions ++ methodDimension(request)
-    requestsActive.dec(dimensions)
-    requestsFailures.inc(dimensions)
+    val dims = settings.serverDimensions ++ requestDimensions(request)
+    requestsActive.dec(dims)
+    requestsFailures.inc(dims)
     cause
   }
 
   override def onConnection(): Unit = {
-    connections.inc(settings.serverDimensions)
-    connectionsActive.inc(settings.serverDimensions)
+    val dims = settings.serverDimensions
+    connections.inc(dims)
+    connectionsActive.inc(dims)
   }
 
   override def onDisconnection(): Unit = {
-    connectionsActive.dec(settings.serverDimensions)
+    val dims = settings.serverDimensions
+    connectionsActive.dec(dims)
   }
 }

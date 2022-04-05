@@ -20,7 +20,7 @@ import akka.http.scaladsl.marshalling.PredefinedToEntityMarshallers._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import fr.davit.akka.http.metrics.core.{HttpMetrics, TestRegistry}
+import fr.davit.akka.http.metrics.core.{AttributeLabeler, PathLabeler, TestRegistry}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -42,6 +42,19 @@ class HttpMetricsDirectivesSpec extends AnyFlatSpec with Matchers with Scalatest
     }
   }
 
+  it should "put label on custom dimension" in {
+    object CustomLabeler extends AttributeLabeler {
+      def name = "dim"
+    }
+    val route = metricsLabeled(CustomLabeler, "label") {
+      complete(StatusCodes.OK)
+    }
+
+    Get() ~> route ~> check {
+      response.attribute(CustomLabeler.key) shouldBe Some("label")
+    }
+  }
+
   it should "put label on path" in {
     val route = pathPrefixLabeled("api") {
       pathPrefix("user" / LongNumber) { _ =>
@@ -52,7 +65,7 @@ class HttpMetricsDirectivesSpec extends AnyFlatSpec with Matchers with Scalatest
     }
 
     Get("/api/user/1234/address") ~> route ~> check {
-      response.attribute(HttpMetrics.PathLabel) shouldBe Some("/api")
+      response.attribute(PathLabeler.key) shouldBe Some("/api")
     }
   }
 
@@ -66,7 +79,7 @@ class HttpMetricsDirectivesSpec extends AnyFlatSpec with Matchers with Scalatest
     }
 
     Get("/api/user/1234/address") ~> route ~> check {
-      response.attribute(HttpMetrics.PathLabel) shouldBe Some("/api/user/:userId/address")
+      response.attribute(PathLabeler.key) shouldBe Some("/api/user/:userId/address")
     }
   }
 
@@ -80,7 +93,7 @@ class HttpMetricsDirectivesSpec extends AnyFlatSpec with Matchers with Scalatest
     }
 
     Get("/api/user/1234/address") ~> route ~> check {
-      response.attribute(HttpMetrics.PathLabel) shouldBe empty
+      response.attribute(PathLabeler.key) shouldBe empty
     }
   }
 }

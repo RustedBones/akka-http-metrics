@@ -37,8 +37,6 @@ final class HttpMetrics(private val http: HttpExt) extends AnyVal {
 
 object HttpMetrics {
 
-  val PathLabel: AttributeKey[String] = AttributeKey("path-label")
-
   implicit def enrichHttp(http: HttpExt): HttpMetrics = new HttpMetrics(http)
 
   private def markUnhandled(inner: Route): Route = {
@@ -46,7 +44,7 @@ object HttpMetrics {
   }
 
   private def markUnhandled(response: HttpResponse): HttpResponse = {
-    response.addAttribute(PathLabel, "unhandled")
+    response.addAttribute(PathLabeler.key, "unhandled")
   }
 
   /** This will take precedence over the RouteResult.routeToFlow to seal the route with proper handler for metrics

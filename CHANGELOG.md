@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Update dependencies
+- Add support for custom dimensions
 
 ## v1.6.0 (2021-05-07)
 

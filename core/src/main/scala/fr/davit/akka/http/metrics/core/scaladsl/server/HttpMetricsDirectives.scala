@@ -22,13 +22,19 @@ import akka.http.scaladsl.server.PathMatcher.{Matched, Unmatched}
 import akka.http.scaladsl.server.directives.BasicDirectives.{mapRequestContext, tprovide}
 import akka.http.scaladsl.server.directives.RouteDirectives.reject
 import akka.http.scaladsl.server.util.Tuple
-import akka.http.scaladsl.server.{Directive, PathMatcher, StandardRoute}
-import fr.davit.akka.http.metrics.core.{HttpMetrics, HttpMetricsRegistry}
+import akka.http.scaladsl.server.{Directive, Directive0, PathMatcher, StandardRoute}
+import fr.davit.akka.http.metrics.core.{AttributeLabeler, HttpMetricsRegistry, PathLabeler}
 
 trait HttpMetricsDirectives {
 
   def metrics[T <: HttpMetricsRegistry: ToEntityMarshaller](registry: T): StandardRoute = complete(registry)
 
+  def metricsLabeled(labeler: AttributeLabeler, label: String): Directive0 =
+    mapResponse(_.addAttribute(labeler.key, label))
+
+  /////////////////////////////////////////////////////////////////////////////
+  // path
+  /////////////////////////////////////////////////////////////////////////////
   def pathLabeled[L](pm: PathMatcher[L]): Directive[L] =
     pathPrefixLabeled(pm ~ PathEnd)
 
@@ -54,12 +60,12 @@ trait HttpMetricsDirectives {
       pm(ctx.unmatchedPath) match {
         case Matched(rest, values) =>
           tprovide(values) & mapRequestContext(_ withUnmatchedPath rest) & mapResponse { response =>
-            val suffix = response.attribute(HttpMetrics.PathLabel).getOrElse("")
+            val suffix = response.attribute(PathLabeler.key).getOrElse("")
             val pathLabel = label match {
               case Some(l) => "/" + l + suffix // pm matches additional slash prefix
               case None    => pathCandidate.substring(0, pathCandidate.length - rest.charCount) + suffix
             }
-            response.addAttribute(HttpMetrics.PathLabel, pathLabel)
+            response.addAttribute(PathLabeler.key, pathLabel)
           }
         case Unmatched =>
           reject

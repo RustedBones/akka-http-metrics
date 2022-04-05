@@ -26,7 +26,7 @@ object DropwizardMetrics {
   implicit class RichMetricsName(val metricName: MetricName) extends AnyVal {
 
     def tagged(dimensions: Seq[Dimension]): MetricName =
-      metricName.tagged(dimensions.flatMap(d => Seq(d.key, d.value)): _*)
+      metricName.tagged(dimensions.flatMap(d => Seq(d.name, d.label)): _*)
 
   }
 }
