@@ -23,7 +23,6 @@ lazy val commonSettings = Defaults.itSettings ++
   Seq(
     organization := "fr.davit",
     organizationName := "Michel Davit",
-    version := "1.7.0-SNAPSHOT",
     crossScalaVersions := (ThisBuild / crossScalaVersions).value,
     scalaVersion := crossScalaVersions.value.head,
     scalacOptions ~= filterScalacOptions,
@@ -42,6 +41,7 @@ lazy val commonSettings = Defaults.itSettings ++
     publishMavenStyle := true,
     Test / publishArtifact := false,
     publishTo := Some(if (isSnapshot.value) Opts.resolver.sonatypeSnapshots else Opts.resolver.sonatypeStaging),
+    releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     credentials ++= (for {
       username <- sys.env.get("SONATYPE_USERNAME")
       password <- sys.env.get("SONATYPE_PASSWORD")
