@@ -44,7 +44,7 @@ trait HttpMetricsSettings {
   def serverDimensions: immutable.Seq[Dimension]
 
   /** Custom dimensions */
-  def customDimensions: immutable.Seq[HttpMessageLabeler[_]]
+  def customDimensions: immutable.Seq[HttpMessageLabeler]
 
   def withNamespace(namespace: String): HttpMetricsSettings
   def withMetricsNames(metricsNames: HttpMetricsNames): HttpMetricsSettings
@@ -53,7 +53,7 @@ trait HttpMetricsSettings {
   def withIncludePathDimension(include: Boolean): HttpMetricsSettings
   def withIncludeStatusDimension(include: Boolean): HttpMetricsSettings
   def withServerDimensions(dims: immutable.Seq[Dimension]): HttpMetricsSettings
-  def withCustomDimensions(labelers: immutable.Seq[HttpMessageLabeler[_]]): HttpMetricsSettings
+  def withCustomDimensions(labelers: immutable.Seq[HttpMessageLabeler]): HttpMetricsSettings
 }
 
 object HttpMetricsSettings {
@@ -66,7 +66,7 @@ object HttpMetricsSettings {
       includePathDimension: Boolean,
       includeStatusDimension: Boolean,
       serverDimensions: immutable.Seq[Dimension],
-      customDimensions: immutable.Seq[HttpMessageLabeler[_]]
+      customDimensions: immutable.Seq[HttpMessageLabeler]
   ): HttpMetricsSettings = HttpMetricsSettingsImpl(
     namespace,
     metricsNames,
@@ -86,7 +86,7 @@ object HttpMetricsSettings {
       includePathDimension: Boolean,
       includeStatusDimension: Boolean,
       serverDimensions: immutable.Seq[Dimension] = immutable.Seq.empty,
-      customDimensions: immutable.Seq[HttpMessageLabeler[_]] = immutable.Seq.empty
+      customDimensions: immutable.Seq[HttpMessageLabeler] = immutable.Seq.empty
   ) extends HttpMetricsSettings {
 
     def withNamespace(namespace: String): HttpMetricsSettings                 = copy(namespace = namespace)
@@ -96,7 +96,7 @@ object HttpMetricsSettings {
     def withIncludePathDimension(include: Boolean): HttpMetricsSettings       = copy(includePathDimension = include)
     def withIncludeStatusDimension(include: Boolean): HttpMetricsSettings     = copy(includeStatusDimension = include)
     def withServerDimensions(dims: immutable.Seq[Dimension]): HttpMetricsSettings = copy(serverDimensions = dims)
-    def withCustomDimensions(dims: immutable.Seq[HttpMessageLabeler[_]]): HttpMetricsSettings =
+    def withCustomDimensions(dims: immutable.Seq[HttpMessageLabeler]): HttpMetricsSettings =
       copy(customDimensions = dims)
 
   }

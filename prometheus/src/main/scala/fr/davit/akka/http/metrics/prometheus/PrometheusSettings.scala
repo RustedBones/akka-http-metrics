@@ -76,7 +76,7 @@ final case class PrometheusSettings(
     includePathDimension: Boolean,
     includeStatusDimension: Boolean,
     serverDimensions: immutable.Seq[Dimension] = immutable.Seq.empty,
-    customDimensions: immutable.Seq[HttpMessageLabeler[_]] = immutable.Seq.empty,
+    customDimensions: immutable.Seq[HttpMessageLabeler] = immutable.Seq.empty,
     receivedBytesConfig: HistogramConfig,
     durationConfig: TimerConfig,
     sentBytesConfig: HistogramConfig
@@ -89,7 +89,7 @@ final case class PrometheusSettings(
   def withIncludePathDimension(include: Boolean): PrometheusSettings           = copy(includePathDimension = include)
   def withIncludeStatusDimension(include: Boolean): PrometheusSettings         = copy(includeStatusDimension = include)
   def withServerDimensions(dims: immutable.Seq[Dimension]): PrometheusSettings = copy(serverDimensions = dims)
-  def withCustomDimensions(dims: immutable.Seq[HttpMessageLabeler[_]]): PrometheusSettings =
+  def withCustomDimensions(dims: immutable.Seq[HttpMessageLabeler]): PrometheusSettings =
     copy(customDimensions = dims)
   def withReceivedBytesConfig(config: HistogramConfig): PrometheusSettings = copy(receivedBytesConfig = config)
   def withDurationConfig(config: TimerConfig): PrometheusSettings          = copy(durationConfig = config)

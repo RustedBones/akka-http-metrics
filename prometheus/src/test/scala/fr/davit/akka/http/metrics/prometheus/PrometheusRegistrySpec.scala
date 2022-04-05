@@ -25,10 +25,10 @@ import scala.concurrent.duration._
 
 class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
 
-  val serverDimensions   = Seq(Dimension("dim", "label"))
+  val serverDimensions   = List(Dimension("dim", "label"))
   val requestsDimensions = serverDimensions :+ Dimension(MethodLabeler.name, "GET")
   val responsesDimensions =
-    requestsDimensions ++ Seq(Dimension(PathLabeler.name, "/api"), Dimension(StatusGroupLabeler.name, "2xx"))
+    requestsDimensions ++ List(Dimension(PathLabeler.name, "/api"), Dimension(StatusGroupLabeler.name, "2xx"))
 
   trait Fixture {
 
