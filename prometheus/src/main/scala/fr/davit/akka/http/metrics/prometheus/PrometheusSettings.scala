@@ -18,7 +18,7 @@ package fr.davit.akka.http.metrics.prometheus
 
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 import fr.davit.akka.http.metrics.core.HttpMetricsNames.HttpMetricsNamesImpl
-import fr.davit.akka.http.metrics.core.{Dimension, HttpMetricsNames, HttpMetricsSettings}
+import fr.davit.akka.http.metrics.core.{Dimension, HttpMessageLabeler, HttpMetricsNames, HttpMetricsSettings}
 import fr.davit.akka.http.metrics.prometheus.Quantiles.Quantile
 
 import scala.collection.immutable
@@ -69,28 +69,30 @@ object PrometheusMetricsNames {
 }
 
 final case class PrometheusSettings(
-    namespace: String,
-    metricsNames: HttpMetricsNames,
-    defineError: HttpResponse => Boolean,
-    includeMethodDimension: Boolean,
-    includePathDimension: Boolean,
-    includeStatusDimension: Boolean,
-    serverDimensions: immutable.Seq[Dimension] = immutable.Seq.empty[Dimension],
-    receivedBytesConfig: HistogramConfig,
-    durationConfig: TimerConfig,
-    sentBytesConfig: HistogramConfig
+                                     namespace: String,
+                                     metricsNames: HttpMetricsNames,
+                                     defineError: HttpResponse => Boolean,
+                                     includeMethodDimension: Boolean,
+                                     includePathDimension: Boolean,
+                                     includeStatusDimension: Boolean,
+                                     serverDimensions: immutable.Seq[Dimension] = immutable.Seq.empty,
+                                     customDimensions: immutable.Seq[HttpMessageLabeler[_]] = immutable.Seq.empty,
+                                     receivedBytesConfig: HistogramConfig,
+                                     durationConfig: TimerConfig,
+                                     sentBytesConfig: HistogramConfig
 ) extends HttpMetricsSettings {
 
-  def withNamespace(namespace: String): PrometheusSettings                 = copy(namespace = namespace)
-  def withMetricsNames(metricsNames: HttpMetricsNames): PrometheusSettings = copy(metricsNames = metricsNames)
-  def withDefineError(fn: HttpResponse => Boolean): PrometheusSettings     = copy(defineError = defineError)
-  def withIncludeMethodDimension(include: Boolean): PrometheusSettings     = copy(includeMethodDimension = include)
-  def withIncludePathDimension(include: Boolean): PrometheusSettings       = copy(includePathDimension = include)
-  def withIncludeStatusDimension(include: Boolean): PrometheusSettings     = copy(includeStatusDimension = include)
-  def withServerDimensions(labels: immutable.Seq[Dimension]): PrometheusSettings = copy(serverDimensions = labels)
-  def withReceivedBytesConfig(config: HistogramConfig): PrometheusSettings       = copy(receivedBytesConfig = config)
-  def withDurationConfig(config: TimerConfig): PrometheusSettings                = copy(durationConfig = config)
-  def withSentBytesConfig(config: HistogramConfig): PrometheusSettings           = copy(sentBytesConfig = config)
+  def withNamespace(namespace: String): PrometheusSettings                     = copy(namespace = namespace)
+  def withMetricsNames(metricsNames: HttpMetricsNames): PrometheusSettings     = copy(metricsNames = metricsNames)
+  def withDefineError(fn: HttpResponse => Boolean): PrometheusSettings         = copy(defineError = defineError)
+  def withIncludeMethodDimension(include: Boolean): PrometheusSettings         = copy(includeMethodDimension = include)
+  def withIncludePathDimension(include: Boolean): PrometheusSettings           = copy(includePathDimension = include)
+  def withIncludeStatusDimension(include: Boolean): PrometheusSettings         = copy(includeStatusDimension = include)
+  def withServerDimensions(dims: immutable.Seq[Dimension]): PrometheusSettings = copy(serverDimensions = dims)
+  def withCustomDimensions(dims: immutable.Seq[HttpMessageLabeler[_]]): PrometheusSettings = copy(customDimensions = dims)
+  def withReceivedBytesConfig(config: HistogramConfig): PrometheusSettings          = copy(receivedBytesConfig = config)
+  def withDurationConfig(config: TimerConfig): PrometheusSettings                   = copy(durationConfig = config)
+  def withSentBytesConfig(config: HistogramConfig): PrometheusSettings              = copy(sentBytesConfig = config)
 }
 
 object PrometheusSettings {

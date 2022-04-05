@@ -80,13 +80,13 @@ class HttpMetricsSpec
     {
       val handler  = HttpMetrics.metricsRouteToFunction(reject)
       val response = handler(HttpRequest()).futureValue
-      response.attributes(HttpMetrics.PathLabel) shouldBe "unhandled"
+      response.attributes(PathLabeler.key) shouldBe "unhandled"
     }
 
     {
       val handler  = HttpMetrics.metricsRouteToFunction(failWith(new Exception("BOOM!")))
       val response = handler(HttpRequest()).futureValue
-      response.attributes(HttpMetrics.PathLabel) shouldBe "unhandled"
+      response.attributes(PathLabeler.key) shouldBe "unhandled"
     }
   }
 
@@ -150,7 +150,7 @@ class HttpMetricsSpec
     val expected = Marshal(StatusCodes.NotFound -> "The requested resource could not be found.")
       .to[HttpResponse]
       .futureValue
-      .addAttribute(HttpMetrics.PathLabel, "unhandled")
+      .addAttribute(PathLabeler.key, "unhandled")
     response.value shouldBe expected
   }
 
@@ -179,7 +179,7 @@ class HttpMetricsSpec
     val expected = Marshal(StatusCodes.InternalServerError)
       .to[HttpResponse]
       .futureValue
-      .addAttribute(HttpMetrics.PathLabel, "unhandled")
+      .addAttribute(PathLabeler.key, "unhandled")
     response.value shouldBe expected
   }
 

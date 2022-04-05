@@ -22,7 +22,7 @@ import fr.davit.akka.http.metrics.core.{Counter, Dimension, Gauge, Histogram, Ti
 import scala.concurrent.duration.FiniteDuration
 
 object StatsDMetrics {
-  def dimensionToTag(dimension: Dimension): String = s"${dimension.key}:${dimension.value}"
+  def dimensionToTag(dimension: Dimension): String = s"${dimension.name}:${dimension.label}"
 }
 
 abstract class StatsDMetrics(namespace: String, name: String) {

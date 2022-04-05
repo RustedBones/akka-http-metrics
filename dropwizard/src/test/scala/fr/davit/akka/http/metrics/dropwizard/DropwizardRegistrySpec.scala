@@ -16,8 +16,7 @@
 
 package fr.davit.akka.http.metrics.dropwizard
 
-import akka.http.scaladsl.model.StatusCodes
-import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{PathDimension, StatusGroupDimension}
+import fr.davit.akka.http.metrics.core.Dimension
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -26,7 +25,7 @@ import scala.jdk.CollectionConverters._
 
 class DropwizardRegistrySpec extends AnyFlatSpec with Matchers {
 
-  val dimensions = Seq(StatusGroupDimension(StatusCodes.OK), PathDimension("/api"))
+  val dimensions = Seq(Dimension("status", "2xx"), Dimension("path", "/api"))
 
   trait Fixture {
     val registry = DropwizardRegistry()

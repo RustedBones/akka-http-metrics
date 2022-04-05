@@ -97,9 +97,9 @@ Http()
   .bind(route)
 ```
 
-#### Labels
+#### Dimensions
 
-By default, metrics labels are disabled. You can enable them in the settings.
+By default, metrics dimensions are disabled. You can enable them in the settings.
 
 ```scala
 settings
@@ -108,22 +108,56 @@ settings
   .withIncludeStatusDimension(true)
 ```
 
-You can also add additional static server-level dimensions to all metrics collected by the library. In the example
-below, the `env` label with `prod` dimension will be added. 
+Custom dimensions can be added to the message metrics:
+- extend the `HttpRequestLabeler` to add labels on requests & their associated response 
+- extend the `HttpResponseLabeler` to add labels on responses only
+
+In the example below, the `browser` dimension will be populated based on the user-agent header on requests and responses.
+The responses going through the route will have the `user` dimension set with the provided username, other responses
+will be `unlabelled`.
+
+```scala
+import fr.davit.akka.http.metrics.core.{AttributeLabeler, HttpRequestLabeler}
+
+// based on https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent#browser_name
+object BrowserLabeler extends HttpRequestLabeler {
+ override def name: String = "browser"
+ override def label(request: HttpRequest): String = {
+  val products = for {
+   ua <- request.header[`User-Agent`].toSeq
+   pv <- ua.products
+  } yield pv.product
+  if (products.contains("Seamonkey")) "seamonkey"
+  else if (products.contains("Firefox")) "firefox"
+  else if (products.contains("Chromium")) "chromium"
+  else if (products.contains("Chrome")) "chrome"
+  else if (products.contains("Safari")) "safari"
+  else if (products.contains("OPR") || products.contains("Opera")) "opera"
+  else "other"
+ }
+}
+
+object UserLabeler extends AttributeLabeler {
+  def name: String = "user"
+}
+
+val route = auth { username =>
+ metricsLabel(UserLabeler, username) {
+  ...
+ }
+}
+
+settings.withCustomDimensions(Seq(BrowserLabeler, UserLabeler))
+```
+
+
+Additional static server-level dimensions can be set to all metrics collected by the library.
+In the example below, the `env` dimension with `prod` label will be added. 
 
 ```scala
 import fr.davit.akka.http.metrics.core.Dimension
-
-final case class EnvDimension(value: String) extends Dimension {
-  override def key: String = "env"
-}
-
-settings.withServerDimensions(Seq(EnvDimension("prod")))
+settings.withServerDimensions(Seq(Dimension("env", "prod")))
 ```
-
-These key/value pairs will be added to all response size and response duration metrics.
-
-It is up to the implementor to implement a class extending the `Dimension` trait.
 
 ##### Method
 

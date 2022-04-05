@@ -17,9 +17,8 @@
 package fr.davit.akka.http.metrics.dropwizard.marshalling
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.StatusGroupDimension
+import fr.davit.akka.http.metrics.core.Dimension
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives._
 import fr.davit.akka.http.metrics.dropwizard.DropwizardRegistry
 import org.scalatest.BeforeAndAfterAll
@@ -47,7 +46,7 @@ class DropwizardMarshallersSpec extends AnyFlatSpec with Matchers with Scalatest
 
   "DropwizardMarshallers" should "expose metrics as json format" in new Fixture {
     // use metrics so they appear in the report
-    val dimensions = Seq(StatusGroupDimension(StatusCodes.OK))
+    val dimensions = Seq(Dimension("status", "2xx"))
     registry.requests.inc()
     registry.requestsActive.inc()
     registry.requestsSize.update(10)

@@ -16,9 +16,7 @@
 
 package fr.davit.akka.http.metrics.prometheus
 
-import akka.http.scaladsl.model.{HttpMethods, StatusCodes}
-import fr.davit.akka.http.metrics.core.Dimension
-import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{MethodDimension, PathDimension, StatusGroupDimension}
+import fr.davit.akka.http.metrics.core.{Dimension, MethodLabeler, PathLabeler, StatusGroupLabeler}
 import io.prometheus.client.CollectorRegistry
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -27,14 +25,10 @@ import scala.concurrent.duration._
 
 class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
 
-  final case object TestDimension extends Dimension {
-    override def key: String   = "env"
-    override def value: String = "test"
-  }
-
-  val serverDimensions    = List(TestDimension)
-  val requestsDimensions  = serverDimensions :+ MethodDimension(HttpMethods.GET)
-  val responsesDimensions = requestsDimensions ++ List(PathDimension("/api"), StatusGroupDimension(StatusCodes.OK))
+  val serverDimensions   = Seq(Dimension("dim", "label"))
+  val requestsDimensions = serverDimensions :+ Dimension(MethodLabeler.name, "GET")
+  val responsesDimensions =
+    requestsDimensions ++ Seq(Dimension(PathLabeler.name, "/api"), Dimension(StatusGroupLabeler.name, "2xx"))
 
   trait Fixture {
 
@@ -44,11 +38,11 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
     )
 
     def underlyingCounterValue(name: String, dims: Seq[Dimension] = Seq.empty): Long = {
-      registry.underlying.getSampleValue(name, dims.map(_.key).toArray, dims.map(_.value).toArray).toLong
+      registry.underlying.getSampleValue(name, dims.map(_.name).toArray, dims.map(_.label).toArray).toLong
     }
 
     def underlyingHistogramValue(name: String, dims: Seq[Dimension] = Seq.empty): Double = {
-      registry.underlying.getSampleValue(s"${name}_sum", dims.map(_.key).toArray, dims.map(_.value).toArray)
+      registry.underlying.getSampleValue(s"${name}_sum", dims.map(_.name).toArray, dims.map(_.label).toArray)
     }
   }
 

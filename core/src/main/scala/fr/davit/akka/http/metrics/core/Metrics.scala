@@ -18,10 +18,7 @@ package fr.davit.akka.http.metrics.core
 
 import scala.concurrent.duration.FiniteDuration
 
-trait Dimension {
-  def key: String
-  def value: String
-}
+case class Dimension(name: String, label: String)
 
 trait Counter {
   def inc(dimensions: Seq[Dimension] = Seq.empty): Unit

@@ -16,18 +16,16 @@
 
 package fr.davit.akka.http.metrics.graphite
 
-import java.net.InetSocketAddress
-import java.time.{Clock, Instant, ZoneId}
-
 import akka.actor.{ActorRef, ActorSystem}
-import akka.http.scaladsl.model.StatusCodes
 import akka.io.{IO, Tcp}
 import akka.testkit.{TestActor, TestKit, TestProbe}
-import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.{PathDimension, StatusGroupDimension}
+import fr.davit.akka.http.metrics.core.{Dimension, PathLabeler, StatusGroupLabeler}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 
+import java.net.InetSocketAddress
+import java.time.{Clock, Instant, ZoneId}
 import scala.concurrent.duration._
 
 class GraphiteRegistrySpec
@@ -36,7 +34,7 @@ class GraphiteRegistrySpec
     with Matchers
     with BeforeAndAfterAll {
 
-  val dimensions = Seq(PathDimension("/api"), StatusGroupDimension(StatusCodes.OK))
+  val dimensions = Seq(Dimension(PathLabeler.name, "/api"), Dimension(StatusGroupLabeler.name, "2xx"))
   val timestamp  = Instant.ofEpochSecond(1234)
 
   def withFixture(test: (TestProbe, GraphiteRegistry) => Any) = {

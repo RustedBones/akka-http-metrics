@@ -37,7 +37,9 @@ object TestRegistry {
 
   implicit val marshaller: ToEntityMarshaller[TestRegistry] = Marshaller.opaque(_ => HttpEntity.Empty)
 
-  private def keyer(dimensions: Seq[Dimension]): String = dimensions.mkString(":")
+  private def keyer(dimensions: Seq[Dimension]): String = dimensions
+    .map(d => d.name + "=" + d.label)
+    .mkString(":")
 
   class TestCounter extends Counter {
     protected val acc = mutable.Map[String, Long]()
