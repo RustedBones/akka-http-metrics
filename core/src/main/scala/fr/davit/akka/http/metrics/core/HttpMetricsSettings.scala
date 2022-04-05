@@ -95,8 +95,9 @@ object HttpMetricsSettings {
     def withIncludeMethodDimension(include: Boolean): HttpMetricsSettings     = copy(includeMethodDimension = include)
     def withIncludePathDimension(include: Boolean): HttpMetricsSettings       = copy(includePathDimension = include)
     def withIncludeStatusDimension(include: Boolean): HttpMetricsSettings     = copy(includeStatusDimension = include)
-    def withServerDimensions(dims: immutable.Seq[Dimension]): HttpMetricsSettings      = copy(serverDimensions = dims)
-    def withCustomDimensions(dims: immutable.Seq[HttpMessageLabeler[_]]): HttpMetricsSettings = copy(customDimensions = dims)
+    def withServerDimensions(dims: immutable.Seq[Dimension]): HttpMetricsSettings = copy(serverDimensions = dims)
+    def withCustomDimensions(dims: immutable.Seq[HttpMessageLabeler[_]]): HttpMetricsSettings =
+      copy(customDimensions = dims)
 
   }
 }
