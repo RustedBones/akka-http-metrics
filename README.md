@@ -142,7 +142,7 @@ object UserLabeler extends AttributeLabeler {
 }
 
 val route = auth { username =>
- metricsLabel(UserLabeler, username) {
+ metricsLabeled(UserLabeler, username) {
   ...
  }
 }
