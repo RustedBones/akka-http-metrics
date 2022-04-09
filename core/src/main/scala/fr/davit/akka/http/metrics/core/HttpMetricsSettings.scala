@@ -52,8 +52,8 @@ trait HttpMetricsSettings {
   def withIncludeMethodDimension(include: Boolean): HttpMetricsSettings
   def withIncludePathDimension(include: Boolean): HttpMetricsSettings
   def withIncludeStatusDimension(include: Boolean): HttpMetricsSettings
-  def withServerDimensions(dims: immutable.Seq[Dimension]): HttpMetricsSettings
-  def withCustomDimensions(labelers: immutable.Seq[HttpMessageLabeler]): HttpMetricsSettings
+  def withServerDimensions(dims: Dimension*): HttpMetricsSettings
+  def withCustomDimensions(labelers: HttpMessageLabeler*): HttpMetricsSettings
 }
 
 object HttpMetricsSettings {
@@ -95,9 +95,8 @@ object HttpMetricsSettings {
     def withIncludeMethodDimension(include: Boolean): HttpMetricsSettings     = copy(includeMethodDimension = include)
     def withIncludePathDimension(include: Boolean): HttpMetricsSettings       = copy(includePathDimension = include)
     def withIncludeStatusDimension(include: Boolean): HttpMetricsSettings     = copy(includeStatusDimension = include)
-    def withServerDimensions(dims: immutable.Seq[Dimension]): HttpMetricsSettings = copy(serverDimensions = dims)
-    def withCustomDimensions(dims: immutable.Seq[HttpMessageLabeler]): HttpMetricsSettings =
-      copy(customDimensions = dims)
+    def withServerDimensions(dims: Dimension*): HttpMetricsSettings           = copy(serverDimensions = dims.toVector)
+    def withCustomDimensions(dims: HttpMessageLabeler*): HttpMetricsSettings  = copy(customDimensions = dims.toVector)
 
   }
 }

@@ -4,6 +4,7 @@
 
 - Update dependencies
 - Add support for custom dimensions
+- Change form sequence to varagrs API in settings
 
 ## v1.6.0 (2021-05-07)
 

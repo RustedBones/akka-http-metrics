@@ -82,15 +82,14 @@ final case class PrometheusSettings(
     sentBytesConfig: HistogramConfig
 ) extends HttpMetricsSettings {
 
-  def withNamespace(namespace: String): PrometheusSettings                     = copy(namespace = namespace)
-  def withMetricsNames(metricsNames: HttpMetricsNames): PrometheusSettings     = copy(metricsNames = metricsNames)
-  def withDefineError(fn: HttpResponse => Boolean): PrometheusSettings         = copy(defineError = defineError)
-  def withIncludeMethodDimension(include: Boolean): PrometheusSettings         = copy(includeMethodDimension = include)
-  def withIncludePathDimension(include: Boolean): PrometheusSettings           = copy(includePathDimension = include)
-  def withIncludeStatusDimension(include: Boolean): PrometheusSettings         = copy(includeStatusDimension = include)
-  def withServerDimensions(dims: immutable.Seq[Dimension]): PrometheusSettings = copy(serverDimensions = dims)
-  def withCustomDimensions(dims: immutable.Seq[HttpMessageLabeler]): PrometheusSettings =
-    copy(customDimensions = dims)
+  def withNamespace(namespace: String): PrometheusSettings                 = copy(namespace = namespace)
+  def withMetricsNames(metricsNames: HttpMetricsNames): PrometheusSettings = copy(metricsNames = metricsNames)
+  def withDefineError(fn: HttpResponse => Boolean): PrometheusSettings     = copy(defineError = defineError)
+  def withIncludeMethodDimension(include: Boolean): PrometheusSettings     = copy(includeMethodDimension = include)
+  def withIncludePathDimension(include: Boolean): PrometheusSettings       = copy(includePathDimension = include)
+  def withIncludeStatusDimension(include: Boolean): PrometheusSettings     = copy(includeStatusDimension = include)
+  def withServerDimensions(dims: Dimension*): PrometheusSettings           = copy(serverDimensions = dims.toVector)
+  def withCustomDimensions(dims: HttpMessageLabeler*): PrometheusSettings  = copy(customDimensions = dims.toVector)
   def withReceivedBytesConfig(config: HistogramConfig): PrometheusSettings = copy(receivedBytesConfig = config)
   def withDurationConfig(config: TimerConfig): PrometheusSettings          = copy(durationConfig = config)
   def withSentBytesConfig(config: HistogramConfig): PrometheusSettings     = copy(sentBytesConfig = config)

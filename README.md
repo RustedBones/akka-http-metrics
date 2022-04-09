@@ -147,7 +147,7 @@ val route = auth { username =>
  }
 }
 
-settings.withCustomDimensions(Seq(BrowserLabeler, UserLabeler))
+settings.withCustomDimensions(BrowserLabeler, UserLabeler)
 ```
 
 
@@ -156,7 +156,7 @@ In the example below, the `env` dimension with `prod` label will be added.
 
 ```scala
 import fr.davit.akka.http.metrics.core.Dimension
-settings.withServerDimensions(Seq(Dimension("env", "prod")))
+settings.withServerDimensions(Dimension("env", "prod"))
 ```
 
 ##### Method
