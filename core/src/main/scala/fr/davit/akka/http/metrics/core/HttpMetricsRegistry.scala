@@ -45,40 +45,11 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
     builder.result()
   }
 
-  // --------------------------------------------------------------------------------------------------------------------
-  // requests
-  // --------------------------------------------------------------------------------------------------------------------
-  def requests: Counter
-
-  def requestsActive: Gauge
-
-  def requestsFailures: Counter
-
-  def requestsSize: Histogram
-
-  // --------------------------------------------------------------------------------------------------------------------
-  // responses
-  // --------------------------------------------------------------------------------------------------------------------
-  def responses: Counter
-
-  def responsesErrors: Counter
-
-  def responsesDuration: Timer
-
-  def responsesSize: Histogram
-
-  // --------------------------------------------------------------------------------------------------------------------
-  // Connections
-  // --------------------------------------------------------------------------------------------------------------------
-  def connections: Counter
-
-  def connectionsActive: Gauge
-
-  private def requestDimensions(request: HttpRequest): Seq[Dimension] = {
+  protected def requestDimensions(request: HttpRequest): Seq[Dimension] = {
     requestLabelers.map(_.dimension(request))
   }
 
-  private def responseDimensions(response: HttpResponse): Seq[Dimension] = {
+  protected def responseDimensions(response: HttpResponse): Seq[Dimension] = {
     responseLabelers.map(_.dimension(response))
   }
 
@@ -155,4 +126,33 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
     val dims = settings.serverDimensions
     connectionsActive.dec(dims)
   }
+
+  // --------------------------------------------------------------------------------------------------------------------
+  // requests
+  // --------------------------------------------------------------------------------------------------------------------
+  def requests: Counter
+
+  def requestsActive: Gauge
+
+  def requestsFailures: Counter
+
+  def requestsSize: Histogram
+
+  // --------------------------------------------------------------------------------------------------------------------
+  // responses
+  // --------------------------------------------------------------------------------------------------------------------
+  def responses: Counter
+
+  def responsesErrors: Counter
+
+  def responsesDuration: Timer
+
+  def responsesSize: Histogram
+
+  // --------------------------------------------------------------------------------------------------------------------
+  // Connections
+  // --------------------------------------------------------------------------------------------------------------------
+  def connections: Counter
+
+  def connectionsActive: Gauge
 }

@@ -16,6 +16,7 @@
 
 package fr.davit.akka.http.metrics.prometheus
 
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import fr.davit.akka.http.metrics.core._
 import fr.davit.akka.http.metrics.prometheus.Quantiles.Quantile
 import io.prometheus.client.CollectorRegistry
@@ -38,6 +39,11 @@ object PrometheusRegistry {
   ): PrometheusRegistry = {
     new PrometheusRegistry(settings, underlying)
   }
+
+  // order dimension by names
+  // this helps making sure same dimension are given in the same order
+  // when creating collectors and observing metrics
+  implicit val DimensionOrdering: Ordering[Dimension] = Ordering.by(_.name)
 }
 
 /** Prometheus registry For metrics naming see [https://prometheus.io/docs/practices/naming/]
@@ -55,8 +61,17 @@ class PrometheusRegistry(settings: PrometheusSettings, val underlying: Collector
   private val serverDimensions         = settings.serverDimensions.map(_.name)
   private val customRequestDimensions  = settings.customDimensions.collect { case l: HttpRequestLabeler => l.name }
   private val customResponseDimensions = settings.customDimensions.collect { case l: HttpResponseLabeler => l.name }
-  private val requestsDimensions       = serverDimensions ++ methodDimension ++ customRequestDimensions
-  private val responsesDimensions = requestsDimensions ++ pathDimension ++ statusDimension ++ customResponseDimensions
+
+  private val requestsDimensions =
+    (serverDimensions ++ methodDimension ++ customRequestDimensions).sorted
+  private val responsesDimensions =
+    (requestsDimensions ++ pathDimension ++ statusDimension ++ customResponseDimensions).sorted
+
+  override protected def requestDimensions(request: HttpRequest): Seq[Dimension] =
+    super.requestDimensions(request).sorted
+
+  override protected def responseDimensions(response: HttpResponse): Seq[Dimension] =
+    super.responseDimensions(response).sorted
 
   lazy val requests: Counter = io.prometheus.client.Counter
     .build()
