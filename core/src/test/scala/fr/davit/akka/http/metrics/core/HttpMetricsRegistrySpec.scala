@@ -217,7 +217,7 @@ class HttpMetricsRegistrySpec
   }
 
   it should "increment proper server dimension" in new Fixture(
-    TestRegistry.settings.withServerDimensions(List(testDimension))
+    TestRegistry.settings.withServerDimensions(testDimension)
   ) {
     registry.onConnection()
     registry.connections.value(Seq(testDimension)) shouldBe 1
@@ -254,7 +254,7 @@ class HttpMetricsRegistrySpec
   }
 
   it should "increment proper custom request dimension" in new Fixture(
-    TestRegistry.settings.withCustomDimensions(List(BrowserLabeler))
+    TestRegistry.settings.withCustomDimensions(BrowserLabeler)
   ) {
     val agent = Dimension(BrowserLabeler.name, "chrome")
     registry.onConnection()
@@ -271,7 +271,7 @@ class HttpMetricsRegistrySpec
     def name: String = "grpc-service"
   }
   it should "increment proper custom response dimension" in new Fixture(
-    TestRegistry.settings.withCustomDimensions(List(GrpcServiceLabeler))
+    TestRegistry.settings.withCustomDimensions(GrpcServiceLabeler)
   ) {
     val service = Dimension(GrpcServiceLabeler.name, "health")
     registry.onConnection()
