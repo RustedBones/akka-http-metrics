@@ -16,7 +16,8 @@
 
 package fr.davit.akka.http.metrics.prometheus
 
-import fr.davit.akka.http.metrics.core.{Dimension, MethodLabeler, PathLabeler, StatusGroupLabeler}
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
+import fr.davit.akka.http.metrics.core._
 import io.prometheus.client.CollectorRegistry
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -25,10 +26,34 @@ import scala.concurrent.duration._
 
 class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
 
-  val serverDimensions   = List(Dimension("dim", "label"))
-  val requestsDimensions = serverDimensions :+ Dimension(MethodLabeler.name, "GET")
-  val responsesDimensions =
-    requestsDimensions ++ List(Dimension(PathLabeler.name, "/api"), Dimension(StatusGroupLabeler.name, "2xx"))
+  import PrometheusRegistry._
+
+  object CustomRequestLabeler extends HttpRequestLabeler {
+    override def name                                = "custom_request_dim"
+    def label                                        = "custom_request_label"
+    override def label(request: HttpRequest): String = label
+  }
+
+  object CustomResponseLabeler extends HttpResponseLabeler {
+    override def name                                  = "custom_request_dim"
+    def label                                          = "custom_response_label"
+    override def label(response: HttpResponse): String = label
+  }
+
+  val serverDimensions         = List(Dimension("server_dim", "server_label"))
+  val customRequestDimensions  = List(Dimension(CustomRequestLabeler.name, CustomRequestLabeler.label))
+  val customResponseDimensions = List(Dimension(CustomResponseLabeler.name, CustomResponseLabeler.label))
+
+  val requestsDimensions = (
+    serverDimensions ++
+      customRequestDimensions ++
+      List(Dimension(MethodLabeler.name, "GET"))
+  ).sorted
+  val responsesDimensions = (
+    requestsDimensions ++
+      customResponseDimensions ++
+      List(Dimension(PathLabeler.name, "/api"), Dimension(StatusGroupLabeler.name, "2xx"))
+  ).sorted
 
   trait Fixture {
 
@@ -55,6 +80,7 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
         .withIncludePathDimension(true)
         .withIncludeStatusDimension(true)
         .withServerDimensions(serverDimensions)
+        .withCustomDimensions(List(CustomRequestLabeler, CustomResponseLabeler))
     )
   }
 
