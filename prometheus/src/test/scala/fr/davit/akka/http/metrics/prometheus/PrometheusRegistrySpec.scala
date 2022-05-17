@@ -26,8 +26,6 @@ import scala.concurrent.duration._
 
 class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
 
-  import PrometheusRegistry._
-
   object CustomRequestLabeler extends HttpRequestLabeler {
     override def name                                = "custom_request_dim"
     def label                                        = "custom_request_label"
@@ -40,20 +38,18 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
     override def label(response: HttpResponse): String = label
   }
 
-  val serverDimensions         = List(Dimension("server_dim", "server_label"))
-  val customRequestDimensions  = List(Dimension(CustomRequestLabeler.name, CustomRequestLabeler.label))
-  val customResponseDimensions = List(Dimension(CustomResponseLabeler.name, CustomResponseLabeler.label))
-
-  val requestsDimensions = (
-    serverDimensions ++
-      customRequestDimensions ++
-      List(Dimension(MethodLabeler.name, "GET"))
-  ).sorted
-  val responsesDimensions = (
-    requestsDimensions ++
-      customResponseDimensions ++
-      List(Dimension(PathLabeler.name, "/api"), Dimension(StatusGroupLabeler.name, "2xx"))
-  ).sorted
+  val serverDimensions = List(
+    Dimension("server_dim", "server_label")
+  )
+  val requestsDimensions = List(
+    Dimension(MethodLabeler.name, "GET"),
+    Dimension(CustomRequestLabeler.name, CustomRequestLabeler.label)
+  )
+  val responsesDimensions = List(
+    Dimension(StatusGroupLabeler.name, "2xx"),
+    Dimension(PathLabeler.name, "/api"),
+    Dimension(CustomResponseLabeler.name, CustomResponseLabeler.label)
+  )
 
   trait Fixture {
 
@@ -105,6 +101,18 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
     )
   }
 
+  it should "not have any dimensions by default" in new Fixture {
+    registry.serverDimensions shouldBe empty
+    registry.requestsDimensions shouldBe empty
+    registry.responsesDimensions shouldBe empty
+  }
+
+  it should "add proper dimensions when configured" in new DimensionFixture {
+    registry.serverDimensions should contain theSameElementsInOrderAs serverDimensions.map(_.name)
+    registry.requestsDimensions should contain theSameElementsInOrderAs requestsDimensions.map(_.name)
+    registry.responsesDimensions should contain theSameElementsInOrderAs responsesDimensions.map(_.name)
+  }
+
   it should "set requestsActive metrics in the underlying registry" in new Fixture {
     registry.requestsActive.inc()
     underlyingCounterValue("akka_http_requests_active") shouldBe 1L
@@ -116,8 +124,9 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
   }
 
   it should "set requestsActive metrics in the underlying registry with dimensions" in new DimensionFixture {
-    registry.requestsActive.inc(requestsDimensions)
-    underlyingCounterValue("akka_http_requests_active", requestsDimensions) shouldBe 1L
+    val dim = serverDimensions ++ requestsDimensions
+    registry.requestsActive.inc(dim)
+    underlyingCounterValue("akka_http_requests_active", dim) shouldBe 1L
   }
 
   it should "set requests metrics in the underlying registry" in new Fixture {
@@ -131,8 +140,9 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
   }
 
   it should "set requests metrics in the underlying registry with dimensions" in new DimensionFixture {
-    registry.requests.inc(requestsDimensions)
-    underlyingCounterValue("akka_http_requests_total", requestsDimensions) shouldBe 1L
+    val dims = serverDimensions ++ requestsDimensions
+    registry.requests.inc(dims)
+    underlyingCounterValue("akka_http_requests_total", dims) shouldBe 1L
   }
 
   it should "set requestsSize metrics in the underlying registry" in new Fixture {
@@ -146,8 +156,9 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
   }
 
   it should "set requestsSize metrics in the underlying registry with dimensions" in new DimensionFixture {
-    registry.requestsSize.update(3, requestsDimensions)
-    underlyingHistogramValue("akka_http_requests_size_bytes", requestsDimensions) shouldBe 3L
+    val dims = serverDimensions ++ requestsDimensions
+    registry.requestsSize.update(3, dims)
+    underlyingHistogramValue("akka_http_requests_size_bytes", dims) shouldBe 3L
   }
 
   it should "set responses metrics in the underlying registry" in new Fixture {
@@ -161,8 +172,9 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
   }
 
   it should "set responses metrics in the underlying registry with dimensions" in new DimensionFixture {
-    registry.responses.inc(responsesDimensions)
-    underlyingCounterValue("akka_http_responses_total", responsesDimensions) shouldBe 1L
+    val dims = serverDimensions ++ requestsDimensions ++ responsesDimensions
+    registry.responses.inc(dims)
+    underlyingCounterValue("akka_http_responses_total", dims) shouldBe 1L
   }
 
   it should "set responsesErrors metrics in the underlying registry" in new Fixture {
@@ -176,8 +188,9 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
   }
 
   it should "set responsesErrors metrics in the underlying registry with dimensions" in new DimensionFixture {
-    registry.responsesErrors.inc(responsesDimensions)
-    underlyingCounterValue("akka_http_responses_errors_total", responsesDimensions) shouldBe 1L
+    val dims = serverDimensions ++ requestsDimensions ++ responsesDimensions
+    registry.responsesErrors.inc(dims)
+    underlyingCounterValue("akka_http_responses_errors_total", dims) shouldBe 1L
   }
 
   it should "set responsesDuration metrics in the underlying registry" in new Fixture {
@@ -191,8 +204,9 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
   }
 
   it should "set responsesDuration metrics in the underlying registry with dimension" in new DimensionFixture {
-    registry.responsesDuration.observe(3.seconds, responsesDimensions)
-    underlyingHistogramValue("akka_http_responses_duration_seconds", responsesDimensions) shouldBe 3.0
+    val dims = serverDimensions ++ requestsDimensions ++ responsesDimensions
+    registry.responsesDuration.observe(3.seconds, dims)
+    underlyingHistogramValue("akka_http_responses_duration_seconds", dims) shouldBe 3.0
   }
 
   it should "set responsesSize metrics in the underlying registry" in new Fixture {
@@ -206,8 +220,9 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
   }
 
   it should "set responsesSize metrics in the underlying registry with dimensions" in new DimensionFixture {
-    registry.responsesSize.update(3, responsesDimensions)
-    underlyingHistogramValue("akka_http_responses_size_bytes", responsesDimensions) shouldBe 3L
+    val dims = serverDimensions ++ requestsDimensions ++ responsesDimensions
+    registry.responsesSize.update(3, dims)
+    underlyingHistogramValue("akka_http_responses_size_bytes", dims) shouldBe 3L
   }
 
   it should "set connectionsActive metrics in the underlying registry" in new Fixture {
@@ -221,8 +236,9 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
   }
 
   it should "set connectionsActive metrics in the underlying registry with dimensions" in new DimensionFixture {
-    registry.connectionsActive.inc(serverDimensions)
-    underlyingCounterValue("akka_http_connections_active", serverDimensions) shouldBe 1L
+    val dims = serverDimensions
+    registry.connectionsActive.inc(dims)
+    underlyingCounterValue("akka_http_connections_active", dims) shouldBe 1L
   }
 
   it should "set connections metrics in the underlying registry" in new Fixture {
@@ -236,7 +252,8 @@ class PrometheusRegistrySpec extends AnyFlatSpec with Matchers {
   }
 
   it should "set connections metrics in the underlying registry with dimensions" in new DimensionFixture {
-    registry.connections.inc(serverDimensions)
-    underlyingCounterValue("akka_http_connections_total", serverDimensions) shouldBe 1L
+    val dims = serverDimensions
+    registry.connections.inc(dims)
+    underlyingCounterValue("akka_http_connections_total", dims) shouldBe 1L
   }
 }
