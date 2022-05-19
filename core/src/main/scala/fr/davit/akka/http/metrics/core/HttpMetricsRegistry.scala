@@ -45,11 +45,11 @@ abstract class HttpMetricsRegistry(settings: HttpMetricsSettings) extends HttpMe
     builder.result()
   }
 
-  protected def requestDimensions(request: HttpRequest): Seq[Dimension] = {
+  private def requestDimensions(request: HttpRequest): Seq[Dimension] = {
     requestLabelers.map(_.dimension(request))
   }
 
-  protected def responseDimensions(response: HttpResponse): Seq[Dimension] = {
+  private def responseDimensions(response: HttpResponse): Seq[Dimension] = {
     responseLabelers.map(_.dimension(response))
   }
 
