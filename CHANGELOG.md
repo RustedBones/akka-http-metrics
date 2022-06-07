@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## v1.7.1 (2022-06-07)
+
+- Fix prometheus dimension ordering
+
 ## v1.7.0 (2022-04-11)
 
 - Update dependencies
