@@ -3,13 +3,13 @@ import sbt._
 object Dependencies {
 
   object Versions {
-    val Akka                  = "2.6.19"
-    val AkkaHttp              = "10.2.9"
+    val Akka                  = "2.6.20"
+    val AkkaHttp              = "10.2.10"
     val Datadog               = "4.0.0"
     val Dropwizard            = "4.2.9"
     val DropwizardV5          = "5.0.0"
     val Enumeratum            = "1.7.0"
-    val Logback               = "1.4.5"
+    val Logback               = "1.2.11"
     val Prometheus            = "0.15.0"
     val ScalaCollectionCompat = "2.7.0"
     val ScalaLogging          = "3.9.4"
