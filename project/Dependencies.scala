@@ -5,6 +5,8 @@ object Dependencies {
   object Versions {
     val Akka                  = "2.6.20"
     val AkkaHttp              = "10.2.10"
+    val Pekko                 = "0.0.0+26633-3a8d86f8-SNAPSHOT"
+    val PekkoHttp             = "0.0.0+4340-878dd99f-SNAPSHOT"
     val Datadog               = "4.1.0"
     val Dropwizard            = "4.2.14"
     val DropwizardV5          = "5.0.0"
@@ -18,6 +20,7 @@ object Dependencies {
   }
 
   val AkkaHttp         = "com.typesafe.akka"          %% "akka-http"             % Versions.AkkaHttp
+  val PekkoHttp        = "org.apache.pekko"           %% "pekko-http"             % Versions.PekkoHttp
   val Datadog          = "com.datadoghq"               % "java-dogstatsd-client" % Versions.Datadog
   val DropwizardCore   = "io.dropwizard.metrics"       % "metrics-core"          % Versions.Dropwizard
   val DropwizardJson   = "io.dropwizard.metrics"       % "metrics-json"          % Versions.Dropwizard
@@ -29,6 +32,7 @@ object Dependencies {
 
   object Provided {
     val AkkaStream = "com.typesafe.akka" %% "akka-stream" % Versions.Akka % "provided"
+    val PekkoStream = "org.apache.pekko" %% "pekko-stream" % Versions.Pekko % "provided"
   }
 
   object Test {
@@ -37,6 +41,13 @@ object Dependencies {
     val AkkaSlf4j         = "com.typesafe.akka"     %% "akka-slf4j"           % Versions.Akka         % "it,test"
     val AkkaStreamTestkit = "com.typesafe.akka"     %% "akka-stream-testkit"  % Versions.Akka         % "it,test"
     val AkkaTestkit       = "com.typesafe.akka"     %% "akka-testkit"         % Versions.Akka         % "it,test"
+
+    val PekkoHttpJson = "org.apache.pekko" %% "pekko-http-spray-json" % Versions.PekkoHttp % "it,test"
+    val PekkoHttpTestkit = "org.apache.pekko" %% "pekko-http-testkit" % Versions.PekkoHttp % "it,test"
+    val PekkoSlf4j = "org.apache.pekko" %% "pekko-slf4j" % Versions.Pekko % "it,test"
+    val PekkoStreamTestkit = "org.apache.pekko" %% "pekko-stream-testkit" % Versions.Pekko % "it,test"
+    val PekkoTestkit = "org.apache.pekko" %% "pekko-testkit" % Versions.Pekko % "it,test"
+
     val DropwizardJvm     = "io.dropwizard.metrics"  % "metrics-jvm"          % Versions.Dropwizard   % "it,test"
     val DropwizardV5Jvm   = "io.dropwizard.metrics5" % "metrics-jvm"          % Versions.DropwizardV5 % "it,test"
     val Logback           = "ch.qos.logback"         % "logback-classic"      % Versions.Logback      % "it,test"
@@ -47,5 +58,4 @@ object Dependencies {
     val ScalaMock = "org.scalamock" %% "scalamock" % Versions.ScalaMock % "it,test"
     val ScalaTest = "org.scalatest" %% "scalatest" % Versions.ScalaTest % "it,test"
   }
-
 }

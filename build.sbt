@@ -40,6 +40,8 @@ lazy val commonSettings = Defaults.itSettings ++
     ),
     publishMavenStyle := true,
     Test / publishArtifact := false,
+    // Release version of Pekko not yet available so use Apache nightlies for now
+    resolvers += "Apache Nightlies" at "https://repository.apache.org/content/groups/snapshots",
     publishTo := Some(if (isSnapshot.value) Opts.resolver.sonatypeSnapshots else Opts.resolver.sonatypeStaging),
     releaseCrossBuild := true,
     releasePublishArtifactsAction := PgpKeys.publishSigned.value,
@@ -69,13 +71,16 @@ lazy val `akka-http-metrics-core` = (project in file("core"))
   .settings(
     libraryDependencies ++= Seq(
       Dependencies.AkkaHttp,
+      Dependencies.PekkoHttp,
       Dependencies.Enumeratum,
       Dependencies.Provided.AkkaStream,
+      Dependencies.Provided.PekkoStream,
       Dependencies.Test.AkkaHttpTestkit,
       Dependencies.Test.AkkaSlf4j,
       Dependencies.Test.AkkaStreamTestkit,
-      Dependencies.Test.Logback,
-      Dependencies.Test.ScalaMock,
+      Dependencies.Test.PekkoHttpTestkit,
+      Dependencies.Test.PekkoSlf4j,Dependencies.Test.Logback,
+      Dependencies.Test.PekkoStreamTestkit,Dependencies.Test.ScalaMock,
       Dependencies.Test.ScalaTest
     )
   )
@@ -88,9 +93,13 @@ lazy val `akka-http-metrics-datadog` = (project in file("datadog"))
     libraryDependencies ++= Seq(
       Dependencies.Datadog,
       Dependencies.Provided.AkkaStream,
+      Dependencies.Provided.PekkoStream,
       Dependencies.Test.AkkaHttpTestkit,
       Dependencies.Test.AkkaSlf4j,
       Dependencies.Test.AkkaStreamTestkit,
+      Dependencies.Test.PekkoHttpTestkit,
+      Dependencies.Test.PekkoSlf4j,
+      Dependencies.Test.PekkoStreamTestkit,
       Dependencies.Test.Logback,
       Dependencies.Test.ScalaTest
     )
@@ -111,6 +120,14 @@ lazy val `akka-http-metrics-dropwizard` = (project in file("dropwizard"))
       Dependencies.Test.AkkaSlf4j,
       Dependencies.Test.AkkaStreamTestkit,
       Dependencies.Test.AkkaTestkit,
+
+      Dependencies.Provided.PekkoStream,
+      Dependencies.Test.PekkoHttpJson,
+      Dependencies.Test.PekkoHttpTestkit,
+      Dependencies.Test.PekkoSlf4j,
+      Dependencies.Test.PekkoStreamTestkit,
+      Dependencies.Test.PekkoTestkit,
+
       Dependencies.Test.DropwizardJvm,
       Dependencies.Test.Logback,
       Dependencies.Test.ScalaCollectionCompat,
@@ -132,6 +149,14 @@ lazy val `akka-http-metrics-dropwizard-v5` = (project in file("dropwizard-v5"))
       Dependencies.Test.AkkaSlf4j,
       Dependencies.Test.AkkaStreamTestkit,
       Dependencies.Test.AkkaTestkit,
+
+      Dependencies.Provided.PekkoStream,
+      Dependencies.Test.PekkoHttpJson,
+      Dependencies.Test.PekkoHttpTestkit,
+      Dependencies.Test.PekkoSlf4j,
+      Dependencies.Test.PekkoStreamTestkit,
+      Dependencies.Test.PekkoTestkit,
+
       Dependencies.Test.DropwizardV5Jvm,
       Dependencies.Test.Logback,
       Dependencies.Test.ScalaCollectionCompat,
@@ -149,6 +174,12 @@ lazy val `akka-http-metrics-graphite` = (project in file("graphite"))
       Dependencies.Test.AkkaHttpTestkit,
       Dependencies.Test.AkkaSlf4j,
       Dependencies.Test.AkkaStreamTestkit,
+
+      Dependencies.Provided.PekkoStream,
+      Dependencies.Test.PekkoHttpTestkit,
+      Dependencies.Test.PekkoSlf4j,
+      Dependencies.Test.PekkoStreamTestkit,
+
       Dependencies.Test.Logback,
       Dependencies.Test.ScalaTest
     )
@@ -166,6 +197,13 @@ lazy val `akka-http-metrics-prometheus` = (project in file("prometheus"))
       Dependencies.Test.AkkaSlf4j,
       Dependencies.Test.AkkaStreamTestkit,
       Dependencies.Test.AkkaTestkit,
+
+      Dependencies.Provided.PekkoStream,
+      Dependencies.Test.PekkoHttpTestkit,
+      Dependencies.Test.PekkoSlf4j,
+      Dependencies.Test.PekkoStreamTestkit,
+      Dependencies.Test.PekkoTestkit,
+
       Dependencies.Test.Logback,
       Dependencies.Test.PrometheusHotspot,
       Dependencies.Test.ScalaTest
