@@ -16,10 +16,10 @@
 
 package fr.davit.akka.http.metrics.core.scaladsl.server
 
-import akka.http.scaladsl.marshalling.PredefinedToEntityMarshallers._
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.testkit.ScalatestRouteTest
+import org.apache.pekko.http.scaladsl.marshalling.PredefinedToEntityMarshallers._
+import org.apache.pekko.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.server.Directives._
+import org.apache.pekko.http.scaladsl.testkit.ScalatestRouteTest
 import fr.davit.akka.http.metrics.core.{AttributeLabeler, PathLabeler, TestRegistry}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

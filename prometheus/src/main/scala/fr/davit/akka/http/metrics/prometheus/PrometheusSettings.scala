@@ -16,7 +16,7 @@
 
 package fr.davit.akka.http.metrics.prometheus
 
-import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
+import org.apache.pekko.http.scaladsl.model.{HttpResponse, StatusCodes}
 import fr.davit.akka.http.metrics.core.HttpMetricsNames.HttpMetricsNamesImpl
 import fr.davit.akka.http.metrics.core.{Dimension, HttpMessageLabeler, HttpMetricsNames, HttpMetricsSettings}
 import fr.davit.akka.http.metrics.prometheus.Quantiles.Quantile

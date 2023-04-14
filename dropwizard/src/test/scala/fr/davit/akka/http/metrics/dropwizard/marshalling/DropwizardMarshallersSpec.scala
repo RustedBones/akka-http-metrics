@@ -16,8 +16,8 @@
 
 package fr.davit.akka.http.metrics.dropwizard.marshalling
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.testkit.ScalatestRouteTest
+import org.apache.pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import org.apache.pekko.http.scaladsl.testkit.ScalatestRouteTest
 import fr.davit.akka.http.metrics.core.Dimension
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives._
 import fr.davit.akka.http.metrics.dropwizard.DropwizardRegistry

@@ -16,8 +16,8 @@
 
 package fr.davit.akka.http.metrics.core
 
-import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
-import akka.http.scaladsl.model.{HttpEntity, StatusCodes}
+import org.apache.pekko.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
+import org.apache.pekko.http.scaladsl.model.{HttpEntity, StatusCodes}
 import fr.davit.akka.http.metrics.core.HttpMetricsNames.HttpMetricsNamesImpl
 import fr.davit.akka.http.metrics.core.HttpMetricsSettings.HttpMetricsSettingsImpl
 

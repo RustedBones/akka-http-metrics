@@ -16,9 +16,9 @@
 
 package fr.davit.akka.http.metrics.datadog
 
-import akka.actor.ActorSystem
-import akka.io.{IO, Udp}
-import akka.testkit.{TestKit, TestProbe}
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.io.{IO, Udp}
+import org.apache.pekko.testkit.{TestKit, TestProbe}
 import com.timgroup.statsd.NonBlockingStatsDClientBuilder
 import fr.davit.akka.http.metrics.core.{Dimension, PathLabeler, StatusGroupLabeler}
 import org.scalatest.BeforeAndAfterAll

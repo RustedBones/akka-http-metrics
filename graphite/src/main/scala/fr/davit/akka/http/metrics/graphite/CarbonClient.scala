@@ -18,12 +18,12 @@ package fr.davit.akka.http.metrics.graphite
 
 import java.time.{Clock, Instant}
 
-import akka.NotUsed
-import akka.actor.ActorSystem
-import akka.event.Logging
-import akka.stream.scaladsl.{Flow, Keep, RestartFlow, Sink, Source, Tcp}
-import akka.stream.{OverflowStrategy, QueueOfferResult, RestartSettings}
-import akka.util.ByteString
+import org.apache.pekko.NotUsed
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.event.Logging
+import org.apache.pekko.stream.scaladsl.{Flow, Keep, RestartFlow, Sink, Source, Tcp}
+import org.apache.pekko.stream.{OverflowStrategy, QueueOfferResult, RestartSettings}
+import org.apache.pekko.util.ByteString
 import fr.davit.akka.http.metrics.core.Dimension
 
 import scala.concurrent.Await

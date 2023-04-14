@@ -16,9 +16,9 @@
 
 package fr.davit.akka.http.metrics.core
 
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
-import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
-import akka.stream.{Attributes, BidiShape, Inlet, Outlet}
+import org.apache.pekko.http.scaladsl.model.{HttpRequest, HttpResponse}
+import org.apache.pekko.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
+import org.apache.pekko.stream.{Attributes, BidiShape, Inlet, Outlet}
 
 import scala.collection.mutable
 

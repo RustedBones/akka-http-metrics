@@ -16,7 +16,7 @@
 
 package fr.davit.akka.http.metrics.core
 
-import akka.http.scaladsl.model._
+import org.apache.pekko.http.scaladsl.model._
 import fr.davit.akka.http.metrics.core.HttpMessageLabeler.Unlabelled
 
 object HttpMessageLabeler {

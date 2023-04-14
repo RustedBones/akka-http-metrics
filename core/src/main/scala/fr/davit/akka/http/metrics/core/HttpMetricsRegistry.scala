@@ -16,9 +16,9 @@
 
 package fr.davit.akka.http.metrics.core
 
-import akka.http.scaladsl.model._
-import akka.stream.scaladsl.{Flow, Sink}
-import akka.util.ByteString
+import org.apache.pekko.http.scaladsl.model._
+import org.apache.pekko.stream.scaladsl.{Flow, Sink}
+import org.apache.pekko.util.ByteString
 
 import scala.concurrent.duration.Deadline
 

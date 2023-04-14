@@ -16,9 +16,9 @@
 
 package fr.davit.akka.http.metrics.graphite
 
-import akka.actor.{ActorRef, ActorSystem}
-import akka.io.{IO, Tcp}
-import akka.testkit.{TestActor, TestKit, TestProbe}
+import org.apache.pekko.actor.{ActorRef, ActorSystem}
+import org.apache.pekko.io.{IO, Tcp}
+import org.apache.pekko.testkit.{TestActor, TestKit, TestProbe}
 import fr.davit.akka.http.metrics.core.{Dimension, PathLabeler, StatusGroupLabeler}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpecLike

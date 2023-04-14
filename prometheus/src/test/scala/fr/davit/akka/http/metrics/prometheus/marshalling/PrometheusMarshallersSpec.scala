@@ -16,7 +16,7 @@
 
 package fr.davit.akka.http.metrics.prometheus.marshalling
 
-import akka.http.scaladsl.testkit.ScalatestRouteTest
+import org.apache.pekko.http.scaladsl.testkit.ScalatestRouteTest
 import fr.davit.akka.http.metrics.core.{Dimension, StatusGroupLabeler}
 import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives.metrics
 import fr.davit.akka.http.metrics.prometheus.{PrometheusRegistry, PrometheusSettings}

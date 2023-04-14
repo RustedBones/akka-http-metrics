@@ -16,13 +16,13 @@
 
 package fr.davit.akka.http.metrics.core
 
-import akka.NotUsed
-import akka.actor.ClassicActorSystemProvider
-import akka.http.scaladsl.HttpExt
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.{Directives, ExceptionHandler, RejectionHandler, Route}
-import akka.http.scaladsl.settings.RoutingSettings
-import akka.stream.scaladsl.{BidiFlow, Flow}
+import org.apache.pekko.NotUsed
+import org.apache.pekko.actor.ClassicActorSystemProvider
+import org.apache.pekko.http.scaladsl.HttpExt
+import org.apache.pekko.http.scaladsl.model._
+import org.apache.pekko.http.scaladsl.server.{Directives, ExceptionHandler, RejectionHandler, Route}
+import org.apache.pekko.http.scaladsl.settings.RoutingSettings
+import org.apache.pekko.stream.scaladsl.{BidiFlow, Flow}
 import fr.davit.akka.http.metrics.core.scaladsl.HttpMetricsServerBuilder
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -65,7 +65,7 @@ object HttpMetrics {
     val exceptionHandler = ExceptionHandler.default(routingSettings).andThen(markUnhandled _)
     val rejectionHandler = RejectionHandler.default.mapRejectionResponse(markUnhandled)
 
-    import akka.http.scaladsl.server.directives.ExecutionDirectives._
+    import org.apache.pekko.http.scaladsl.server.directives.ExecutionDirectives._
     Route.toFunction {
       (handleExceptions(exceptionHandler) & handleRejections(rejectionHandler)) {
         route

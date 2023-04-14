@@ -16,7 +16,7 @@
 
 package fr.davit.akka.http.metrics.prometheus
 
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
+import org.apache.pekko.http.scaladsl.model.{HttpRequest, HttpResponse}
 import fr.davit.akka.http.metrics.core._
 import io.prometheus.client.CollectorRegistry
 import org.scalatest.flatspec.AnyFlatSpec

@@ -16,12 +16,12 @@
 
 package fr.davit.akka.http.metrics.core
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
-import akka.stream.ClosedShape
-import akka.stream.scaladsl.{GraphDSL, RunnableGraph}
-import akka.stream.testkit.scaladsl.{TestSink, TestSource}
-import akka.testkit.TestKit
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.http.scaladsl.model.{HttpRequest, HttpResponse}
+import org.apache.pekko.stream.ClosedShape
+import org.apache.pekko.stream.scaladsl.{GraphDSL, RunnableGraph}
+import org.apache.pekko.stream.testkit.scaladsl.{TestSink, TestSource}
+import org.apache.pekko.testkit.TestKit
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike

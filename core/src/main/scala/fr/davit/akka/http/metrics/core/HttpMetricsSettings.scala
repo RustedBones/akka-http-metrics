@@ -16,7 +16,7 @@
 
 package fr.davit.akka.http.metrics.core
 
-import akka.http.scaladsl.model.HttpResponse
+import org.apache.pekko.http.scaladsl.model.HttpResponse
 
 import scala.collection.immutable
 

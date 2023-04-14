@@ -16,15 +16,15 @@
 
 package fr.davit.akka.http.metrics.core.scaladsl
 
-import akka.actor.ClassicActorSystemProvider
-import akka.event.LoggingAdapter
-import akka.http.scaladsl.Http.ServerBinding
-import akka.http.scaladsl._
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.settings.ServerSettings
-import akka.stream.scaladsl.Source
-import akka.stream.{Materializer, SystemMaterializer}
+import org.apache.pekko.actor.ClassicActorSystemProvider
+import org.apache.pekko.event.LoggingAdapter
+import org.apache.pekko.http.scaladsl.Http.ServerBinding
+import org.apache.pekko.http.scaladsl._
+import org.apache.pekko.http.scaladsl.model.{HttpRequest, HttpResponse}
+import org.apache.pekko.http.scaladsl.server.Route
+import org.apache.pekko.http.scaladsl.settings.ServerSettings
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.stream.{Materializer, SystemMaterializer}
 import fr.davit.akka.http.metrics.core.{HttpMetrics, HttpMetricsHandler}
 
 import scala.annotation.nowarn

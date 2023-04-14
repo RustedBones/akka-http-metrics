@@ -16,14 +16,14 @@
 
 package fr.davit.akka.http.metrics.core
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.{RequestContext, RouteResult}
-import akka.stream.scaladsl.Keep
-import akka.stream.testkit.scaladsl.{TestSink, TestSource}
-import akka.testkit.TestKit
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.http.scaladsl.marshalling.Marshal
+import org.apache.pekko.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
+import org.apache.pekko.http.scaladsl.server.Directives._
+import org.apache.pekko.http.scaladsl.server.{RequestContext, RouteResult}
+import org.apache.pekko.stream.scaladsl.Keep
+import org.apache.pekko.stream.testkit.scaladsl.{TestSink, TestSource}
+import org.apache.pekko.testkit.TestKit
 import org.scalamock.matchers.ArgCapture.CaptureOne
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.BeforeAndAfterAll
@@ -68,7 +68,7 @@ class HttpMetricsSpec
 
   "HttpMetrics" should "provide newMeteredServerAt extension" in {
     """
-      |import akka.http.scaladsl.Http
+      |import org.apache.pekko.http.scaladsl.Http
       |import fr.davit.akka.http.metrics.core.HttpMetrics._
       |val registry = new TestRegistry(TestRegistry.settings)
       |implicit val system: ActorSystem = ActorSystem()

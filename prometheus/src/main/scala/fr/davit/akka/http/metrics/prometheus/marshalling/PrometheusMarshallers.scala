@@ -18,8 +18,8 @@ package fr.davit.akka.http.metrics.prometheus.marshalling
 
 import java.io.StringWriter
 
-import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
-import akka.http.scaladsl.model.{ContentType, HttpCharsets, HttpEntity, MediaTypes}
+import org.apache.pekko.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
+import org.apache.pekko.http.scaladsl.model.{ContentType, HttpCharsets, HttpEntity, MediaTypes}
 import fr.davit.akka.http.metrics.prometheus.PrometheusRegistry
 import io.prometheus.client.exporter.common.TextFormat
 

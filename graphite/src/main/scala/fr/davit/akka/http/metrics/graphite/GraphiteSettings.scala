@@ -16,7 +16,7 @@
 
 package fr.davit.akka.http.metrics.graphite
 
-import akka.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.model.StatusCodes
 import fr.davit.akka.http.metrics.core.HttpMetricsNames.HttpMetricsNamesImpl
 import fr.davit.akka.http.metrics.core.HttpMetricsSettings.HttpMetricsSettingsImpl
 import fr.davit.akka.http.metrics.core.{HttpMetricsNames, HttpMetricsSettings}

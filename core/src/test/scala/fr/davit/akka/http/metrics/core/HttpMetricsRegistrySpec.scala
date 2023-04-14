@@ -16,13 +16,13 @@
 
 package fr.davit.akka.http.metrics.core
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.{`User-Agent`, ProductVersion}
-import akka.stream.Materializer
-import akka.stream.scaladsl.Source
-import akka.testkit.TestKit
-import akka.util.ByteString
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.http.scaladsl.model._
+import org.apache.pekko.http.scaladsl.model.headers.{`User-Agent`, ProductVersion}
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.testkit.TestKit
+import org.apache.pekko.util.ByteString
 import fr.davit.akka.http.metrics.core.HttpMetricsRegistry.TraceTimestampKey
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike

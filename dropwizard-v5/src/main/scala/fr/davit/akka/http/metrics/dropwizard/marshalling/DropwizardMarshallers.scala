@@ -18,8 +18,8 @@ package fr.davit.akka.http.metrics.dropwizard.marshalling
 
 import java.io.StringWriter
 
-import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
+import org.apache.pekko.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
+import org.apache.pekko.http.scaladsl.model.{ContentTypes, HttpEntity}
 import com.fasterxml.jackson.databind.ObjectMapper
 import fr.davit.akka.http.metrics.dropwizard.DropwizardRegistry
 

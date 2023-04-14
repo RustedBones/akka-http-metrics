@@ -16,7 +16,7 @@
 
 package fr.davit.akka.http.metrics.core
 
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
+import org.apache.pekko.http.scaladsl.model.{HttpRequest, HttpResponse}
 
 trait HttpMetricsHandler {
 
