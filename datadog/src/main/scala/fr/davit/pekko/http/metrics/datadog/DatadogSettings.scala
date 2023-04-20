@@ -41,7 +41,7 @@ object DatadogMetricsNames {
 object DatadogSettings {
 
   val default: HttpMetricsSettings = HttpMetricsSettingsImpl(
-    "akka.http",
+    "pekko.http",
     DatadogMetricsNames.default,
     _.status.isInstanceOf[StatusCodes.ServerError],
     includeMethodDimension = false,
