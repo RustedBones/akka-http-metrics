@@ -3,8 +3,6 @@ import sbt._
 object Dependencies {
 
   object Versions {
-    val Akka                  = "2.6.20"
-    val AkkaHttp              = "10.2.10"
     val Pekko                 = "0.0.0+26633-3a8d86f8-SNAPSHOT"
     val PekkoHttp             = "0.0.0+4340-878dd99f-SNAPSHOT"
     val Datadog               = "4.1.0"
@@ -19,7 +17,6 @@ object Dependencies {
     val ScalaTest             = "3.2.14"
   }
 
-  val AkkaHttp         = "com.typesafe.akka"          %% "akka-http"             % Versions.AkkaHttp
   val PekkoHttp        = "org.apache.pekko"           %% "pekko-http"             % Versions.PekkoHttp
   val Datadog          = "com.datadoghq"               % "java-dogstatsd-client" % Versions.Datadog
   val DropwizardCore   = "io.dropwizard.metrics"       % "metrics-core"          % Versions.Dropwizard
@@ -31,17 +28,10 @@ object Dependencies {
   val ScalaLogging     = "com.typesafe.scala-logging" %% "scala-logging"         % Versions.ScalaLogging
 
   object Provided {
-    val AkkaStream = "com.typesafe.akka" %% "akka-stream" % Versions.Akka % "provided"
     val PekkoStream = "org.apache.pekko" %% "pekko-stream" % Versions.Pekko % "provided"
   }
 
   object Test {
-    val AkkaHttpJson      = "com.typesafe.akka"     %% "akka-http-spray-json" % Versions.AkkaHttp     % "it,test"
-    val AkkaHttpTestkit   = "com.typesafe.akka"     %% "akka-http-testkit"    % Versions.AkkaHttp     % "it,test"
-    val AkkaSlf4j         = "com.typesafe.akka"     %% "akka-slf4j"           % Versions.Akka         % "it,test"
-    val AkkaStreamTestkit = "com.typesafe.akka"     %% "akka-stream-testkit"  % Versions.Akka         % "it,test"
-    val AkkaTestkit       = "com.typesafe.akka"     %% "akka-testkit"         % Versions.Akka         % "it,test"
-
     val PekkoHttpJson = "org.apache.pekko" %% "pekko-http-spray-json" % Versions.PekkoHttp % "it,test"
     val PekkoHttpTestkit = "org.apache.pekko" %% "pekko-http-testkit" % Versions.PekkoHttp % "it,test"
     val PekkoSlf4j = "org.apache.pekko" %% "pekko-slf4j" % Versions.Pekko % "it,test"
