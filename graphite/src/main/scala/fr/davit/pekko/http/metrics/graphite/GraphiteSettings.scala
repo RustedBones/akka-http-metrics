@@ -41,7 +41,7 @@ object GraphiteMetricsNames {
 object GraphiteSettings {
 
   val default: HttpMetricsSettings = HttpMetricsSettingsImpl(
-    "akka.http",
+    "pekko.http",
     GraphiteMetricsNames.default,
     _.status.isInstanceOf[StatusCodes.ServerError],
     includeMethodDimension = false,

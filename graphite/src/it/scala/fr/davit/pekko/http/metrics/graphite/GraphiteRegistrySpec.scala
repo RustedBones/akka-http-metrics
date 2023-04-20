@@ -72,70 +72,70 @@ class GraphiteRegistrySpec
 
   "GraphiteRegistry" should "send requestsActive datagrams to the carbon server" in withFixture { (carbon, registry) =>
     registry.requestsActive.inc()
-    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "akka.http.requests.active 1 1234\n"
+    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "pekko.http.requests.active 1 1234\n"
   }
 
   it should "send requests datagrams to the carbon server" in withFixture { (carbon, registry) =>
     registry.requests.inc()
-    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "akka.http.requests 1 1234\n"
+    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "pekko.http.requests 1 1234\n"
   }
 
   it should "send requestsSize datagrams to the carbon server" in withFixture { (carbon, registry) =>
     registry.requestsSize.update(3)
-    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "akka.http.requests.bytes 3 1234\n"
+    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "pekko.http.requests.bytes 3 1234\n"
 
     registry.requestsSize.update(3, dimensions)
-    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "akka.http.requests.bytes;path=/api;status=2xx 3 1234\n"
+    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "pekko.http.requests.bytes;path=/api;status=2xx 3 1234\n"
   }
 
   it should "send responses datagrams to the carbon server" in withFixture { (carbon, registry) =>
     registry.responses.inc()
-    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "akka.http.responses 1 1234\n"
+    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "pekko.http.responses 1 1234\n"
 
     registry.responses.inc(dimensions)
-    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "akka.http.responses;path=/api;status=2xx 1 1234\n"
+    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "pekko.http.responses;path=/api;status=2xx 1 1234\n"
   }
 
   it should "send responsesErrors datagrams to the carbon server" in withFixture { (carbon, registry) =>
     registry.responsesErrors.inc()
-    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "akka.http.responses.errors 1 1234\n"
+    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "pekko.http.responses.errors 1 1234\n"
 
     registry.responsesErrors.inc(dimensions)
     carbon
       .expectMsgType[Tcp.Received]
       .data
-      .utf8String shouldBe "akka.http.responses.errors;path=/api;status=2xx 1 1234\n"
+      .utf8String shouldBe "pekko.http.responses.errors;path=/api;status=2xx 1 1234\n"
   }
 
   it should "send responsesDuration datagrams to the carbon server" in withFixture { (carbon, registry) =>
     registry.responsesDuration.observe(3.seconds)
-    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "akka.http.responses.duration 3000 1234\n"
+    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "pekko.http.responses.duration 3000 1234\n"
 
     registry.responsesDuration.observe(3.seconds, dimensions)
     carbon
       .expectMsgType[Tcp.Received]
       .data
-      .utf8String shouldBe "akka.http.responses.duration;path=/api;status=2xx 3000 1234\n"
+      .utf8String shouldBe "pekko.http.responses.duration;path=/api;status=2xx 3000 1234\n"
   }
 
   it should "send responsesSize datagrams to the carbon server" in withFixture { (carbon, registry) =>
     registry.responsesSize.update(3)
-    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "akka.http.responses.bytes 3 1234\n"
+    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "pekko.http.responses.bytes 3 1234\n"
 
     registry.responsesSize.update(3, dimensions)
     carbon
       .expectMsgType[Tcp.Received]
       .data
-      .utf8String shouldBe "akka.http.responses.bytes;path=/api;status=2xx 3 1234\n"
+      .utf8String shouldBe "pekko.http.responses.bytes;path=/api;status=2xx 3 1234\n"
   }
 
   it should "send connectionsActive datagrams to the carbon server" in withFixture { (carbon, registry) =>
     registry.connectionsActive.inc()
-    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "akka.http.connections.active 1 1234\n"
+    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "pekko.http.connections.active 1 1234\n"
   }
   it should "send connections datagrams to the carbon server" in withFixture { (carbon, registry) =>
     registry.connections.inc()
-    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "akka.http.connections 1 1234\n"
+    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "pekko.http.connections 1 1234\n"
   }
 
 }
