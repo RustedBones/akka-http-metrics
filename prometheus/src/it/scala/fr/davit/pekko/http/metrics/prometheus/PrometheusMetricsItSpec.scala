@@ -79,14 +79,14 @@ class PrometheusMetricsItSpec
     body
       .split('\n')
       .filter(_.startsWith("# TYPE ")) should contain allElementsOf Seq(
-      "# TYPE akka_http_connections_active gauge",
-      "# TYPE akka_http_connections_created gauge",
-      "# TYPE akka_http_connections_total counter",
-      "# TYPE akka_http_requests_active gauge",
-      "# TYPE akka_http_requests_created gauge",
-      "# TYPE akka_http_requests_size_bytes histogram",
-      "# TYPE akka_http_requests_size_bytes_created gauge",
-      "# TYPE akka_http_requests_total counter",
+      "# TYPE pekko_http_connections_active gauge",
+      "# TYPE pekko_http_connections_created gauge",
+      "# TYPE pekko_http_connections_total counter",
+      "# TYPE pekko_http_requests_active gauge",
+      "# TYPE pekko_http_requests_created gauge",
+      "# TYPE pekko_http_requests_size_bytes histogram",
+      "# TYPE pekko_http_requests_size_bytes_created gauge",
+      "# TYPE pekko_http_requests_total counter",
       "# TYPE jvm_buffer_pool_capacity_bytes gauge",
       "# TYPE jvm_buffer_pool_used_buffers gauge",
       "# TYPE jvm_buffer_pool_used_bytes gauge",

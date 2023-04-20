@@ -112,7 +112,7 @@ object PrometheusSettings {
   val DefaultQuantiles: Quantiles = Quantiles(0.75, 0.95, 0.98, 0.99, 0.999)
 
   val default: PrometheusSettings = PrometheusSettings(
-    namespace = "akka_http",
+    namespace = "pekko_http",
     defineError = _.status.isInstanceOf[StatusCodes.ServerError],
     includeMethodDimension = false,
     includePathDimension = false,
