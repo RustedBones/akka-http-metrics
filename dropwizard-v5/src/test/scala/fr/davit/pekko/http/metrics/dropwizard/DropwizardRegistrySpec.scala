@@ -50,58 +50,58 @@ class DropwizardRegistrySpec extends AnyFlatSpec with Matchers {
 
   "DropwizardRegistry" should "set requestsActive metrics in the underlying registry" in new Fixture {
     registry.requestsActive.inc()
-    underlyingCounter("akka.http.requests.active") shouldBe 1L
+    underlyingCounter("pekko.http.requests.active") shouldBe 1L
   }
 
   it should "set requests metrics in the underlying registry" in new Fixture {
     registry.requests.inc()
-    underlyingCounter("akka.http.requests") shouldBe 1L
+    underlyingCounter("pekko.http.requests") shouldBe 1L
   }
 
   it should "set requestsSize metrics in the underlying registry" in new Fixture {
     registry.requestsSize.update(3)
-    underlyingHistogram("akka.http.requests.bytes") shouldBe 3L
+    underlyingHistogram("pekko.http.requests.bytes") shouldBe 3L
   }
 
   it should "set responses metrics in the underlying registry" in new Fixture {
     registry.responses.inc()
-    underlyingCounter("akka.http.responses") shouldBe 1L
+    underlyingCounter("pekko.http.responses") shouldBe 1L
 
     registry.responses.inc(dimensions)
-    underlyingCounter("akka.http.responses", dimensions) shouldBe 1L
+    underlyingCounter("pekko.http.responses", dimensions) shouldBe 1L
   }
 
   it should "set responsesErrors metrics in the underlying registry" in new Fixture {
     registry.responsesErrors.inc()
-    underlyingCounter("akka.http.responses.errors") shouldBe 1L
+    underlyingCounter("pekko.http.responses.errors") shouldBe 1L
 
     registry.responsesErrors.inc(dimensions)
-    underlyingCounter("akka.http.responses.errors", dimensions) shouldBe 1L
+    underlyingCounter("pekko.http.responses.errors", dimensions) shouldBe 1L
   }
 
   it should "set responsesDuration metrics in the underlying registry" in new Fixture {
     registry.responsesDuration.observe(3.seconds)
-    underlyingTimer("akka.http.responses.duration") shouldBe 3000000000L
+    underlyingTimer("pekko.http.responses.duration") shouldBe 3000000000L
 
     registry.responsesDuration.observe(3.seconds, dimensions)
-    underlyingTimer("akka.http.responses.duration", dimensions) shouldBe 3000000000L
+    underlyingTimer("pekko.http.responses.duration", dimensions) shouldBe 3000000000L
   }
 
   it should "set responsesSize metrics in the underlying registry" in new Fixture {
     registry.responsesSize.update(3)
-    underlyingHistogram("akka.http.responses.bytes") shouldBe 3L
+    underlyingHistogram("pekko.http.responses.bytes") shouldBe 3L
 
     registry.responsesSize.update(3, dimensions)
-    underlyingHistogram("akka.http.responses.bytes", dimensions) shouldBe 3L
+    underlyingHistogram("pekko.http.responses.bytes", dimensions) shouldBe 3L
   }
 
   it should "set connectionsActive metrics in the underlying registry" in new Fixture {
     registry.connectionsActive.inc()
-    underlyingCounter("akka.http.connections.active") shouldBe 1L
+    underlyingCounter("pekko.http.connections.active") shouldBe 1L
   }
 
   it should "set connections metrics in the underlying registry" in new Fixture {
     registry.connections.inc()
-    underlyingCounter("akka.http.connections") shouldBe 1L
+    underlyingCounter("pekko.http.connections") shouldBe 1L
   }
 }

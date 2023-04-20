@@ -61,15 +61,15 @@ class DropwizardMarshallersSpec extends AnyFlatSpec with Matchers with Scalatest
       val json = responseAs[JsonResponse]
       // println(json)
       json.metrics.keys should contain theSameElementsAs Seq(
-        "akka.http.requests",
-        "akka.http.requests.active",
-        "akka.http.requests.bytes",
-        "akka.http.responses{status=2xx}",
-        "akka.http.responses.errors",
-        "akka.http.responses.duration{status=2xx}",
-        "akka.http.responses.bytes",
-        "akka.http.connections",
-        "akka.http.connections.active",
+        "pekko.http.requests",
+        "pekko.http.requests.active",
+        "pekko.http.requests.bytes",
+        "pekko.http.responses{status=2xx}",
+        "pekko.http.responses.errors",
+        "pekko.http.responses.duration{status=2xx}",
+        "pekko.http.responses.bytes",
+        "pekko.http.connections",
+        "pekko.http.connections.active",
         "other.metric"
       ).toSet
     }

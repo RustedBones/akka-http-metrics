@@ -41,7 +41,7 @@ object DropwizardMetricsNames {
 object DropwizardSettings {
 
   val default: HttpMetricsSettings = HttpMetricsSettingsImpl(
-    "akka.http",
+    "pekko.http",
     DropwizardMetricsNames.default,
     _.status.isInstanceOf[StatusCodes.ServerError],
     includeMethodDimension = false,
