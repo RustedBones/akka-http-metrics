@@ -42,6 +42,7 @@ private[metrics] class MeterStage(metricsHandler: HttpMetricsHandler)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
     // using a FIFO stack is OK because HTTP/1 connection must respect ordering
+    // TODO: find pekko reference for this doc
     // see: https://doc.akka.io/docs/akka-http/current/server-side/low-level-api.html#request-response-cycle
     // HTTP/2 is defined with function only
     private val pending = mutable.Stack[HttpRequest]()

@@ -35,8 +35,6 @@ import scala.concurrent.Future
   * Use HttpExt.newMeteredServerAt() to create a builder, use methods to customize settings, and then call one of the
   * bind* methods to bind a server.
   *
-  * Does not extend akka.http.scaladsl.ServerBuilder to seal routes internally in order to ensure proper metrics
-  * instrumentations
   */
 final case class HttpMetricsServerBuilder(
     interface: String,
