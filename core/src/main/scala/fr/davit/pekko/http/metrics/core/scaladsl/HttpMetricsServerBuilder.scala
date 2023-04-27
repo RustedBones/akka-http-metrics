@@ -34,7 +34,6 @@ import scala.concurrent.Future
   *
   * Use HttpExt.newMeteredServerAt() to create a builder, use methods to customize settings, and then call one of the
   * bind* methods to bind a server.
-  *
   */
 final case class HttpMetricsServerBuilder(
     interface: String,

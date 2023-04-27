@@ -17,7 +17,7 @@ object Dependencies {
     val ScalaTest             = "3.2.14"
   }
 
-  val PekkoHttp        = "org.apache.pekko"           %% "pekko-http"             % Versions.PekkoHttp
+  val PekkoHttp        = "org.apache.pekko"           %% "pekko-http"            % Versions.PekkoHttp
   val Datadog          = "com.datadoghq"               % "java-dogstatsd-client" % Versions.Datadog
   val DropwizardCore   = "io.dropwizard.metrics"       % "metrics-core"          % Versions.Dropwizard
   val DropwizardJson   = "io.dropwizard.metrics"       % "metrics-json"          % Versions.Dropwizard
@@ -32,11 +32,11 @@ object Dependencies {
   }
 
   object Test {
-    val PekkoHttpJson = "org.apache.pekko" %% "pekko-http-spray-json" % Versions.PekkoHttp % "it,test"
-    val PekkoHttpTestkit = "org.apache.pekko" %% "pekko-http-testkit" % Versions.PekkoHttp % "it,test"
-    val PekkoSlf4j = "org.apache.pekko" %% "pekko-slf4j" % Versions.Pekko % "it,test"
-    val PekkoStreamTestkit = "org.apache.pekko" %% "pekko-stream-testkit" % Versions.Pekko % "it,test"
-    val PekkoTestkit = "org.apache.pekko" %% "pekko-testkit" % Versions.Pekko % "it,test"
+    val PekkoHttpJson      = "org.apache.pekko" %% "pekko-http-spray-json" % Versions.PekkoHttp % "it,test"
+    val PekkoHttpTestkit   = "org.apache.pekko" %% "pekko-http-testkit"    % Versions.PekkoHttp % "it,test"
+    val PekkoSlf4j         = "org.apache.pekko" %% "pekko-slf4j"           % Versions.Pekko     % "it,test"
+    val PekkoStreamTestkit = "org.apache.pekko" %% "pekko-stream-testkit"  % Versions.Pekko     % "it,test"
+    val PekkoTestkit       = "org.apache.pekko" %% "pekko-testkit"         % Versions.Pekko     % "it,test"
 
     val DropwizardJvm     = "io.dropwizard.metrics"  % "metrics-jvm"          % Versions.Dropwizard   % "it,test"
     val DropwizardV5Jvm   = "io.dropwizard.metrics5" % "metrics-jvm"          % Versions.DropwizardV5 % "it,test"

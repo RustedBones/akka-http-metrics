@@ -85,7 +85,10 @@ class GraphiteRegistrySpec
     carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "pekko.http.requests.bytes 3 1234\n"
 
     registry.requestsSize.update(3, dimensions)
-    carbon.expectMsgType[Tcp.Received].data.utf8String shouldBe "pekko.http.requests.bytes;path=/api;status=2xx 3 1234\n"
+    carbon
+      .expectMsgType[Tcp.Received]
+      .data
+      .utf8String shouldBe "pekko.http.requests.bytes;path=/api;status=2xx 3 1234\n"
   }
 
   it should "send responses datagrams to the carbon server" in withFixture { (carbon, registry) =>

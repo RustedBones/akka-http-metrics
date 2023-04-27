@@ -74,8 +74,10 @@ lazy val `pekko-http-metrics-core` = (project in file("core"))
       Dependencies.Enumeratum,
       Dependencies.Provided.PekkoStream,
       Dependencies.Test.PekkoHttpTestkit,
-      Dependencies.Test.PekkoSlf4j,Dependencies.Test.Logback,
-      Dependencies.Test.PekkoStreamTestkit,Dependencies.Test.ScalaMock,
+      Dependencies.Test.PekkoSlf4j,
+      Dependencies.Test.Logback,
+      Dependencies.Test.PekkoStreamTestkit,
+      Dependencies.Test.ScalaMock,
       Dependencies.Test.ScalaTest
     )
   )
@@ -111,7 +113,6 @@ lazy val `pekko-http-metrics-dropwizard` = (project in file("dropwizard"))
       Dependencies.Test.PekkoSlf4j,
       Dependencies.Test.PekkoStreamTestkit,
       Dependencies.Test.PekkoTestkit,
-
       Dependencies.Test.DropwizardJvm,
       Dependencies.Test.Logback,
       Dependencies.Test.ScalaCollectionCompat,
@@ -127,14 +128,12 @@ lazy val `pekko-http-metrics-dropwizard-v5` = (project in file("dropwizard-v5"))
     libraryDependencies ++= Seq(
       Dependencies.DropwizardV5Core,
       Dependencies.DropwizardV5Json,
-
       Dependencies.Provided.PekkoStream,
       Dependencies.Test.PekkoHttpJson,
       Dependencies.Test.PekkoHttpTestkit,
       Dependencies.Test.PekkoSlf4j,
       Dependencies.Test.PekkoStreamTestkit,
       Dependencies.Test.PekkoTestkit,
-
       Dependencies.Test.DropwizardV5Jvm,
       Dependencies.Test.Logback,
       Dependencies.Test.ScalaCollectionCompat,
@@ -152,7 +151,6 @@ lazy val `pekko-http-metrics-graphite` = (project in file("graphite"))
       Dependencies.Test.PekkoHttpTestkit,
       Dependencies.Test.PekkoSlf4j,
       Dependencies.Test.PekkoStreamTestkit,
-
       Dependencies.Test.Logback,
       Dependencies.Test.ScalaTest
     )
@@ -170,7 +168,6 @@ lazy val `pekko-http-metrics-prometheus` = (project in file("prometheus"))
       Dependencies.Test.PekkoSlf4j,
       Dependencies.Test.PekkoStreamTestkit,
       Dependencies.Test.PekkoTestkit,
-
       Dependencies.Test.Logback,
       Dependencies.Test.PrometheusHotspot,
       Dependencies.Test.ScalaTest
