@@ -1,7 +1,7 @@
 # pekko-http-metrics
 
-[![Continuous Integration](https://github.com/RustedBones/akka-http-metrics/actions/workflows/ci.yml/badge.svg)](https://github.com/RustedBones/akka-http-metrics/actions/workflows/ci.yml)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/fr.davit/akka-http-metrics-core_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/fr.davit/akka-http-metrics-core_2.13)
+[![Continuous Integration](https://github.com/RustedBones/pekko-http-metrics/actions/workflows/ci.yml/badge.svg)](https://github.com/RustedBones/pekko-http-metrics/actions/workflows/ci.yml)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/fr.davit/pekko-http-metrics-core_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/fr.davit/pekko-http-metrics-core_2.13)
 [![Software License](https://img.shields.io/badge/license-Apache%202-brightgreen.svg?style=flat)](LICENSE)
 [![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=flat&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=)](https://scala-steward.org)
 
@@ -16,13 +16,9 @@ The following implementations are supported:
 
 ## Versions
 
-| Version | Release date | Akka Http version | Scala versions      |
-|---------|--------------|-------------------|---------------------|
-| `1.7.1` | 2022-06-07   | `10.2.9`          | `2.13.8`, `2.12.15` |
-| `1.7.0` | 2022-04-11   | `10.2.9`          | `2.13.8`, `2.12.15` |
-| `1.6.0` | 2021-05-07   | `10.2.4`          | `2.13.5`, `2.12.13` |
-| `1.5.1` | 2021-02-16   | `10.2.3`          | `2.13.4`, `2.12.12` |
-| `1.5.0` | 2021-01-12   | `10.2.2`          | `2.13.4`, `2.12.12` |
+| Version | Release date | Pekka Http version | Scala versions |
+|---------|--------------|--------------------|----------------|
+| `x.x.x` | xxxx-xx-xx   | `x.x.x`            | `x.x.x`        |
 
 The complete list can be found in the [CHANGELOG](CHANGELOG.md) file.
 
