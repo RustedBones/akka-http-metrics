@@ -1,11 +1,11 @@
-# akka-http-metrics
+# pekko-http-metrics
 
-[![Continuous Integration](https://github.com/RustedBones/akka-http-metrics/actions/workflows/ci.yml/badge.svg)](https://github.com/RustedBones/akka-http-metrics/actions/workflows/ci.yml)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/fr.davit/akka-http-metrics-core_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/fr.davit/akka-http-metrics-core_2.13)
+[![Continuous Integration](https://github.com/RustedBones/pekko-http-metrics/actions/workflows/ci.yml/badge.svg)](https://github.com/RustedBones/pekko-http-metrics/actions/workflows/ci.yml)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/fr.davit/pekko-http-metrics-core_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/fr.davit/pekko-http-metrics-core_2.13)
 [![Software License](https://img.shields.io/badge/license-Apache%202-brightgreen.svg?style=flat)](LICENSE)
 [![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=flat&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=)](https://scala-steward.org)
 
-Easily collect and expose metrics in your akka-http server.
+Easily collect and expose metrics in your pekko-http server.
 
 The following implementations are supported:
 
@@ -16,27 +16,23 @@ The following implementations are supported:
 
 ## Versions
 
-| Version | Release date | Akka Http version | Scala versions      |
-|---------|--------------|-------------------|---------------------|
-| `1.7.1` | 2022-06-07   | `10.2.9`          | `2.13.8`, `2.12.15` |
-| `1.7.0` | 2022-04-11   | `10.2.9`          | `2.13.8`, `2.12.15` |
-| `1.6.0` | 2021-05-07   | `10.2.4`          | `2.13.5`, `2.12.13` |
-| `1.5.1` | 2021-02-16   | `10.2.3`          | `2.13.4`, `2.12.12` |
-| `1.5.0` | 2021-01-12   | `10.2.2`          | `2.13.4`, `2.12.12` |
+| Version | Release date | Pekka Http version | Scala versions |
+|---------|--------------|--------------------|----------------|
+| `x.x.x` | xxxx-xx-xx   | `x.x.x`            | `x.x.x`        |
 
 The complete list can be found in the [CHANGELOG](CHANGELOG.md) file.
 
-## Getting akka-http-metrics
+## Getting pekko-http-metrics
 
 Libraries are published to Maven Central. Add to your `build.sbt`:
 
 ```scala
-libraryDependencies += "fr.davit" %% "akka-http-metrics-<backend>" % <version>
+libraryDependencies += "fr.davit" %% "pekko-http-metrics-<backend>" % <version>
 ```
 
 ### Server metrics
 
-The library enables you to easily record the following metrics from an akka-http server into a registry. The
+The library enables you to easily record the following metrics from a pekko-http server into a registry. The
 following labeled metrics are recorded:
 
 - requests (`counter`) [method]
@@ -50,16 +46,16 @@ following labeled metrics are recorded:
 - connections (`counter`)
 - connections active (`gauge`)
 
-Record metrics from your akka server by creating an `HttpMetricsServerBuilder` with the `newMeteredServerAt` extension
+Record metrics from your pekko server by creating an `HttpMetricsServerBuilder` with the `newMeteredServerAt` extension
 method located in `HttpMetrics`
 
 ```scala
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
-import fr.davit.akka.http.metrics.core.{HttpMetricsRegistry, HttpMetricsSettings}
-import fr.davit.akka.http.metrics.core.HttpMetrics._ // import extension methods
+import pekko.actor.ActorSystem
+import pekko.http.scaladsl.Http
+import pekko.http.scaladsl.server.Directives._
+import pekko.http.scaladsl.server.Route
+import fr.davit.pekko.http.metrics.core.{HttpMetricsRegistry, HttpMetricsSettings}
+import fr.davit.pekko.http.metrics.core.HttpMetrics._ // import extension methods
 
 implicit val system = ActorSystem()
 
@@ -114,7 +110,7 @@ The responses going through the route will have the `user` dimension set with th
 will be `unlabelled`.
 
 ```scala
-import fr.davit.akka.http.metrics.core.{AttributeLabeler, HttpRequestLabeler}
+import fr.davit.pekko.http.metrics.core.{AttributeLabeler, HttpRequestLabeler}
 
 // based on https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent#browser_name
 object BrowserLabeler extends HttpRequestLabeler {
@@ -152,7 +148,7 @@ Additional static server-level dimensions can be set to all metrics collected by
 In the example below, the `env` dimension with `prod` label will be added. 
 
 ```scala
-import fr.davit.akka.http.metrics.core.Dimension
+import fr.davit.pekko.http.metrics.core.Dimension
 settings.withServerDimensions(Dimension("env", "prod"))
 ```
 
@@ -171,7 +167,7 @@ You must also be careful about cardinality: see [here](https://prometheus.io/doc
 If your path contains unbounded dynamic segments, you must give an explicit label to override the dynamic part:
 
 ```scala
-import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives._
+import fr.davit.pekko.http.metrics.core.scaladsl.server.HttpMetricsDirectives._
 
 val route = pathPrefixLabel("api") {
   pathLabeled("user" / JavaUUID, "user/:user-id") { userId =>
@@ -191,7 +187,7 @@ The status group creates the following dimensions on the metrics: `1xx|2xx|3xx|4
 Expose the metrics from the registry on an http endpoint with the `metrics` directive.
 
 ```scala
-import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives._
+import fr.davit.pekko.http.metrics.core.scaladsl.server.HttpMetricsDirectives._
 
 val route = (get & path("metrics"))(metrics(registry))
 ```
@@ -222,15 +218,15 @@ for this reason it is not possible to expose the metrics in your API.
 Add to your `build.sbt`:
 
 ```scala
-libraryDependencies += "fr.davit" %% "akka-http-metrics-datadog" % <version>
+libraryDependencies += "fr.davit" %% "pekko-http-metrics-datadog" % <version>
 ```
 
 Create your registry
 
 ```scala
 import com.timgroup.statsd.StatsDClient
-import fr.davit.akka.http.metrics.core.HttpMetricsSettings
-import fr.davit.akka.http.metrics.datadog.{DatadogRegistry, DatadogSettings}
+import fr.davit.pekko.http.metrics.core.HttpMetricsSettings
+import fr.davit.pekko.http.metrics.datadog.{DatadogRegistry, DatadogSettings}
 
 val client: StatsDClient = ... // your statsd client
 val settings: HttpMetricsSettings = DatadogSettings.default
@@ -261,17 +257,17 @@ This feature will be available with dropwizard `v5`, which development is paused
 Add to your `build.sbt`:
 
 ```scala
-libraryDependencies += "fr.davit" %% "akka-http-metrics-dropwizard" % <version>
+libraryDependencies += "fr.davit" %% "pekko-http-metrics-dropwizard" % <version>
 // or for dropwizard v5
-libraryDependencies += "fr.davit" %% "akka-http-metrics-dropwizard-v5" % <version>
+libraryDependencies += "fr.davit" %% "pekko-http-metrics-dropwizard-v5" % <version>
 ```
 
 Create your registry
 
 ```scala
 import com.codahale.metrics.MetricRegistry
-import fr.davit.akka.http.metrics.core.HttpMetricsSettings
-import fr.davit.akka.http.metrics.dropwizard.{DropwizardRegistry, DropwizardSettings}
+import fr.davit.pekko.http.metrics.core.HttpMetricsSettings
+import fr.davit.pekko.http.metrics.dropwizard.{DropwizardRegistry, DropwizardSettings}
 
 val dropwizard: MetricRegistry = ... // your dropwizard registry
 val settings: HttpMetricsSettings = DropwizardSettings.default
@@ -281,8 +277,8 @@ val registry = DropwizardRegistry(dropwizard, settings) // or DropwizardRegistry
 Expose the metrics
 
 ```scala
-import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives._
-import fr.davit.akka.http.metrics.dropwizard.marshalling.DropwizardMarshallers._
+import fr.davit.pekko.http.metrics.core.scaladsl.server.HttpMetricsDirectives._
+import fr.davit.pekko.http.metrics.dropwizard.marshalling.DropwizardMarshallers._
 
 val route = (get & path("metrics"))(metrics(registry))
 ```
@@ -324,14 +320,14 @@ val registry = DropwizardRegistry(dropwizard, settings)
 Add to your `build.sbt`:
 
 ```scala
-libraryDependencies += "fr.davit" %% "akka-http-metrics-graphite" % <version>
+libraryDependencies += "fr.davit" %% "pekko-http-metrics-graphite" % <version>
 ```
 
 Create your carbon client and your registry
 
 ```scala
-import fr.davit.akka.http.metrics.core.HttpMetricsSettings
-import fr.davit.akka.http.metrics.graphite.{CarbonClient, GraphiteRegistry, GraphiteSettings}
+import fr.davit.pekko.http.metrics.core.HttpMetricsSettings
+import fr.davit.pekko.http.metrics.graphite.{CarbonClient, GraphiteRegistry, GraphiteSettings}
 
 val carbonClient: CarbonClient = CarbonClient("hostname", 2003)
 val settings: HttpMetricsSettings = GraphiteSettings.default
@@ -356,14 +352,14 @@ val registry = GraphiteRegistry(carbonClient, settings) // or PrometheusRegistry
 Add to your `build.sbt`:
 
 ```scala
-libraryDependencies += "fr.davit" %% "akka-http-metrics-prometheus" % <version>
+libraryDependencies += "fr.davit" %% "pekko-http-metrics-prometheus" % <version>
 ```
 
 Create your registry
 
 ```scala
 import io.prometheus.client.CollectorRegistry
-import fr.davit.akka.http.metrics.prometheus.{PrometheusRegistry, PrometheusSettings}
+import fr.davit.pekko.http.metrics.prometheus.{PrometheusRegistry, PrometheusSettings}
 
 val prometheus: CollectorRegistry = ... // your prometheus registry
 val settings: PrometheusSettings = PrometheusSettings.default
@@ -383,8 +379,8 @@ settings
 Expose the metrics
 
 ```scala
-import fr.davit.akka.http.metrics.core.scaladsl.server.HttpMetricsDirectives._
-import fr.davit.akka.http.metrics.prometheus.marshalling.PrometheusMarshallers._
+import fr.davit.pekko.http.metrics.core.scaladsl.server.HttpMetricsDirectives._
+import fr.davit.pekko.http.metrics.prometheus.marshalling.PrometheusMarshallers._
 
 val route = (get & path("metrics"))(metrics(registry))
 ```

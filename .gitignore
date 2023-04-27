@@ -7,3 +7,4 @@ out/
 target/
 project/target/
 project/metals.sbt
+.bsp
