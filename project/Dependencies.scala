@@ -8,7 +8,7 @@ object Dependencies {
     val Datadog               = "4.1.0"
     val Dropwizard            = "4.2.14"
     val DropwizardV5          = "5.0.0"
-    val Enumeratum            = "1.7.0"
+    val Enumeratum            = "1.7.3"
     val Logback               = "1.2.11"
     val Prometheus            = "0.16.0"
     val ScalaCollectionCompat = "2.9.0"
