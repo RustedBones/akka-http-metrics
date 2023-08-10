@@ -23,7 +23,7 @@ import akka.http.scaladsl._
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.settings.ServerSettings
-import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.{Source, Flow}
 import akka.stream.{Materializer, SystemMaterializer}
 import fr.davit.akka.http.metrics.core.{HttpMetrics, HttpMetricsHandler}
 
@@ -69,6 +69,19 @@ final case class HttpMetricsServerBuilder(
   @nowarn("msg=deprecated")
   def bindFlow(route: Route): Future[ServerBinding] = {
     val flow        = HttpMetrics.metricsRouteToFlow(route)(system)
+    val meteredFlow = HttpMetrics.meterFlow(metricsHandler).join(flow)
+    http.bindAndHandle(
+      meteredFlow,
+      interface,
+      port,
+      context,
+      settings,
+      log
+    )(materializer)
+  }
+
+  @nowarn("msg=deprecated")
+  def bindFlow(flow: Flow[HttpRequest, HttpResponse, _]): Future[ServerBinding] = {
     val meteredFlow = HttpMetrics.meterFlow(metricsHandler).join(flow)
     http.bindAndHandle(
       meteredFlow,
