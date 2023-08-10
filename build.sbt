@@ -40,8 +40,6 @@ lazy val commonSettings = Defaults.itSettings ++
     ),
     publishMavenStyle := true,
     Test / publishArtifact := false,
-    // Release version of Pekko not yet available so use Apache nightlies for now
-    resolvers += "Apache Nightlies" at "https://repository.apache.org/content/groups/snapshots",
     publishTo := Some(if (isSnapshot.value) Opts.resolver.sonatypeSnapshots else Opts.resolver.sonatypeStaging),
     releaseCrossBuild := true,
     releasePublishArtifactsAction := PgpKeys.publishSigned.value,
