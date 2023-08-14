@@ -7,6 +7,10 @@
 
 Easily collect and expose metrics in your akka-http server.
 
+After the akka [licencing change](https://www.lightbend.com/blog/why-we-are-changing-the-license-for-akka),
+no further development is expected on `akka-http-metrics`.
+If you're migrating to pekko-http, see [pekko-http-metrics](https://github.com/RustedBones/pekko-http-metrics).
+
 The following implementations are supported:
 
 * [datadog](#datadog) (via StatsD)
